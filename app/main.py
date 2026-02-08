@@ -330,7 +330,7 @@ async def get_game_result(session_id: str):
         success, response = GameManager.get_game_result(session_id)
         
         if success:
-            logger.info(f"Game result retrieved for {session_id}")
+            # logger.info(f"Game result retrieved for {session_id}")
             return response
         else:
             raise HTTPException(status_code=400, detail=response.get("message", "Failed to get game result"))
