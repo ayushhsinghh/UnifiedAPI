@@ -2,3 +2,4 @@ server.log
 app/app.log
 app/certs/*
 app/frontend/*
+app/__pycache__/*
