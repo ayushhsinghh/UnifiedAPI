@@ -533,15 +533,25 @@ class GameManager:
             if not session:
                 return False, {"success": False, "message": "Game session not found"}
 
-            # Reset session data
+            # Generate new topics
+            topics = generate_game_topics(session["game_category"])
+            player_topic = topics.get("player_topic", session["game_category"])
+            imposter_topic = topics.get("imposter_topic", f"{session['game_category']} (variant)")
+
+            # Randomly select new imposter
+            imposter_id = random.choice(session["players_list"])
+            
+            # Update session data
             update_game_session(session_id, {
-                "status": GAME_STATUS_WAITING,
-                "current_phase": None,
-                "imposter_id": None,
+                "status": GAME_STATUS_PLAYING,
+                "current_phase": GAME_PHASE_DISCUSSION,
+                "imposter_id": imposter_id,
+                "player_topic": player_topic,
+                "imposter_topic": imposter_topic,
                 "votes": {},
                 "voters": [],
                 "game_result": None,
-                "started_at": None,
+                "started_at": datetime.utcnow(),
                 "ended_at": None,
                 "reveal_at": None
             })
@@ -553,8 +563,12 @@ class GameManager:
                 {"session_id": session_id},
                 {"$set": {"is_imposter": False, "is_alive": True, "votes_received": 0}}
             )
+            db["game_players"].update_one(
+                {"session_id": session_id, "player_id": imposter_id},
+                {"$set": {"is_imposter": True}}
+            )
 
-            logger.info(f"New round started for game {session_id}")
+            logger.info(f"New round started for game {session_id}. New imposter: {imposter_id}")
 
             return True, {
                 "success": True,

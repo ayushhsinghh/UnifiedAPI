@@ -1,5 +1,5 @@
 server.log
-app/error.log
+# app/error.log
 app/app.log
 app/certs/*
 app/frontend/*

@@ -334,7 +334,10 @@
                             <li>Subtitle generation (SRT)</li>
                             <li>Multiple quality levels</li>
                         </ul>
-                        <button class="api-card-button" onclick="switchTab('transcriber')">View API</button>
+                        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                            <button class="api-card-button" onclick="switchTab('transcriber')">View API</button>
+                            <a class="api-card-button" href="https://subs.ayush.ltd" target="_blank" style="background: #4caf50;">Open Transcribe App</a>
+                        </div>
                     </div>
 
                     <div class="api-card">
@@ -346,7 +349,7 @@
                             <li>Voting mechanics</li>
                             <li>Live player tracking</li>
                         </ul>
-                        <a href="/game" class="api-card-button" target="_blank">Play Game</a>
+                        <a href="https://game.ayush.ltd" class="api-card-button" target="_blank">Play Game</a>
                     </div>
                 </div>
 
@@ -368,6 +371,28 @@
                 <p style="color: #666; margin-bottom: 20px;">Convert videos to text subtitles using advanced AI transcription technology</p>
 
                 <h3>📝 Core Endpoints</h3>
+
+                <h4 style="color: #333; margin-top:8px;">API Base</h4>
+                <div class="endpoint get">
+                    <span class="method get">BASE</span> <code>/api</code>
+                </div>
+                <p style="color: #666; margin-bottom: 12px;">Example requests:</p>
+
+                <h4 style="color: #333;">Quick Examples</h4>
+                <pre>curl -X POST https://your-host/api/game/create -H "Content-Type: application/json" -d '{"player_name":"Alice","game_category":"animals","max_players":6}'</pre>
+                <pre>curl -X POST https://your-host/api/game/ABCDE/join -H "Content-Type: application/json" -d '{"player_name":"Bob"}'</pre>
+                <pre>curl -X POST https://your-host/api/game/ABCDE/start -H "Content-Type: application/json" -d '{"player_id":"<creator_id>"}'</pre>
+                <pre>curl https://your-host/api/game/ABCDE?player_id=&lt;player_id&gt;</pre>
+                <pre>curl -X POST https://your-host/api/game/ABCDE/vote -H "Content-Type: application/json" -d '{"player_id":"<you>","voted_for_id":"<target>"}'</pre>
+
+                <h4 style="color: #333; margin-top:8px;">API Base</h4>
+                <div class="endpoint get">
+                    <span class="method get">BASE</span> <code>/api</code>
+                </div>
+                <p style="color: #666; margin-bottom: 12px;">All endpoints are rooted under <code>/api</code>. Example requests below:</p>
+
+                
+
 
                 <div style="margin: 20px 0;">
                     <h4 style="color: #333;">Create Transcription Job</h4>
@@ -518,6 +543,54 @@
                     <p style="color: #666;">Get list of all games waiting for players</p>
                 </div>
 
+                <div style="margin: 20px 0;">
+                    <h4 style="color: #333;">Start New Round</h4>
+                    <div class="endpoint post">
+                        <span class="method post">POST</span> <code>/api/game/{session_id}/new-round</code>
+                    </div>
+                    <p style="color: #666;">Start a fresh round for the same players (creator only)</p>
+                </div>
+
+                <div style="margin: 20px 0;">
+                    <h4 style="color: #333;">Get Game Result</h4>
+                    <div class="endpoint get">
+                        <span class="method get">GET</span> <code>/api/game/{session_id}/result</code>
+                    </div>
+                    <p style="color: #666;">Retrieve the reveal/result after voting (shows voted out player and winners)</p>
+                </div>
+
+                <div style="margin: 20px 0;">
+                    <h4 style="color: #333;">Player Heartbeat</h4>
+                    <div class="endpoint post">
+                        <span class="method post">POST</span> <code>/api/game/{session_id}/heartbeat</code>
+                    </div>
+                    <p style="color: #666;">Keep a player marked active in a session (body: <code>{"player_id":"..."}</code>)</p>
+                </div>
+
+                <div style="margin: 20px 0;">
+                    <h4 style="color: #333;">Cleanup Inactive Players</h4>
+                    <div class="endpoint post">
+                        <span class="method post">POST</span> <code>/api/games/cleanup-inactive</code>
+                    </div>
+                    <p style="color: #666;">Trigger a cleanup pass to remove inactive players from waiting games</p>
+                </div>
+
+                <div style="margin: 20px 0;">
+                    <h4 style="color: #333;">Cleanup Old Games</h4>
+                    <div class="endpoint post">
+                        <span class="method post">POST</span> <code>/api/games/cleanup</code>
+                    </div>
+                    <p style="color: #666;">Delete old/waiting game sessions (server-side maintenance)</p>
+                </div>
+
+                <div style="margin: 20px 0;">
+                    <h4 style="color: #333;">Delete Game</h4>
+                    <div class="endpoint delete">
+                        <span class="method delete">DELETE</span> <code>/api/game/{session_id}</code>
+                    </div>
+                    <p style="color: #666;">Delete a game session and all its players/data</p>
+                </div>
+
                 <h3>🎯 Game Categories</h3>
                 <div class="demo-section">
                     <p>🦁 Animals • 👨‍💼 Professions • 🌍 Countries • 🍎 Fruits • ⚽ Sports • 🎬 Movies • 🦸 Superheroes • 🍕 Foods</p>
@@ -531,7 +604,7 @@
                     <p><strong>Ended:</strong> Results are shown</p>
                 </div>
 
-                <a href="/game" target="_blank" class="api-card-button" style="display: inline-block; margin-top: 20px; padding: 12px 24px;">
+                <a href="https://game.ayush.ltd" target="_blank" class="api-card-button" style="display: inline-block; margin-top: 20px; padding: 12px 24px;">
                     🎮 Play Game Now
                 </a>
             </div>

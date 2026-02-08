@@ -42,7 +42,7 @@ cd app
 python3 main.py
 ```
 
-The app will be available at: **http://localhost:8000**
+The app will be available at: **http://localhost:8000** (web UI). If deployed, the Transcribe UI is available at https://subs.ayush.ltd and the Game UI at https://game.ayush.ltd.
 
 ---
 
@@ -99,7 +99,7 @@ uvicorn main:app --reload
 python3 main.py --host 0.0.0.0 --port 8000
 ```
 
-The app starts at: **http://localhost:8000**
+The app starts at: **http://localhost:8000** (web UI). If hosted, access the Transcribe UI at https://subs.ayush.ltd and the Game UI at https://game.ayush.ltd.
 
 ---
 
@@ -171,8 +171,74 @@ curl http://localhost:8000/api/jobs
 # List running jobs
 curl http://localhost:8000/api/jobs?status=running
 
-# Delete job
-curl -X DELETE http://localhost:8000/api/jobs/job_xyzw
+```
+
+## 🎮 Game API (Endpoints)
+
+The Game API provides endpoints to create and manage multiplayer "Guess the Imposter" sessions. Base path: `/api`.
+
+### Core Game Endpoints
+
+Create a game (creator):
+```
+POST /api/game/create
+Body: { "player_name": "Alice", "game_category": "animals", "max_players": 8 }
+```
+
+Join a game:
+```
+POST /api/game/{session_id}/join
+Body: { "player_name": "Bob" }
+```
+
+Start game (creator only):
+```
+POST /api/game/{session_id}/start
+Body: { "player_id": "<creator_id>" }
+```
+
+Get game state (returns players, phase, your topic):
+```
+GET /api/game/{session_id}?player_id={player_id}
+```
+
+Transition to voting (end discussion):
+```
+POST /api/game/{session_id}/transition-voting
+```
+
+Submit a vote:
+```
+POST /api/game/{session_id}/vote
+Body: { "player_id": "<you>", "voted_for_id": "<target>" }
+```
+
+End voting (server-side trigger):
+```
+POST /api/game/{session_id}/end-voting
+```
+
+Get reveal/result:
+```
+GET /api/game/{session_id}/result
+```
+
+Start a new round (creator only):
+```
+POST /api/game/{session_id}/new-round
+```
+
+Player heartbeat (keep player active):
+```
+POST /api/game/{session_id}/heartbeat
+Body: { "player_id": "..." }
+```
+
+Maintenance endpoints:
+```
+POST /api/games/cleanup-inactive
+POST /api/games/cleanup
+DELETE /api/game/{session_id}
 ```
 
 ---
@@ -185,39 +251,19 @@ video-transcriber/
 │   ├── main.py                 # FastAPI application
 │   ├── worker.py               # Transcription worker
 │   ├── database.py             # MongoDB operations
+│   ├── game.py                 # Guess the Imposter game logic
+│   ├── Gemini.py               # Gemini API integration (if applicable)
+│   ├── logging_config.py       # Logging configuration
 │   ├── storage.py              # Job status enums
-│   ├── requirements.txt         # Python dependencies
-│   ├── list_jobs.py            # CLI utility to list jobs
-│   ├── delete_jobs.py          # CLI utility to delete jobs
-│   ├── examples_list_jobs.py   # Usage examples
-│   ├── frontend/
-│   │   └── index.html          # Web UI
-│   ├── uploads/                # Temporary upload storage
-│   ├── outputs/                # SRT subtitle files
+│   ├── requirements.txt        # Python dependencies
 │   └── app.log                 # Application logs
-├── setup.sh                    # Automated setup script
-├── QUICK_START.md              # Quick reference
-├── MONGODB_SETUP.md            # MongoDB configuration
-├── TROUBLESHOOTING.md          # Performance & troubleshooting
-├── IMPROVEMENTS.md             # UI improvements summary
-└── CHANGES_SUMMARY.md          # Technical changes log
+├── run.sh                      # Start the application
+├── video-transcriber.service   # Systemd service file
 ```
 
 ---
 
 ## 🔧 Configuration
-
-### Job ID Generation
-
-Job IDs are short and memorable: `job_abc123`
-
-To change length, edit [main.py](app/main.py):
-```python
-def generate_job_id() -> str:
-    chars = string.ascii_lowercase + string.digits
-    random_part = ''.join(random.choices(chars, k=8))  # Change 8 to desired length
-    return f"job_{random_part}"
-```
 
 ### MongoDB URL
 
@@ -276,36 +322,6 @@ DELETE /api/jobs/{job_id}
   500 Server Error - Deletion failed
 ```
 
----
-
-## 🐛 Troubleshooting
-
-### App Won't Start
-
-```bash
-# Check Python version
-python3 --version  # Must be 3.8+
-
-# Check if port 8000 is in use
-lsof -i :8000
-
-# Try different port
-python3 main.py --port 8001
-```
-
-### MongoDB Connection Failed
-
-```bash
-# Check if MongoDB is running
-pgrep mongod
-
-# If not, start it
-mongod &
-
-# Test connection
-mongo
-```
-
 ### Transcription Takes Too Long
 
 - First time takes 1-2 minutes (model download)
@@ -313,64 +329,12 @@ mongo
 - Using CPU instead of GPU is slower
 - Check app.log for progress: `tail -f app.log`
 
-### UI Not Loading
-
-- Check browser for CORS errors (F12 → Console)
-- Verify API is accessible: `curl http://localhost:8000/api/jobs`
-- Clear browser cache (Ctrl+Shift+Delete)
-
-### More Issues?
-
-See [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
-
----
-
-## 📚 Documentation
-
-- **[QUICK_START.md](QUICK_START.md)** - Quick reference
-- **[MONGODB_SETUP.md](MONGODB_SETUP.md)** - MongoDB configuration & API docs
-- **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - Performance tips & debugging
-- **[IMPROVEMENTS.md](IMPROVEMENTS.md)** - UI/performance changes summary
-- **[CHANGES_SUMMARY.md](CHANGES_SUMMARY.md)** - Technical details of all changes
-
----
-
-## 📝 Logging
-
-Logs are written to `app/app.log` and console:
-
-```bash
-# Real-time logs
-tail -f app.log
-
-# Search for errors
-grep ERROR app.log
-
-# Search for specific job
-grep job_abc123 app.log
-
-# Count events
-grep "Starting transcription" app.log | wc -l
-```
-
----
-
-## 💡 Performance Tips
-
-1. **Use smaller job lengths** - Don't poll excessively with "Check Status"
-2. **Start with small videos** - Test with 5-10 minute clips first
-3. **Close other apps** - Free up CPU/RAM during transcription
-4. **Use GPU if available** - Change device from "cpu" to "cuda" in worker.py
-5. **Compress videos** - Smaller file sizes upload faster
-6. **Build an index** - MongoDB indexes created automatically on first run
-
----
 
 ## 🔐 Security Notes
 
 - **CORS Enabled** - Currently allows all origins (fine for local use)
 - **File Size Limit** - 1GB max per upload
-- **No Authentication** - Add auth middleware for production
+- **No Authentication** - Add auth middleware for production (TODO)
 - **Directory Listing** - Disabled by default
 
 For production:
@@ -384,11 +348,12 @@ For production:
 
 ## 🤝 Contributing
 
-To improve the application:
-
-1. Check [IMPROVEMENTS.md](IMPROVEMENTS.md) for recent changes
-2. Review [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for known issues
-3. Check [app.log](app/app.log) for errors
+OPEN to contributions! To contribute:
+1. Fork the repo
+2. Create a new branch (`git checkout -b feature/my-feature`)
+3. Make your changes and commit (`git commit -m "Add my feature"`)
+4. Push to the branch (`git push origin feature/my-feature`)
+5. Open a pull request should be well-documented and tested. Check existing issues for ideas or open a new one to discuss your idea.
 
 ---
 
@@ -401,16 +366,3 @@ This project uses:
 - FFmpeg (LGPL)
 
 ---
-
-## 🎉 Getting Help
-
-If something isn't working:
-
-1. **Check logs**: `tail -f app.log`
-2. **Verify setup**: Run `bash setup.sh`
-3. **Read docs**: See [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
-4. **Test API**: `curl http://localhost:8000/api/jobs`
-
----
-
-**Happy transcribing! 🎬**

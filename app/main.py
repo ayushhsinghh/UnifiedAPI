@@ -38,9 +38,9 @@ app.add_middleware(
 )
 
 # Mount guessGame static files
-guessGame_path = os.path.join(os.path.dirname(__file__), "guessGame")
-if os.path.exists(guessGame_path):
-    app.mount("/guessGame", StaticFiles(directory=guessGame_path, html=True), name="guessGame")
+# guessGame_path = os.path.join(os.path.dirname(__file__), "guessGame")
+# if os.path.exists(guessGame_path):
+#     app.mount("/guessGame", StaticFiles(directory=guessGame_path, html=True), name="guessGame")
 
 # Pydantic models for game APIs
 class CreateGameRequest(BaseModel):
@@ -215,16 +215,16 @@ def home():
         </html>
         """
 
-@app.get("/game", response_class=HTMLResponse)
-def game():
-    """Serve the Guess the Imposter game"""
-    game_path = os.path.join(os.path.dirname(__file__), "guessGame", "index.html")
-    try:
-        with open(game_path, "r", encoding="utf-8") as f:
-            return f.read()
-    except FileNotFoundError:
-        logger.error(f"Game template not found at {game_path}")
-        raise HTTPException(status_code=404, detail="Game not found")
+# @app.get("/game", response_class=HTMLResponse)
+# def game():
+#     """Serve the Guess the Imposter game"""
+#     game_path = os.path.join(os.path.dirname(__file__), "guessGame", "index.html")
+#     try:
+#         with open(game_path, "r", encoding="utf-8") as f:
+#             return f.read()
+#     except FileNotFoundError:
+#         logger.error(f"Game template not found at {game_path}")
+#         raise HTTPException(status_code=404, detail="Game not found")
 
 # ============== GAME API ENDPOINTS ==============
 
