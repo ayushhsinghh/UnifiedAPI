@@ -1,0 +1,35 @@
+[Unit]
+Description=Video Transcriber FastAPI Application
+After=network.target mongodb.service
+Wants=mongodb.service
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/video-transcriber/app
+Environment="PATH=/usr/local/bin:/usr/bin:/bin"
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+
+# Start MongoDB if not running (optional - depends on your setup)
+ExecStartPre=/bin/bash -c 'pgrep mongod > /dev/null || mongod --fork --logpath /var/log/mongodb.log'
+
+# Determine whether to use HTTPS or HTTP
+ExecStart=/bin/bash -c '\
+    CERT_FILE="/home/ubuntu/video-transcriber/app/certs/cert.pem"; \
+    KEY_FILE="/home/ubuntu/video-transcriber/app/certs/key.pem"; \
+    if [ -f "$CERT_FILE" ] && [ -f "$KEY_FILE" ]; then \
+        /home/ubuntu/whisper/bin/python3 main.py --host 0.0.0.0 --port 443 --cert-file "$CERT_FILE" --key-file "$KEY_FILE"; \
+    else \
+        /home/ubuntu/whisper/bin/python3 main.py --host 0.0.0.0 --port 8000; \
+    fi'
+
+Restart=on-failure
+RestartSec=10
+
+# Log output
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
