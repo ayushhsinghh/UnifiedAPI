@@ -1,0 +1,4 @@
+server.log
+app/app.log
+app/certs/*
+app/frontend/*
