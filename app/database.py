@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure
 from typing import Dict, Optional
@@ -98,27 +98,43 @@ def create_job(job_id: str, job_data: Dict) -> Dict:
 
 def get_job(job_id: str) -> Optional[Dict]:
     """Get a job from MongoDB"""
-    db = get_db()
-    job = db[JOBS_COLLECTION].find_one({"job_id": job_id})
-    if job:
-        # Remove MongoDB's internal _id field for cleaner response
-        job.pop("_id", None)
-    return job
+    try:
+        db = get_db()
+        job = db[JOBS_COLLECTION].find_one({"job_id": job_id})
+        if job:
+            # Remove MongoDB's internal _id field for cleaner response
+            job.pop("_id", None)
+            logger.debug(f"Job {job_id} retrieved from MongoDB")
+            return job
+        else:
+            logger.warning(f"Job {job_id} not found in MongoDB")
+            return None
+    except Exception as e:
+        logger.error(f"Error getting job {job_id} from MongoDB: {str(e)}", exc_info=True)
+        return None
 
 def update_job_status(job_id: str, status: str) -> bool:
     """Update job status in MongoDB"""
-    db = get_db()
-    result = db[JOBS_COLLECTION].update_one(
-        {"job_id": job_id},
-        {
-            "$set": {
-                "status": status,
-                "updated_at": datetime.utcnow()
+    try:
+        db = get_db()
+        result = db[JOBS_COLLECTION].update_one(
+            {"job_id": job_id},
+            {
+                "$set": {
+                    "status": status,
+                    "updated_at": datetime.utcnow()
+                }
             }
-        }
-    )
-    logger.debug(f"Job {job_id} status updated to {status}")
-    return result.modified_count > 0
+        )
+        if result.modified_count > 0:
+            logger.info(f"Job {job_id} status updated to {status}")
+            return True
+        else:
+            logger.warning(f"Job {job_id} status update to {status} failed - no documents matched")
+            return False
+    except Exception as e:
+        logger.error(f"Error updating job status for {job_id}: {str(e)}", exc_info=True)
+        return False
 
 def update_job_progress(job_id: str, completed_segments: int, progress_percentage: int) -> bool:
     """Update job progress in MongoDB"""
@@ -148,49 +164,79 @@ def update_job_progress(job_id: str, completed_segments: int, progress_percentag
 
 def update_job_error(job_id: str, error: str) -> bool:
     """Update job with error information"""
-    db = get_db()
-    result = db[JOBS_COLLECTION].update_one(
-        {"job_id": job_id},
-        {
-            "$set": {
-                "error": error,
-                "updated_at": datetime.utcnow()
+    try:
+        db = get_db()
+        result = db[JOBS_COLLECTION].update_one(
+            {"job_id": job_id},
+            {
+                "$set": {
+                    "error": error,
+                    "status": "error",
+                    "updated_at": datetime.utcnow()
+                }
             }
-        }
-    )
-    logger.debug(f"Job {job_id} error recorded: {error}")
-    return result.modified_count > 0
+        )
+        if result.modified_count > 0:
+            logger.error(f"Job {job_id} marked as error: {error}")
+            return True
+        else:
+            logger.warning(f"Job {job_id} error update failed - no documents matched")
+            return False
+    except Exception as e:
+        logger.error(f"Error updating job error for {job_id}: {str(e)}", exc_info=True)
+        return False
 
 def update_job_completion(job_id: str, detected_language: str) -> bool:
     """Update job after successful completion"""
-    db = get_db()
-    result = db[JOBS_COLLECTION].update_one(
-        {"job_id": job_id},
-        {
-            "$set": {
-                "detected_language": detected_language,
-                "updated_at": datetime.utcnow()
+    try:
+        db = get_db()
+        result = db[JOBS_COLLECTION].update_one(
+            {"job_id": job_id},
+            {
+                "$set": {
+                    "detected_language": detected_language,
+                    "updated_at": datetime.utcnow()
+                }
             }
-        }
-    )
-    logger.debug(f"Job {job_id} marked as completed with language {detected_language}")
-    return result.modified_count > 0
+        )
+        if result.modified_count > 0:
+            logger.info(f"Job {job_id} marked as completed with language {detected_language}")
+            return True
+        else:
+            logger.warning(f"Job {job_id} completion update failed - no documents matched")
+            return False
+    except Exception as e:
+        logger.error(f"Error updating job completion for {job_id}: {str(e)}", exc_info=True)
+        return False
 
 def get_all_jobs(status: Optional[str] = None) -> list:
     """Get all jobs, optionally filtered by status"""
-    db = get_db()
-    query = {} if status is None else {"status": status}
-    jobs = list(db[JOBS_COLLECTION].find(query).sort("created_at", -1))
-    for job in jobs:
-        job.pop("_id", None)
-    return jobs
+    try:
+        db = get_db()
+        query = {} if status is None else {"status": status}
+        jobs = list(db[JOBS_COLLECTION].find(query).sort("created_at", -1))
+        for job in jobs:
+            job.pop("_id", None)
+        logger.debug(f"Retrieved {len(jobs)} jobs with status: {status}")
+        return jobs
+    except Exception as e:
+        logger.error(f"Error getting all jobs: {str(e)}", exc_info=True)
+        return []
 
 def delete_job(job_id: str) -> bool:
     """Delete a job from MongoDB"""
-    db = get_db()
-    result = db[JOBS_COLLECTION].delete_one({"job_id": job_id})
-    logger.debug(f"Job {job_id} deleted from MongoDB")
-    return result.deleted_count > 0
+    try:
+        db = get_db()
+        result = db[JOBS_COLLECTION].delete_one({"job_id": job_id})
+        if result.deleted_count > 0:
+            logger.info(f"Job {job_id} deleted from MongoDB")
+            return True
+        else:
+            logger.warning(f"Job {job_id} delete failed - no documents matched")
+            return False
+    except Exception as e:
+        logger.error(f"Error deleting job {job_id}: {str(e)}", exc_info=True)
+        return False
 
 # ============== GAME SESSION FUNCTIONS ==============
 
@@ -211,6 +257,7 @@ def create_game_session(session_id: str, creator_id: str, game_category: str, pl
         "voting_time": 60,  # 1 minute
         "current_phase": "waiting",  # discussion, voting, result
         "votes": {},  # {player_id: voted_for_id}
+        "voters": [],  # list of player_ids who have voted
         "game_result": None,  # winner info
         "created_at": datetime.utcnow(),
         "updated_at": datetime.utcnow(),
@@ -224,35 +271,60 @@ def create_game_session(session_id: str, creator_id: str, game_category: str, pl
 
 def get_game_session(session_id: str) -> Optional[Dict]:
     """Get a game session from MongoDB"""
-    db = get_db()
-    session = db[GAME_SESSIONS_COLLECTION].find_one({"session_id": session_id})
-    if session:
-        session.pop("_id", None)
-    return session
+    try:
+        db = get_db()
+        session = db[GAME_SESSIONS_COLLECTION].find_one({"session_id": session_id})
+        if session:
+            session.pop("_id", None)
+            # logger.debug(f"Game session {session_id} retrieved")
+            return session
+        else:
+            logger.warning(f"Game session {session_id} not found")
+            return None
+    except Exception as e:
+        logger.error(f"Error getting game session {session_id}: {str(e)}", exc_info=True)
+        return None
 
 def update_game_session(session_id: str, update_data: Dict) -> bool:
     """Update a game session"""
-    db = get_db()
-    update_data["updated_at"] = datetime.utcnow()
-    result = db[GAME_SESSIONS_COLLECTION].update_one(
-        {"session_id": session_id},
-        {"$set": update_data}
-    )
-    logger.debug(f"Game session {session_id} updated")
-    return result.modified_count > 0
+    try:
+        db = get_db()
+        update_data["updated_at"] = datetime.utcnow()
+        result = db[GAME_SESSIONS_COLLECTION].update_one(
+            {"session_id": session_id},
+            {"$set": update_data}
+        )
+        if result.modified_count > 0:
+            logger.debug(f"Game session {session_id} updated with: {update_data}")
+            return True
+        else:
+            logger.warning(f"Game session {session_id} update failed - no documents matched")
+            return False
+    except Exception as e:
+        logger.error(f"Error updating game session {session_id}: {str(e)}", exc_info=True)
+        return False
 
 def add_player_to_session(session_id: str, player_id: str) -> bool:
     """Add a player to a game session"""
-    db = get_db()
-    result = db[GAME_SESSIONS_COLLECTION].update_one(
-        {"session_id": session_id},
-        {
-            "$addToSet": {"players_list": player_id},
-            "$set": {"updated_at": datetime.utcnow()}
-        }
-    )
-    logger.info(f"Player {player_id} added to session {session_id}")
-    return result.modified_count > 0
+    try:
+        db = get_db()
+        result = db[GAME_SESSIONS_COLLECTION].update_one(
+            {"session_id": session_id},
+            {
+                "$addToSet": {"players_list": player_id},
+                "$set": {"updated_at": datetime.utcnow()}
+            }
+        )
+        if result.modified_count > 0:
+            logger.info(f"Player {player_id} added to session {session_id}'s player list")
+            return True
+        else:
+            # This can happen if the player is already in the list, which is not an error
+            logger.debug(f"Player {player_id} already in session {session_id}'s player list")
+            return True
+    except Exception as e:
+        logger.error(f"Error adding player {player_id} to session {session_id}: {str(e)}", exc_info=True)
+        return False
 
 def get_all_game_sessions(status: Optional[str] = None) -> list:
     """Get all game sessions, optionally filtered by status"""
@@ -285,12 +357,33 @@ def add_game_player(session_id: str, player_id: str, player_name: str, is_impost
         "is_imposter": is_imposter,
         "is_alive": True,  # False if voted out
         "votes_received": 0,
-        "joined_at": datetime.utcnow()
+        "joined_at": datetime.utcnow(),
+        "last_heartbeat": datetime.utcnow()
     }
     
     result = db[GAME_PLAYERS_COLLECTION].insert_one(player_document)
     logger.info(f"Player {player_name} ({player_id}) added to session {session_id}")
     return player_document
+
+def update_player_heartbeat(session_id: str, player_id: str) -> bool:
+    """Update player's last heartbeat"""
+    db = get_db()
+    result = db[GAME_PLAYERS_COLLECTION].update_one(
+        {"session_id": session_id, "player_id": player_id},
+        {"$set": {"last_heartbeat": datetime.utcnow()}}
+    )
+    return result.modified_count > 0
+
+def remove_inactive_players(session_id: str) -> int:
+    """Remove players who have not sent a heartbeat in the last 30 seconds"""
+    db = get_db()
+    thirty_seconds_ago = datetime.utcnow() - timedelta(seconds=30)
+    result = db[GAME_PLAYERS_COLLECTION].delete_many(
+        {"session_id": session_id, "last_heartbeat": {"$lt": thirty_seconds_ago}}
+    )
+    if result.deleted_count > 0:
+        logger.info(f"Removed {result.deleted_count} inactive players from session {session_id}")
+    return result.deleted_count
 
 def get_game_player(session_id: str, player_id: str) -> Optional[Dict]:
     """Get a player from a game session"""
@@ -300,10 +393,13 @@ def get_game_player(session_id: str, player_id: str) -> Optional[Dict]:
         player.pop("_id", None)
     return player
 
-def get_session_players(session_id: str) -> list:
+def get_session_players(session_id: str, only_alive: bool = False) -> list:
     """Get all players in a session"""
     db = get_db()
-    players = list(db[GAME_PLAYERS_COLLECTION].find({"session_id": session_id}))
+    query = {"session_id": session_id}
+    if only_alive:
+        query["is_alive"] = True
+    players = list(db[GAME_PLAYERS_COLLECTION].find(query))
     for player in players:
         player.pop("_id", None)
     return players

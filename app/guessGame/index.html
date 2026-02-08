@@ -136,7 +136,12 @@
                             Who is the imposter?
                         </p>
                         <div class="voting-buttons" id="voting-buttons"></div>
-                        <button onclick="completeVoting()" style="width: 100%; margin-top: 15px; padding: 12px; font-size: 16px;">Submit Vote</button>
+                    </div>
+
+                    <!-- Reveal Phase (Hidden by default) -->
+                    <div id="reveal-section" style="display: none; margin-top: 25px; text-align: center;">
+                        <h3 style="text-align: center;">All votes are in!</h3>
+                        <button onclick="showGameResult()" style="width: 100%; padding: 12px; font-size: 16px;">Reveal Imposter</button>
                     </div>
                 </div>
 
@@ -144,6 +149,8 @@
                 <div id="game-result-screen" style="display: none;">
                     <h2 style="text-align: center;">🎉 Game Over!</h2>
                     
+                    <div id="result-countdown" style="display: none; text-align: center; font-size: 18px; margin-bottom: 20px;"></div>
+
                     <div id="game-result-content" style="margin: 30px 0;">
                         <!-- Result will be populated here -->
                     </div>
@@ -161,7 +168,8 @@
                         </table>
                     </div>
 
-                    <button onclick="goBack()" style="width: 100%; margin-top: 20px;">Play Again</button>
+                    <button onclick="playAgain()" style="width: 100%; margin-top: 20px;">Play Again</button>
+                    <button onclick="goBack(true)" style="width: 100%; margin-top: 10px; background: #999;">Leave Game</button>
                 </div>
 
                 <!-- Error Display -->

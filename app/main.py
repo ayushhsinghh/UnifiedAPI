@@ -8,21 +8,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from storage import JobStatus
 from worker import transcribe_job
-from database import create_job, get_job, update_job_status, get_all_jobs, delete_job
+from database import create_job, get_job, update_job_status, get_all_jobs, delete_job, update_player_heartbeat, remove_inactive_players
 from game import GameManager
 from pydantic import BaseModel
 import os
 import shutil
 
-# Configure logging
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('app.log'),
-        logging.StreamHandler()
-    ]
-)
+from logging_config import setup_logging
+
+# Set up logging
+setup_logging()
 logger = logging.getLogger(__name__)
 
 def generate_job_id() -> str:
@@ -56,8 +51,15 @@ class CreateGameRequest(BaseModel):
 class JoinGameRequest(BaseModel):
     player_name: str
 
+class StartGameRequest(BaseModel):
+    player_id: str
+
 class VoteRequest(BaseModel):
     voted_for_id: str
+    player_id: str
+
+class HeartbeatRequest(BaseModel):
+    player_id: str
 
 UPLOAD_DIR = "/mnt/extra/uploads"
 OUTPUT_DIR = "/mnt/extra/outputs"
@@ -274,10 +276,10 @@ async def join_game(session_id: str, request: JoinGameRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/game/{session_id}/start")
-async def start_game(session_id: str):
+async def start_game(session_id: str, request: StartGameRequest):
     """Start a game session"""
     try:
-        success, response = GameManager.start_game(session_id)
+        success, response = GameManager.start_game(session_id, request.player_id)
         
         if success:
             logger.info(f"Game {session_id} started")
@@ -303,12 +305,12 @@ async def get_game(session_id: str, player_id: str = Query(None)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/game/{session_id}/vote")
-async def submit_vote(session_id: str, player_id: str, request: VoteRequest):
+async def submit_vote(session_id: str, request: VoteRequest):
     """Submit a vote during voting phase"""
     try:
         success, response = GameManager.submit_vote(
             session_id=session_id,
-            voter_id=player_id,
+            voter_id=request.player_id,
             voted_for_id=request.voted_for_id
         )
         
@@ -319,6 +321,21 @@ async def submit_vote(session_id: str, player_id: str, request: VoteRequest):
             raise HTTPException(status_code=400, detail=response.get("message", "Failed to submit vote"))
     except Exception as e:
         logger.error(f"Error in submit_vote: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/game/{session_id}/result")
+async def get_game_result(session_id: str):
+    """Get game result after reveal time"""
+    try:
+        success, response = GameManager.get_game_result(session_id)
+        
+        if success:
+            logger.info(f"Game result retrieved for {session_id}")
+            return response
+        else:
+            raise HTTPException(status_code=400, detail=response.get("message", "Failed to get game result"))
+    except Exception as e:
+        logger.error(f"Error in get_game_result: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/game/{session_id}/end-voting")
@@ -364,6 +381,60 @@ async def list_available_games():
         }
     except Exception as e:
         logger.error(f"Error in list_available_games: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/game/{session_id}/new-round")
+async def new_round(session_id: str):
+    """Start a new round for an existing game session"""
+    try:
+        success, response = GameManager.new_round(session_id)
+        
+        if success:
+            logger.info(f"New round started for game {session_id}")
+            return response
+        else:
+            raise HTTPException(status_code=400, detail=response.get("message", "Failed to start new round"))
+    except Exception as e:
+        logger.error(f"Error in new_round: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/game/{session_id}/heartbeat")
+async def heartbeat(session_id: str, request: HeartbeatRequest):
+    """Player heartbeat to stay active"""
+    try:
+        success = update_player_heartbeat(session_id, request.player_id)
+        if success:
+            return {"success": True}
+        else:
+            raise HTTPException(status_code=404, detail="Player not found")
+    except Exception as e:
+        logger.error(f"Error in heartbeat: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/games/cleanup-inactive")
+async def cleanup_inactive_players():
+    """Periodically clean up inactive players from all games"""
+    try:
+        sessions = GameManager.list_available_games()
+        for session in sessions:
+            remove_inactive_players(session["session_id"])
+        return {"success": True, "message": "Inactive players cleaned up"}
+    except Exception as e:
+        logger.error(f"Error in cleanup_inactive_players: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/games/cleanup")
+async def cleanup_old_games():
+    """Periodically clean up old game sessions"""
+    try:
+        success, response = GameManager.delete_old_games()
+        if success:
+            logger.info("Old games cleaned up successfully")
+            return response
+        else:
+            raise HTTPException(status_code=500, detail=response.get("message", "Failed to clean up old games"))
+    except Exception as e:
+        logger.error(f"Error in cleanup_old_games: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.delete("/api/game/{session_id}")

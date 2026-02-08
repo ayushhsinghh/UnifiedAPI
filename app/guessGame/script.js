@@ -224,7 +224,9 @@ function stopLobbyAutoRefresh() {
 async function startGame() {
     try {
         const response = await fetch(`${API_BASE}/game/${currentSession}/start`, {
-            method: 'POST'
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ player_id: currentPlayerId })
         });
 
         const data = await response.json();
@@ -250,9 +252,20 @@ async function loadGameState() {
     try {
         const response = await fetch(`${API_BASE}/game/${currentSession}?player_id=${currentPlayerId}`);
         const data = await response.json();
+        console.log('loadGameState data:', data);
 
         if (data.success) {
+            // Handle transition from result back to lobby
+            if (lastPhase === 'result' && data.current_phase === 'waiting') {
+                document.getElementById('game-result-screen').style.display = 'none';
+                document.getElementById('game-created-screen').style.display = 'block';
+                lastPhase = 'waiting';
+                refreshLobby();
+                return;
+            }
+
             gameState = data;
+            lastPhase = data.current_phase;
 
             // Display the topic word
             document.getElementById('topic-display').textContent = data.your_topic || 'Loading...';
@@ -269,6 +282,9 @@ async function loadGameState() {
 
             if (data.current_phase === 'voting') {
                 showVotingPhase(data);
+            } else if (data.current_phase === 'reveal') {
+                document.getElementById('voting-section').style.display = 'none';
+                document.getElementById('reveal-section').style.display = 'block';
             } else if (data.current_phase === 'result') {
                 showGameResult();
             }
@@ -283,22 +299,34 @@ function showVotingPhase(data) {
     document.getElementById('discussion-actions').style.display = 'none';
     document.getElementById('voting-section').style.display = 'block';
 
+    const hasVoted = data.voters.includes(currentPlayerId);
+
     const votingButtonsHtml = data.players
         .filter(p => p.is_alive)
         .map(p => 
-            `<button onclick="submitVote('${p.player_id}')">${p.player_name}</button>`
+            `<button onclick="submitVote('${p.player_id}')" ${hasVoted ? 'disabled' : ''}>
+                ${p.player_name}
+                ${data.voters.includes(p.player_id) ? '<span class="voted-check">✔</span>' : ''}
+            </button>`
         ).join('');
 
     document.getElementById('voting-buttons').innerHTML = votingButtonsHtml;
+
+    if (hasVoted) {
+        document.getElementById('voting-buttons').innerHTML += '<p>You have already voted.</p>';
+    }
 }
 
 // Submit Vote
 async function submitVote(targetPlayerId) {
     try {
-        const response = await fetch(`${API_BASE}/game/${currentSession}/vote?player_id=${currentPlayerId}`, {
+        const response = await fetch(`${API_BASE}/game/${currentSession}/vote`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ voted_for_id: targetPlayerId })
+            body: JSON.stringify({
+                voted_for_id: targetPlayerId,
+                player_id: currentPlayerId
+            })
         });
 
         const data = await response.json();
@@ -333,29 +361,13 @@ async function transitionToVoting() {
     }
 }
 
-// Complete Voting
-async function completeVoting() {
-    try {
-        const response = await fetch(`${API_BASE}/game/${currentSession}/end-voting`, {
-            method: 'POST'
-        });
 
-        const data = await response.json();
-
-        if (data.success) {
-            showGameResult(data.game_result);
-        } else {
-            showMessage(data.message, 'error');
-        }
-    } catch (error) {
-        showMessage('Error completing voting: ' + error.message, 'error');
-    }
-}
 
 // Show Game Result
 async function showGameResult() {
+    console.log('showGameResult called');
     try {
-        const response = await fetch(`${API_BASE}/game/${currentSession}`);
+        const response = await fetch(`${API_BASE}/game/${currentSession}/result`);
         const data = await response.json();
 
         if (data.success && data.game_result) {
@@ -456,14 +468,21 @@ function startAutoRefresh() {
     autoRefreshInterval = setInterval(() => {
         if (document.getElementById('game-created-screen').style.display !== 'none') {
             refreshLobby();
-        } else if (document.getElementById('game-playing-screen').style.display !== 'none') {
+        } else if (document.getElementById('game-playing-screen').style.display !== 'none' || document.getElementById('game-result-screen').style.display !== 'none') {
             loadGameState();
         }
     }, 2000);
 }
 
 // Go Back
-function goBack() {
+function goBack(fromResult = false) {
+    if (currentSession && !fromResult) {
+        const confirmation = confirm("Are you sure you want to leave the game? The game might end if you are the creator.");
+        if (!confirmation) {
+            return;
+        }
+    }
+
     clearGameTimers();
     if (autoRefreshInterval) clearInterval(autoRefreshInterval);
     stopLobbyAutoRefresh();
@@ -480,4 +499,31 @@ function goBack() {
     isCreator = false;
     gameState = null;
     lastPhase = 'waiting';
+}
+
+async function playAgain() {
+    if (!isCreator) {
+        showMessage("Only the game creator can start a new round.", "info");
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/game/${currentSession}/new-round`, {
+            method: 'POST'
+        });
+        const data = await response.json();
+
+        if (data.success) {
+            showMessage('Starting a new round!', 'success');
+            document.getElementById('game-result-screen').style.display = 'none';
+            document.getElementById('game-created-screen').style.display = 'block';
+            lastPhase = 'waiting';
+            refreshLobby();
+            startLobbyAutoRefresh();
+        } else {
+            showMessage(data.message, 'error');
+        }
+    } catch (error) {
+        showMessage('Error starting new round: ' + error.message, 'error');
+    }
 }
