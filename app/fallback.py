@@ -1,0 +1,117 @@
+FALLBACK_DATA = {
+    "animals": [
+        "Bengal Tiger", "Indian Elephant", "Snow Leopard", "One-horned Rhino", "Asiatic Lion",
+        "Peacock", "King Cobra", "Gharial", "Nilgai", "Blackbuck", "Hanuman Langur", 
+        "Sloth Bear", "Red Panda", "Clouded Leopard", "Indian Wolf", "Golden Jackal",
+        "Striped Hyena", "Indian Fox", "Wild Boar", "Indian Gazelle", "Mongoose",
+        "Pangolin", "Spotted Deer", "Sambar Deer", "Barking Deer", "Indian Bison",
+        "Water Buffalo", "Camel", "Yak", "Himalayan Tahr", "Great Indian Bustard",
+        "Indian Roller", "Parrot", "Myna", "Bulbul", "Kingfisher", "Hornbill",
+        "Eagle", "Vulture", "Owl", "Rat", "Cat", "Dog", "Cow", "Goat", "Sheep",
+        "Donkey", "Horse", "Monkey", "Squirrel"
+    ],
+    "professions": [
+        "Doctor", "Engineer", "Software Developer", "Teacher", "Professor", "Lawyer",
+        "Police Officer", "Soldier", "Farmer", "Pilot", "Nurse", "Chef", "Architect",
+        "Journalist", "Chartered Accountant", "Banker", "Actor", "Director", "Singer",
+        "Dancer", "Artist", "Photographer", "Fashion Designer", "Makeup Artist",
+        "Carpenter", "Electrician", "Plumber", "Mason", "Tailor", "Driver", "Pilot",
+        "Astronaut", "Scientist", "Librarian", "Postman", "Shopkeeper", "Salesman",
+        "Manager", "Receptionist", "Secretary", "Security Guard", "Firefighter",
+        "Gardener", "Sweeper", "Vendor", "Farmer", "Fisherman", "Potter", "Blacksmith", "Barber"
+    ],
+    "countries": [
+        "India", "Pakistan", "Bangladesh", "Sri Lanka", "Nepal", "Bhutan", "Maldives",
+        "China", "Japan", "South Korea", "Thailand", "Vietnam", "Indonesia", "Malaysia",
+        "Singapore", "Afghanistan", "Iran", "Iraq", "Saudi Arabia", "UAE", "Qatar",
+        "UK", "France", "Germany", "Italy", "Spain", "Russia", "USA", "Canada",
+        "Mexico", "Brazil", "Argentina", "Australia", "New Zealand", "South Africa",
+        "Egypt", "Kenya", "Nigeria", "Switzerland", "Sweden", "Norway", "Denmark",
+        "Netherlands", "Belgium", "Greece", "Turkey", "Israel", "Ukraine", "Poland", "Portugal"
+    ],
+    "fruits": [
+        "Mango", "Banana", "Apple", "Orange", "Guava", "Papaya", "Pomegranate",
+        "Watermelon", "Muskmelon", "Grapes", "Pineapple", "Chickoo", "Custard Apple",
+        "Lychee", "Jackfruit", "Pear", "Peach", "Plum", "Apricot", "Cherry",
+        "Strawberry", "Blueberry", "Blackberry", "Coconut", "Amla", "Tamarind",
+        "Jamun", "Ber", "Starfruit", "Dragon Fruit", "Kiwi", "Avocado", "Fig",
+        "Date", "Prune", "Raisin", "Cashew Apple", "Mulberry", "Wood Apple",
+        "Lemon", "Lime", "Sweet Lime", "Grapefruit", "Pomelo", "Passion Fruit",
+        "Cranberry", "Raspberry", "Olive", "Walnut", "Almond"
+    ],
+    "sports": [
+        "Cricket", "Kabaddi", "Hockey", "Football", "Badminton", "Tennis", "Table Tennis",
+        "Wrestling", "Boxing", "Archery", "Shooting", "Weightlifting", "Athletics",
+        "Swimming", "Cycling", "Chess", "Carrom", "Kho-Kho", "Gilli Danda", "Ludo",
+        "Snakes and Ladders", "Basketball", "Volleyball", "Handball", "Rugby", "Golf",
+        "Billards", "Snooker", "Squash", "Formula 1", "Motor Racing", "Horse Racing",
+        "Polo", "Judo", "Karate", "Taekwondo", "Yoga", "Mallakhamba", "Kalaripayattu",
+        "Fencing", "Gymnastics", "Rowing", "Sailing", "Surfing", "Skating", "Skiing",
+        "Ice Hockey", "Mountaineering", "Trekking", "High Jump"
+    ],
+    "movies": [
+        "Sholay", "Zanjeer", "DDLJ", "Kuch Kuch Hota Hai", "Kabhi Khushi Kabhie Gham", 
+        "Hum Saath Saath Hain", "Devdas", "Bajirao Mastani", "Lagaan", "Dangal", 
+        "Mother India", "Mughal-E-Azam", "Amar Akbar Anthony", "Naseeb", "Don", 
+        "Agneepath", "Mr. India", "Shaan", "Deewaar", "Trishul", "Dil Chahta Hai", 
+        "Zindagi Na Milegi Dobara", "3 Idiots", "Chhichhore", "Yeh Jawaani Hai Deewani", 
+        "Ae Dil Hai Mushkil", "Rock On!!", "Gully Boy", "Queen", "English Vinglish", 
+        "Piku", "Karwaan", "Wake Up Sid", "Tamasha", "Barfi!", "Jagga Jasoos", 
+        "Kai Po Che!", "MS Dhoni: The Untold Story", "Sanju", "Rocketry", "Hera Pheri", 
+        "Welcome", "Andaz Apna Apna", "Munna Bhai M.B.B.S.", "Lage Raho Munna Bhai", 
+        "Golmaal", "Dhamaal", "Chennai Express", "Bol Bachchan", "Stree", 
+        "Bhool Bhulaiyaa", "Dream Girl", "Bala", "Housefull", "Total Dhamaal", 
+        "Fukrey", "War", "Pathaan", "Dhoom", "Race", "Singham", "Simmba", 
+        "Drishyam", "Special 26", "Andhadhun", "Ittefaq", "Raazi", "Baby", 
+        "Gangs of Wasseypur", "Satya", "Kahaani", "Pink", "Badla", "Talaash", 
+        "Vikram Vedha", "Bholaa", "Veer-Zaara", "Kal Ho Naa Ho", "Jab We Met", 
+        "Hum Tum", "Aashiqui 2", "Kabir Singh", "Dil To Pagal Hai", "Taal", 
+        "Chak De! India", "Maidaan", "Bhaag Milkha Bhaag", "Sultan", "Mary Kom", 
+        "Saand Ki Aankh", "Padmaavat", "Jodhaa Akbar", "Brahmastra", "Ra.One", 
+        "Main Hoon Na", "Om Shanti Om"
+    ],
+    "superheroes": [
+        "Shaktimaan", "Krrish", "G.One", "Flying Jatt", "Minnal Murali", "Bhisma", "Nagraj", "Super Commando Dhruva", "Parmanu",
+        "Bheriya", "Inspector Steel", "Shakti", "Tiranga", "Anthony", "Super Indian",
+        "Devi", "Sadhu", "Aghori", "Ravan", "Hanuman", "Bheem",
+        "Arjun", "Karna", "Vikram Betal", "Hatim Tai", "Mowgli", "Baahubali",
+        "Iron Man", "Spider-Man", "Batman", "Superman", "Wonder Woman", "Thor",
+        "Hulk", "Captain America", "Black Panther", "Doctor Strange", "Flash",
+        "Aquaman", "Cyborg", "Shazam", "Joker", "Thanos", "Loki", "Wolverine",
+        "Deadpool", "Black Widow", 
+    ],
+    "foods": [
+        "Samosa", "Jalebi", "Dhokla", "Vada Pav", "Pani Puri", "Bhel Puri", "Pav Bhaji",
+        "Idli", "Dosa", "Vada", "Uttapam", "Biryani", "Pulao", "Butter Chicken",
+        "Paneer Tikka", "Dal Makhani", "Chole Bhature", "Rajma Chawal", "Paratha",
+        "Naan", "Roti", "Gulab Jamun", "Rasgulla", "Kulfi", "Lassi", "Masala Chai",
+        "Filter Coffee", "Pakora", "Kachori", "Thali", "Upma", "Poha", "Khichdi",
+        "Fish Curry", "Chicken Tikka", "Mutton Rogan Josh", "Korma", "Nihari",
+        "Hyderabadi Haleem", "Mishti Doi", "Sandesh", "Barfi", "Laddu", "Petha",
+        "Mysore Pak", "Gajak", "Chikki", "Aloo Paratha", "Baigan Bharta", "Palak Paneer"
+    ],
+    "celebrities": [
+    "Shah Rukh Khan", "Salman Khan", "Aamir Khan", "Amitabh Bachchan", "Rajinikanth",
+    "Akshay Kumar", "Ajay Devgn", "Hrithik Roshan", "Ranbir Kapoor", "Ranveer Singh",
+    "Deepika Padukone", "Priyanka Chopra", "Alia Bhatt", "Katrina Kaif", "Kareena Kapoor",
+    "Aishwarya Rai", "Madhuri Dixit", "Sridevi", "Kajol", "Anushka Sharma",
+    "Sachin Tendulkar", "Virat Kohli", "MS Dhoni", "Rohit Sharma", "Hardik Pandya",
+    "Kapil Dev", "Sunil Gavaskar", "Sourav Ganguly", "Yuvraj Singh", "Rishabh Pant",
+    "A.R. Rahman", "Arijit Singh", "Shreya Ghoshal", "Lata Mangeshkar", "Kishore Kumar",
+    "Badshah", "Diljit Dosanjh", "Kapil Sharma", "Zakir Khan", "Abhishek Upmanyu",
+    "Prabhas", "Allu Arjun", "Yash", "Ram Charan", "Jr. NTR",
+    "Vijay Thalapathy", "Mahesh Babu", "Samantha Ruth Prabhu", "Nayanthara", "Rashmika Mandanna"
+    ],
+    "tv_shows": [
+    "Mirzapur", "Sacred Games", "Panchayat", "The Family Man", "Scam 1992", 
+    "Kota Factory", "Delhi Crime", "Made in Heaven", "Gullak", "Farzi",
+    "Special Ops", "Paatal Lok", "Aspirants", "Rocket Boys", "Criminal Justice",
+    "Khichdi", "Taarak Mehta Ka Ooltah Chashmah", "CID", 
+    "Shaktimaan", "Office Office", "Hum Paanch", "Dekh Bhai Dekh", "F.I.R.",
+    "Bhabiji Ghar Par Hain!", "Kyunki Saas Bhi Kabhi Bahu Thi", "Kasautii Zindagii Kay", "Ramayan", "Mahabharat",
+    "Bigg Boss", "Kaun Banega Crorepati", "Shark Tank India", "Indian Idol", "MasterChef India",
+    "Splitsvilla", "Roadies", "Koffee with Karan", "The Kapil Sharma Show", "Dance India Dance",
+    "Game of Thrones", "Friends", "The Office", "Breaking Bad", "Stranger Things",
+    "Money Heist", "Squid Game", "Narcos", "Sherlock", "The Big Bang Theory"
+    ]
+}
