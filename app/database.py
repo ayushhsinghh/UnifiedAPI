@@ -374,16 +374,54 @@ def update_player_heartbeat(session_id: str, player_id: str) -> bool:
     )
     return result.modified_count > 0
 
-def remove_inactive_players(session_id: str) -> int:
-    """Remove players who have not sent a heartbeat in the last 30 seconds"""
+def remove_inactive_players(session_id: str, timeout_seconds: int = 45) -> int:
+    """Mark players who have not sent a heartbeat in the last N seconds as inactive,
+    remove their votes, and remove them from the session players_list."""
     db = get_db()
-    thirty_seconds_ago = datetime.utcnow() - timedelta(seconds=30)
-    result = db[GAME_PLAYERS_COLLECTION].delete_many(
-        {"session_id": session_id, "last_heartbeat": {"$lt": thirty_seconds_ago}}
+    cutoff = datetime.utcnow() - timedelta(seconds=timeout_seconds)
+
+    # Find inactive players (have a heartbeat older than cutoff)
+    inactive = list(db[GAME_PLAYERS_COLLECTION].find({
+        "session_id": session_id,
+        "last_heartbeat": {"$lt": cutoff},
+        "is_alive": True,
+    }))
+
+    if not inactive:
+        return 0
+
+    inactive_ids = [p["player_id"] for p in inactive]
+
+    # Mark them as not alive
+    db[GAME_PLAYERS_COLLECTION].update_many(
+        {"session_id": session_id, "player_id": {"$in": inactive_ids}},
+        {"$set": {"is_alive": False}}
     )
-    if result.deleted_count > 0:
-        logger.info(f"Removed {result.deleted_count} inactive players from session {session_id}")
-    return result.deleted_count
+
+    # Remove their votes from session
+    session = db[GAME_SESSIONS_COLLECTION].find_one({"session_id": session_id})
+    if session:
+        votes = session.get("votes", {})
+        voters = session.get("voters", [])
+        players_list = session.get("players_list", [])
+
+        # Remove votes cast BY inactive players
+        cleaned_votes = {k: v for k, v in votes.items() if k not in inactive_ids}
+        cleaned_voters = [v for v in voters if v not in inactive_ids]
+        cleaned_players_list = [p for p in players_list if p not in inactive_ids]
+
+        db[GAME_SESSIONS_COLLECTION].update_one(
+            {"session_id": session_id},
+            {"$set": {
+                "votes": cleaned_votes,
+                "voters": cleaned_voters,
+                "players_list": cleaned_players_list,
+                "updated_at": datetime.utcnow(),
+            }}
+        )
+
+    logger.info(f"Marked {len(inactive_ids)} inactive players in session {session_id}: {inactive_ids}")
+    return len(inactive_ids)
 
 def get_game_player(session_id: str, player_id: str) -> Optional[Dict]:
     """Get a player from a game session"""

@@ -4,3 +4,4 @@ python-multipart==0.0.6
 faster-whisper==0.10.0
 pymongo==4.6.0
 requests==2.31.0
+slowapi==0.1.9

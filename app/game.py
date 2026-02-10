@@ -14,7 +14,7 @@ from database import (
     add_player_to_session, get_all_game_sessions,
     add_game_player, get_game_player, get_session_players,
     update_player_votes, mark_player_voted_out, remove_game_players,
-    remove_game_session
+    remove_game_session, update_player_heartbeat, remove_inactive_players
 )
 from gemini import generate_game_topics
 
@@ -235,7 +235,18 @@ class GameManager:
             session = get_game_session(session_id)
             if not session:
                 return False, {"success": False, "message": "Game session not found"}
-            
+
+            # Update heartbeat for the requesting player
+            if player_id:
+                update_player_heartbeat(session_id, player_id)
+
+            # Auto-clean inactive players (during lobby and active game phases)
+            if session["status"] in (GAME_STATUS_WAITING, GAME_STATUS_PLAYING):
+                removed = remove_inactive_players(session_id)
+                if removed > 0:
+                    # Re-fetch session after cleanup (players_list may have changed)
+                    session = get_game_session(session_id)
+
             players = get_session_players(session_id, only_alive=False)
             
             # Prepare response
@@ -275,6 +286,10 @@ class GameManager:
                 else:
                     response["your_topic"] = session["player_topic"]
                     response["topic_type"] = "player"
+
+            # Include game result if available and appropriate
+            if session.get("game_result") and session["current_phase"] in (GAME_PHASE_RESULT, GAME_STATUS_ENDED):
+                response["game_result"] = session["game_result"]
             
             return True, response
         except Exception as e:
@@ -404,47 +419,71 @@ class GameManager:
                 return False, {"success": False, "message": "Results are not ready to be revealed"}
 
             votes = session.get("votes", {})
-            
-            # Find player with most votes
+
             if not votes:
                 return False, {"success": False, "message": "No votes recorded"}
-            
-            voted_out_id = max(votes.values(), key=lambda x: sum(v == x for v in votes.values()))
-            voted_out_player = get_game_player(session_id, voted_out_id)
-            
-            if not voted_out_player:
+
+            # ── Count votes per player ──────────────────────────────────
+            vote_counts: Dict[str, int] = {}
+            for voted_for in votes.values():
+                vote_counts[voted_for] = vote_counts.get(voted_for, 0) + 1
+
+            max_votes = max(vote_counts.values())
+
+            # All players tied at the highest vote count are voted out
+            tied_ids = [pid for pid, count in vote_counts.items() if count == max_votes]
+
+            # ── Resolve each tied player ────────────────────────────────
+            voted_out_ids = []
+            voted_out_names = []
+            for pid in tied_ids:
+                player = get_game_player(session_id, pid)
+                if not player:
+                    continue
+                mark_player_voted_out(session_id, pid)
+                voted_out_ids.append(pid)
+                voted_out_names.append(player["player_name"])
+
+            if not voted_out_ids:
                 return False, {"success": False, "message": "Invalid vote outcome"}
-            
-            # Mark player as voted out
-            mark_player_voted_out(session_id, voted_out_id)
-            
-            # Determine game result
+
+            # ── Determine result ────────────────────────────────────────
             imposter_id = session["imposter_id"]
-            is_imposter_caught = voted_out_id == imposter_id
-            
+            is_imposter_caught = imposter_id in voted_out_ids
+
             result = {
-                "voted_out_id": voted_out_id,
-                "voted_out_name": voted_out_player["player_name"],
+                "voted_out_ids": voted_out_ids,
+                "voted_out_names": voted_out_names,
+                # Keep singular keys for backward-compat with frontend
+                "voted_out_id": voted_out_ids[0],
+                "voted_out_name": voted_out_names[0],
+                "is_tie": len(voted_out_ids) > 1,
                 "is_imposter_caught": is_imposter_caught,
-                "imposter_id": imposter_id
+                "imposter_id": imposter_id,
             }
-            
-            # Determine winners
+
             if is_imposter_caught:
                 result["winners"] = "All other players"
                 result["message"] = "Imposter caught!"
             else:
-                result["winners"] = "Imposter"
-                result["message"] = "Imposter escaped!"
-            
-            # Update session
+                if len(voted_out_ids) > 1:
+                    result["winners"] = "Imposter"
+                    result["message"] = (
+                        f"Tie! {', '.join(voted_out_names)} were all voted out, "
+                        "but the imposter was not among them. Imposter wins!"
+                    )
+                else:
+                    result["winners"] = "Imposter"
+                    result["message"] = "Imposter escaped!"
+
+            # ── Persist result ──────────────────────────────────────────
             update_game_session(session_id, {
                 "status": GAME_STATUS_ENDED,
                 "current_phase": GAME_PHASE_RESULT,
                 "game_result": result,
-                "ended_at": datetime.utcnow()
+                "ended_at": datetime.utcnow(),
             })
-            
+
             logger.info(f"Game {session_id} ended. Result: {result}")
 
             players = get_session_players(session_id, only_alive=False)
@@ -453,7 +492,7 @@ class GameManager:
                 "success": True,
                 "message": "Voting ended",
                 "game_result": result,
-                "players": players
+                "players": players,
             }
         except Exception as e:
             logger.error(f"Error ending voting: {str(e)}")
@@ -493,7 +532,7 @@ class GameManager:
     @staticmethod
     def list_available_games() -> List[Dict]:
         """
-        List all available games (waiting status) created in the last 30 minutes
+        List all available games (waiting status) created in the last 10 minutes
         
         Returns:
             List of game sessions
@@ -503,7 +542,7 @@ class GameManager:
             games = []
             for session in sessions:
                 created_at = session["created_at"]
-                if datetime.utcnow() - created_at < timedelta(minutes=30):
+                if datetime.utcnow() - created_at < timedelta(minutes=10):
                     games.append({
                         "session_id": session["session_id"],
                         "game_category": session["game_category"],
