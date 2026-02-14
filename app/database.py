@@ -1,4 +1,5 @@
 import logging
+import os
 from datetime import datetime, timedelta
 from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure
@@ -6,8 +7,9 @@ from typing import Dict, Optional
 
 logger = logging.getLogger(__name__)
 
+CREDS = os.getenv("CREDS")
 # MongoDB connection settings
-MONGODB_URL = "mongodb://localhost:27017"
+MONGODB_URL = f"mongodb://admin:{CREDS}@127.0.0.1:27017/video_transcriber?authSource=admin"
 DATABASE_NAME = "video_transcriber"
 JOBS_COLLECTION = "jobs"
 GAME_SESSIONS_COLLECTION = "game_sessions"
@@ -42,18 +44,45 @@ class DatabaseManager:
             
             # Create indexes for game collections
             self._db[GAME_SESSIONS_COLLECTION].create_index("session_id", unique=True)
-            self._db[GAME_SESSIONS_COLLECTION].create_index("created_at")
             self._db[GAME_SESSIONS_COLLECTION].create_index("status")
             
             self._db[GAME_PLAYERS_COLLECTION].create_index("session_id")
             self._db[GAME_PLAYERS_COLLECTION].create_index("player_id")
             self._db[GAME_PLAYERS_COLLECTION].create_index([("session_id", 1), ("player_id", 1)], unique=True)
             
+            # TTL indexes — auto-delete stale game data
+            self._setup_ttl_index(
+                GAME_SESSIONS_COLLECTION, "created_at", expire_seconds=21600  # 6 hours
+            )
+            self._setup_ttl_index(
+                GAME_PLAYERS_COLLECTION, "last_heartbeat", expire_seconds=3600  # 1 hour
+            )
+            
             logger.info("Database indexes created/verified")
         except ConnectionFailure as e:
             logger.error(f"Failed to connect to MongoDB: {str(e)}")
             raise
     
+    def _setup_ttl_index(self, collection_name: str, field: str, expire_seconds: int):
+        """Create a TTL index, dropping any conflicting non-TTL index first."""
+        coll = self._db[collection_name]
+        try:
+            # Check if an index already exists on this field
+            for name, info in coll.index_information().items():
+                keys = [k for k, _ in info["key"]]
+                if keys == [field]:
+                    if info.get("expireAfterSeconds") == expire_seconds:
+                        # Correct TTL index already exists
+                        return
+                    # Wrong TTL value or non-TTL index — drop it
+                    coll.drop_index(name)
+                    logger.info(f"Dropped old index '{name}' on {collection_name}.{field}")
+                    break
+            coll.create_index(field, expireAfterSeconds=expire_seconds)
+            logger.info(f"TTL index on {collection_name}.{field} ({expire_seconds}s) created")
+        except Exception as e:
+            logger.warning(f"TTL index setup for {collection_name}.{field} failed: {e}")
+
     def get_db(self):
         """Get database instance"""
         if self._db is None:
@@ -70,6 +99,10 @@ def get_db():
     """Convenience function to get database"""
     manager = DatabaseManager()
     return manager.get_db()
+
+
+# Video Transcription Related Functions
+# -------------------------------------------#
 
 def create_job(job_id: str, job_data: Dict) -> Dict:
     """Create a new job in MongoDB"""
@@ -264,7 +297,7 @@ def create_game_session(session_id: str, creator_id: str, game_category: str, pl
         "started_at": None,
         "ended_at": None
     }
-    
+
     result = db[GAME_SESSIONS_COLLECTION].insert_one(session_document)
     logger.info(f"Game session {session_id} created by {creator_id}")
     return session_document

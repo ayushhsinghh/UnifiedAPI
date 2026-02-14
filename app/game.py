@@ -17,6 +17,7 @@ from database import (
     remove_game_session, update_player_heartbeat, remove_inactive_players
 )
 from gemini import generate_game_topics
+from collections import Counter
 
 logger = logging.getLogger(__name__)
 
@@ -287,9 +288,9 @@ class GameManager:
                     response["your_topic"] = session["player_topic"]
                     response["topic_type"] = "player"
 
-            # Include game result if available and appropriate
-            if session.get("game_result") and session["current_phase"] in (GAME_PHASE_RESULT, GAME_STATUS_ENDED):
-                response["game_result"] = session["game_result"]
+            # # Include game result if available and appropriate
+            # if session.get("game_result") and session["current_phase"] in (GAME_PHASE_RESULT, GAME_STATUS_ENDED):
+            #     response["game_result"] = session["game_result"]
             
             return True, response
         except Exception as e:
@@ -424,13 +425,8 @@ class GameManager:
                 return False, {"success": False, "message": "No votes recorded"}
 
             # ── Count votes per player ──────────────────────────────────
-            vote_counts: Dict[str, int] = {}
-            for voted_for in votes.values():
-                vote_counts[voted_for] = vote_counts.get(voted_for, 0) + 1
-
+            vote_counts = Counter(votes.values())
             max_votes = max(vote_counts.values())
-
-            # All players tied at the highest vote count are voted out
             tied_ids = [pid for pid, count in vote_counts.items() if count == max_votes]
 
             # ── Resolve each tied player ────────────────────────────────

@@ -1,6 +1,7 @@
 server.log
 # app/error.log
 app/app.log
+*.log*
 app/certs/*
 app/frontend/*
 app/__pycache__/*
