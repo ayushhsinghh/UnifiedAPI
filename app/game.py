@@ -7,6 +7,7 @@ import uuid
 import random
 import logging
 import string
+import threading
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple
 from database import (
@@ -46,40 +47,70 @@ class GameManager:
         return str(uuid.uuid4())
     
     @staticmethod
-    def create_new_game(creator_id: str, creator_name: str, game_category: str, max_players: int = 8) -> Tuple[bool, Dict]:
-        """
-        Create a new game session
-        
-        Args:
-            creator_id: ID of the player creating the game
-            creator_name: Name of the creator
-            game_category: Category for game topics
-            max_players: Maximum number of players allowed
-            
-        Returns:
-            Tuple of (success, response_dict)
-        """
+    def _generate_topics_background(
+        session_id: str,
+        game_category: str,
+        previous_player_topic: str = None,
+        previous_imposter_topic: str = None,
+    ):
+        """Background worker: calls Gemini and writes topics back to the DB."""
         try:
-            # Generate topics using deepseek
-            topics = generate_game_topics(game_category)
+            topics = generate_game_topics(
+                game_category,
+                previous_player_topic=previous_player_topic,
+                previous_imposter_topic=previous_imposter_topic,
+            )
             player_topic = topics.get("player_topic", game_category)
             imposter_topic = topics.get("imposter_topic", f"{game_category} (variant)")
-            
-            # Create game session
+
+            update_game_session(session_id, {
+                "player_topic": player_topic,
+                "imposter_topic": imposter_topic,
+                "topics_ready": True,
+            })
+            logger.info(f"Background topics ready for session {session_id}: {player_topic} / {imposter_topic}")
+        except Exception as e:
+            # Even on failure the fallback inside generate_game_topics should
+            # have returned something usable, but guard just in case.
+            logger.error(f"Background topic generation failed for {session_id}: {e}")
+            update_game_session(session_id, {
+                "player_topic": game_category,
+                "imposter_topic": f"{game_category} (variant)",
+                "topics_ready": True,
+            })
+    
+    @staticmethod
+    def create_new_game(creator_id: str, creator_name: str, game_category: str, max_players: int = 8) -> Tuple[bool, Dict]:
+        """
+        Create a new game session.
+        Topics are generated in the background so this call returns instantly.
+        """
+        try:
+            # Create game session immediately with placeholder topics
             session_id = GameManager.generate_session_id()
             session = create_game_session(
                 session_id=session_id,
                 creator_id=creator_id,
                 game_category=game_category,
-                player_topic=player_topic,
-                imposter_topic=imposter_topic,
+                player_topic="Sun",           # placeholder
+                imposter_topic="Moon",  # placeholder
                 max_players=max_players
             )
+            # Mark topics as not-ready yet
+            update_game_session(session_id, {"topics_ready": False})
             
             # Add creator as first player
             add_game_player(session_id, creator_id, creator_name, is_imposter=False)
             
-            logger.info(f"New game created: {session_id} by {creator_name}")
+            # Fire background thread for Gemini topic generation
+            thread = threading.Thread(
+                target=GameManager._generate_topics_background,
+                args=(session_id, game_category),
+                daemon=True,
+            )
+            thread.start()
+            
+            logger.info(f"New game created: {session_id} by {creator_name} (topics generating in background)")
             
             return True, {
                 "success": True,
@@ -87,8 +118,6 @@ class GameManager:
                 "session_id": session_id,
                 "game_category": game_category,
                 "max_players": max_players,
-                "player_topic": player_topic,
-                "imposter_topic": imposter_topic
             }
         except Exception as e:
             logger.error(f"Error creating game: {str(e)}")
@@ -182,6 +211,11 @@ class GameManager:
                 logger.warning(f"Start game failed for session {session_id}: Game has already started")
                 return False, {"success": False, "message": "Game has already started"}
             
+            # Ensure background topic generation has finished
+            if not session.get("topics_ready", True):
+                logger.warning(f"Start game failed for session {session_id}: Topics still generating")
+                return False, {"success": False, "message": "Topics are still being generated, please wait a moment"}
+            
             # Randomly select imposter
             imposter_id = random.choice(session["players_list"])
             
@@ -262,6 +296,7 @@ class GameManager:
                 "discussion_time": session["discussion_time"],
                 "voting_time": session["voting_time"],
                 "voters": session.get("voters", []),
+                "topics_ready": session.get("topics_ready", True),
                 "players": []
             }
             
@@ -555,34 +590,30 @@ class GameManager:
     @staticmethod
     def new_round(session_id: str) -> Tuple[bool, Dict]:
         """
-        Start a new round for an existing game session
-        
-        Args:
-            session_id: ID of the session
-            
-        Returns:
-            Tuple of (success, response_dict)
+        Start a new round for an existing game session.
+        Topics are generated in the background so this call returns instantly.
         """
         try:
             session = get_game_session(session_id)
             if not session:
                 return False, {"success": False, "message": "Game session not found"}
 
-            # Generate new topics
-            topics = generate_game_topics(session["game_category"])
-            player_topic = topics.get("player_topic", session["game_category"])
-            imposter_topic = topics.get("imposter_topic", f"{session['game_category']} (variant)")
+            # Remember previous topics so Gemini avoids repeats
+            prev_player = session.get("player_topic")
+            prev_imposter = session.get("imposter_topic")
+            game_category = session["game_category"]
 
             # Randomly select new imposter
             imposter_id = random.choice(session["players_list"])
             
-            # Update session data
+            # Update session data immediately with placeholder topics
             update_game_session(session_id, {
                 "status": GAME_STATUS_PLAYING,
                 "current_phase": GAME_PHASE_DISCUSSION,
                 "imposter_id": imposter_id,
-                "player_topic": player_topic,
-                "imposter_topic": imposter_topic,
+                "player_topic": "Sun",                    
+                "imposter_topic": "Moon", 
+                "topics_ready": False,
                 "votes": {},
                 "voters": [],
                 "game_result": None,
@@ -603,7 +634,15 @@ class GameManager:
                 {"$set": {"is_imposter": True}}
             )
 
-            logger.info(f"New round started for game {session_id}. New imposter: {imposter_id}")
+            # Fire background thread for Gemini topic generation
+            thread = threading.Thread(
+                target=GameManager._generate_topics_background,
+                args=(session_id, game_category, prev_player, prev_imposter),
+                daemon=True,
+            )
+            thread.start()
+
+            logger.info(f"New round started for game {session_id}. New imposter: {imposter_id} (topics generating in background)")
 
             return True, {
                 "success": True,

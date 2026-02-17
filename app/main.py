@@ -117,7 +117,7 @@ class CreateGameRequest(BaseModel):
         ..., min_length=1, max_length=50,
         description="Topic category for the game",
     )
-    max_players: int = Field(default=8, ge=2, le=20)
+    max_players: int = Field(default=8, ge=3, le=20)
 
 
 class JoinGameRequest(BaseModel):
