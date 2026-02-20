@@ -1,632 +1,826 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video Transcriber & Game API</title>
+    <title>SubForge — API Platform</title>
+    <meta name="description" content="Unified API platform for AI video transcription and multiplayer game services.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
     <style>
-        * {
+        /* ── Reset ─────────────────────────────────────────── */
+        *,
+        *::before,
+        *::after {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
 
+        html {
+            font-size: 16px;
+            -webkit-font-smoothing: antialiased;
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #121212;
+            color: #E8E8EC;
             min-height: 100vh;
-            padding: 20px;
+            line-height: 1.6;
         }
 
-        .navbar {
-            background: white;
-            padding: 15px 30px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .navbar h2 {
-            color: #667eea;
-            margin: 0;
-        }
-
-        .nav-buttons {
-            display: flex;
-            gap: 10px;
-        }
-
-        .nav-buttons button {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s;
-        }
-
-        .nav-buttons button.active {
-            background: #667eea;
-            color: white;
-        }
-
-        .nav-buttons button:not(.active) {
-            background: #f0f0f0;
-            color: #333;
-        }
-
-        .nav-buttons button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .container {
-            max-width: 1200px;
+        /* ── Layout ────────────────────────────────────────── */
+        .shell {
+            max-width: 900px;
             margin: 0 auto;
+            padding: 0 20px 60px;
         }
 
+        /* ── Navbar ────────────────────────────────────────── */
+        .navbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 0;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: #121212;
+            border-bottom: 1px solid #1E1E1E;
+        }
+
+        .nav-logo {
+            font-weight: 700;
+            font-size: 18px;
+            letter-spacing: -0.02em;
+            color: #E8E8EC;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 4px;
+        }
+
+        .tab-btn {
+            padding: 7px 16px;
+            border: 1px solid #2A2A2E;
+            border-radius: 8px;
+            background: transparent;
+            color: #9CA3AF;
+            font-family: inherit;
+            font-size: 0.8125rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab-btn:hover {
+            background: #1E1E1E;
+            color: #E8E8EC;
+            border-color: #3A3A3E;
+        }
+
+        .tab-btn.active {
+            background: #7B8CDE;
+            color: #121212;
+            border-color: #7B8CDE;
+        }
+
+        /* ── Panels ────────────────────────────────────────── */
         .panel {
             display: none;
-            animation: fadeIn 0.3s ease-in;
+            animation: fadeUp 0.3s ease;
         }
 
         .panel.active {
             display: block;
         }
 
-        @keyframes fadeIn {
+        @keyframes fadeUp {
             from {
                 opacity: 0;
-                transform: translateY(10px);
+                transform: translateY(6px)
             }
+
             to {
                 opacity: 1;
-                transform: translateY(0);
+                transform: translateY(0)
             }
         }
 
-        .card {
-            background: white;
-            border-radius: 12px;
-            padding: 30px;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-        }
-
-        h1, h2, h3 {
-            color: #333;
-            margin-bottom: 20px;
-        }
-
-        h1 {
-            font-size: 42px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        h2 {
-            font-size: 28px;
-        }
-
-        h3 {
-            font-size: 18px;
-            margin-top: 25px;
-            border-bottom: 2px solid #667eea;
-            padding-bottom: 10px;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            padding: 40px;
-            border-radius: 12px;
+        /* ── Hero ──────────────────────────────────────────── */
+        .hero {
             text-align: center;
-            margin-bottom: 30px;
+            padding: 56px 0 36px;
+            position: relative;
         }
 
-        .header h1 {
-            color: white;
-            -webkit-text-fill-color: white;
-            font-size: 42px;
+        .hero-glow {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(123, 140, 222, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .hero h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            line-height: 1.15;
+            margin-bottom: 12px;
+            position: relative;
+        }
+
+        .hero p {
+            color: #9CA3AF;
+            font-size: 1rem;
+            position: relative;
+        }
+
+        /* ── Status Badge ──────────────────────────────────── */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(52, 211, 153, 0.08);
+            border: 1px solid rgba(52, 211, 153, 0.2);
+            border-radius: 20px;
+            padding: 8px 18px;
+            font-size: 0.8125rem;
+            color: #34D399;
+            margin: 24px 0 32px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #34D399;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: 0.4
+            }
+        }
+
+        /* ── Service Cards ─────────────────────────────────── */
+        .services-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .service-card {
+            background: #1E1E1E;
+            border: 1px solid #2A2A2E;
+            border-radius: 14px;
+            padding: 28px;
+            transition: all 0.25s;
+        }
+
+        .service-card:hover {
+            border-color: #3A3A3E;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .service-card h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
             margin-bottom: 10px;
         }
 
-        .header p {
-            font-size: 18px;
-            opacity: 0.95;
-        }
-
-        .api-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin: 30px 0;
-        }
-
-        .api-card {
-            background: linear-gradient(135deg, #667eea15, #764ba215);
-            border: 2px solid #667eea;
-            border-radius: 10px;
-            padding: 25px;
-            transition: all 0.3s;
-        }
-
-        .api-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.2);
-        }
-
-        .api-card h3 {
-            color: #667eea;
-            border-color: #667eea;
-            font-size: 20px;
-        }
-
-        .api-card p {
-            color: #666;
-            line-height: 1.6;
-            margin-bottom: 15px;
-        }
-
-        .api-card-button {
-            display: inline-block;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 6px;
-            text-decoration: none;
-            font-weight: 600;
-            transition: all 0.3s;
-            border: none;
-            cursor: pointer;
-        }
-
-        .api-card-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
-        }
-
-        .endpoint {
-            background: #f8f9fa;
-            border-left: 4px solid #667eea;
-            padding: 12px;
-            margin: 15px 0;
-            font-family: 'Courier New', monospace;
-            font-size: 13px;
-            color: #333;
-            border-radius: 4px;
-            overflow-x: auto;
-        }
-
-        .endpoint.post {
-            border-left-color: #ff6b6b;
-        }
-
-        .endpoint.get {
-            border-left-color: #4caf50;
-        }
-
-        .endpoint.delete {
-            border-left-color: #ff9800;
-        }
-
-        .method {
-            font-weight: bold;
-            margin-right: 8px;
-        }
-
-        .method.post {
-            color: #ff6b6b;
-        }
-
-        .method.get {
-            color: #4caf50;
-        }
-
-        .method.delete {
-            color: #ff9800;
-        }
-
-        .status {
-            background: #e8f5e9;
-            color: #388e3c;
-            border-left: 4px solid #4caf50;
-            padding: 15px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            font-weight: 500;
-        }
-
-        @media (max-width: 768px) {
-            .api-grid {
-                grid-template-columns: 1fr;
-            }
-            .navbar {
-                flex-direction: column;
-                gap: 15px;
-            }
-            h1 {
-                font-size: 28px;
-            }
-            .header h1 {
-                font-size: 32px;
-            }
-        }
-
-        code {
-            background: #f0f0f0;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-family: 'Courier New', monospace;
+        .service-card p {
+            color: #9CA3AF;
+            font-size: 0.875rem;
+            margin-bottom: 16px;
+            line-height: 1.55;
         }
 
         .feature-list {
             list-style: none;
-            margin: 15px 0;
+            margin-bottom: 20px;
         }
 
         .feature-list li {
-            padding: 8px 0;
-            color: #666;
+            padding: 5px 0;
+            color: #9CA3AF;
+            font-size: 0.8125rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        .feature-list li:before {
-            content: "✓ ";
-            color: #4caf50;
-            font-weight: bold;
-            margin-right: 8px;
+        .feature-list li::before {
+            content: "";
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: #34D399;
+            flex-shrink: 0;
         }
 
-        .demo-section {
-            background: #f8f9fa;
-            padding: 20px;
+        .card-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        /* ── Buttons ───────────────────────────────────────── */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 9px 18px;
+            border: none;
             border-radius: 8px;
-            margin: 20px 0;
+            font-family: inherit;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s;
         }
 
-        pre {
-            background: #333;
-            color: #4caf50;
-            padding: 15px;
-            border-radius: 6px;
+        .btn-accent {
+            background: #7B8CDE;
+            color: #121212;
+        }
+
+        .btn-accent:hover {
+            background: #8E9DE6;
+            box-shadow: 0 2px 12px rgba(123, 140, 222, 0.25);
+        }
+
+        .btn-green {
+            background: #34D399;
+            color: #121212;
+        }
+
+        .btn-green:hover {
+            background: #4ADE80;
+        }
+
+        .btn-ghost {
+            background: #1E1E1E;
+            color: #E8E8EC;
+            border: 1px solid #2A2A2E;
+        }
+
+        .btn-ghost:hover {
+            background: #2A2A2E;
+        }
+
+        /* ── Tech Strip ────────────────────────────────────── */
+        .tech-strip {
+            background: #1E1E1E;
+            border: 1px solid #2A2A2E;
+            border-radius: 12px;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+        }
+
+        .tech-item {
+            text-align: center;
+        }
+
+        .tech-label {
+            font-size: 0.6875rem;
+            color: #6B7280;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 4px;
+        }
+
+        .tech-val {
+            font-size: 0.8125rem;
+            font-weight: 600;
+            color: #E8E8EC;
+        }
+
+        /* ── API Docs Panels ───────────────────────────────── */
+        .docs-card {
+            background: #1E1E1E;
+            border: 1px solid #2A2A2E;
+            border-radius: 14px;
+            padding: 28px;
+            margin-top: 20px;
+        }
+
+        .docs-card h2 {
+            font-size: 1.375rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .docs-card .subtitle {
+            color: #9CA3AF;
+            font-size: 0.875rem;
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #7B8CDE;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #2A2A2E;
+            margin: 28px 0 16px;
+        }
+
+        .section-title:first-of-type {
+            margin-top: 0;
+        }
+
+        /* Endpoint blocks */
+        .endpoint-block {
+            margin-bottom: 20px;
+        }
+
+        .endpoint-block h4 {
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .endpoint-line {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #151518;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8125rem;
+            margin-bottom: 4px;
             overflow-x: auto;
-            font-size: 12px;
-            line-height: 1.5;
+        }
+
+        .method-badge {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.6875rem;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+            flex-shrink: 0;
+        }
+
+        .method-badge.post {
+            background: rgba(248, 113, 113, 0.12);
+            color: #F87171;
+        }
+
+        .method-badge.get {
+            background: rgba(52, 211, 153, 0.12);
+            color: #34D399;
+        }
+
+        .method-badge.delete {
+            background: rgba(245, 158, 11, 0.12);
+            color: #F59E0B;
+        }
+
+        .endpoint-path {
+            color: #9CA3AF;
+        }
+
+        .endpoint-desc {
+            color: #6B7280;
+            font-size: 0.8125rem;
+            margin-top: 4px;
+        }
+
+        /* Info box */
+        .info-box {
+            background: #151518;
+            border: 1px solid #2A2A2E;
+            border-radius: 10px;
+            padding: 16px 18px;
+            margin: 12px 0;
+        }
+
+        .info-box p {
+            color: #9CA3AF;
+            font-size: 0.8125rem;
+            margin-bottom: 4px;
+        }
+
+        .info-box p:last-child {
+            margin-bottom: 0;
+        }
+
+        .info-box strong {
+            color: #E8E8EC;
+        }
+
+        /* Code blocks */
+        pre {
+            background: #151518;
+            border: 1px solid #2A2A2E;
+            border-radius: 8px;
+            padding: 14px;
+            overflow-x: auto;
+            margin: 8px 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: #34D399;
+            line-height: 1.6;
+        }
+
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8125rem;
+            background: #222226;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #7B8CDE;
+        }
+
+        /* Category chips */
+        .chip-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 8px 0;
+        }
+
+        .chip {
+            background: #222226;
+            border: 1px solid #2A2A2E;
+            border-radius: 16px;
+            padding: 5px 14px;
+            font-size: 0.75rem;
+            color: #9CA3AF;
+        }
+
+        /* ── Responsive ────────────────────────────────────── */
+        @media(max-width:700px) {
+            .services-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .tech-strip {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .hero h1 {
+                font-size: 1.75rem;
+            }
+
+            .navbar {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .nav-tabs {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
         }
     </style>
 </head>
 
 <body>
-    <nav class="navbar">
-        <h2>📡 API Management</h2>
-        <div class="nav-buttons">
-            <button class="nav-btn active" data-tab="home" onclick="switchTab('home')">Home</button>
-            <button class="nav-btn" data-tab="transcriber" onclick="switchTab('transcriber')">Transcriber API</button>
-            <button class="nav-btn" data-tab="game" onclick="switchTab('game')">Game API</button>
-        </div>
-    </nav>
+    <div class="shell">
+        <nav class="navbar">
+            <span class="nav-logo">APIs</span>
+            <div class="nav-tabs">
+                <button class="tab-btn active" data-tab="home" onclick="switchTab('home')">Home</button>
+                <button class="tab-btn" data-tab="transcriber" onclick="switchTab('transcriber')">Transcriber
+                    API</button>
+                <button class="tab-btn" data-tab="game" onclick="switchTab('game')">Game API</button>
+            </div>
+        </nav>
 
-    <div class="container">
-        <!-- HOME PANEL -->
+        <!-- ═══ HOME ═══ -->
         <div class="panel active" id="home-panel">
-            <div class="header">
-                <h1>🎯 Welcome to Unified API Platform</h1>
+            <div class="hero">
+                <div class="hero-glow"></div>
+                <h1>Unified API Platform</h1>
                 <p>Video Transcription & Multiplayer Game Services</p>
             </div>
 
-            <div class="card">
-                <div class="status">
-                    ✅ All Services Running • API Version 1.0 • Status: Operational
-                </div>
-
-                <h2>🚀 Available Services</h2>
-                
-                <div class="api-grid">
-                    <div class="api-card">
-                        <h3>🎬 Video Transcriber</h3>
-                        <p>Convert videos to subtitles with AI-powered transcription featuring:</p>
-                        <ul class="feature-list">
-                            <li>Multi-language support</li>
-                            <li>Real-time transcription</li>
-                            <li>Subtitle generation (SRT)</li>
-                            <li>Multiple quality levels</li>
-                        </ul>
-                        <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                            <button class="api-card-button" onclick="switchTab('transcriber')">View API</button>
-                            <a class="api-card-button" href="https://subs.ayush.ltd" target="_blank" style="background: #4caf50;">Open Transcribe App</a>
-                        </div>
-                    </div>
-
-                    <div class="api-card">
-                        <h3>🎮 Guess the Imposter</h3>
-                        <p>Real-time multiplayer deception game featuring:</p>
-                        <ul class="feature-list">
-                            <li>AI topic generation</li>
-                            <li>Real-time synchronization</li>
-                            <li>Voting mechanics</li>
-                            <li>Live player tracking</li>
-                        </ul>
-                        <a href="https://game.ayush.ltd" class="api-card-button" target="_blank">Play Game</a>
-                    </div>
-                </div>
-
-                <h3>📊 System Statistics</h3>
-                <div class="demo-section">
-                    <p><strong>Backend:</strong> FastAPI + Python</p>
-                    <p><strong>Database:</strong> MongoDB</p>
-                    <p><strong>AI Models:</strong> DeepSeek, Faster-Whisper</p>
-                    <p><strong>Real-time Features:</strong> Polling-based synchronization</p>
-                    <p><strong>Scalability:</strong> Designed for 1000+ concurrent connections</p>
+            <div style="text-align:center">
+                <div class="status-badge">
+                    <span class="status-dot"></span>
+                    All Services Operational · API v1.0
                 </div>
             </div>
-        </div>
 
-        <!-- TRANSCRIBER API PANEL -->
-        <div class="panel" id="transcriber-panel">
-            <div class="card">
-                <h2>🎬 Video Transcriber API</h2>
-                <p style="color: #666; margin-bottom: 20px;">Convert videos to text subtitles using advanced AI transcription technology</p>
-
-                <h3>📝 Core Endpoints</h3>
-
-                <h4 style="color: #333; margin-top:8px;">API Base</h4>
-                <div class="endpoint get">
-                    <span class="method get">BASE</span> <code>/api</code>
-                </div>
-                <p style="color: #666; margin-bottom: 12px;">Example requests:</p>
-
-                <h4 style="color: #333;">Quick Examples</h4>
-                <pre>curl -X POST https://your-host/api/game/create -H "Content-Type: application/json" -d '{"player_name":"Alice","game_category":"animals","max_players":6}'</pre>
-                <pre>curl -X POST https://your-host/api/game/ABCDE/join -H "Content-Type: application/json" -d '{"player_name":"Bob"}'</pre>
-                <pre>curl -X POST https://your-host/api/game/ABCDE/start -H "Content-Type: application/json" -d '{"player_id":"<creator_id>"}'</pre>
-                <pre>curl https://your-host/api/game/ABCDE?player_id=&lt;player_id&gt;</pre>
-                <pre>curl -X POST https://your-host/api/game/ABCDE/vote -H "Content-Type: application/json" -d '{"player_id":"<you>","voted_for_id":"<target>"}'</pre>
-
-                <h4 style="color: #333; margin-top:8px;">API Base</h4>
-                <div class="endpoint get">
-                    <span class="method get">BASE</span> <code>/api</code>
-                </div>
-                <p style="color: #666; margin-bottom: 12px;">All endpoints are rooted under <code>/api</code>. Example requests below:</p>
-
-                
-
-
-                <div style="margin: 20px 0;">
-                    <h4 style="color: #333;">Create Transcription Job</h4>
-                    <div class="endpoint post">
-                        <span class="method post">POST</span> <code>/api/jobs</code>
-                    </div>
-                    <p style="color: #666; margin-bottom: 10px;">Upload a video file and start transcription</p>
-                </div>
-
-                <div style="margin: 20px 0;">
-                    <h4 style="color: #333;">Get Job Status</h4>
-                    <div class="endpoint get">
-                        <span class="method get">GET</span> <code>/api/jobs/{job_id}</code>
-                    </div>
-                    <p style="color: #666;">Check the status and progress of a transcription job</p>
-                </div>
-
-                <div style="margin: 20px 0;">
-                    <h4 style="color: #333;">Download Subtitles</h4>
-                    <div class="endpoint get">
-                        <span class="method get">GET</span> <code>/api/jobs/{job_id}/subtitles</code>
-                    </div>
-                    <p style="color: #666;">Download the generated subtitle file (SRT format)</p>
-                </div>
-
-                <div style="margin: 20px 0;">
-                    <h4 style="color: #333;">List All Jobs</h4>
-                    <div class="endpoint get">
-                        <span class="method get">GET</span> <code>/api/jobs</code>
-                    </div>
-                    <p style="color: #666;">Retrieve a list of all transcription jobs</p>
-                </div>
-
-                <div style="margin: 20px 0;">
-                    <h4 style="color: #333;">Delete Job</h4>
-                    <div class="endpoint delete">
-                        <span class="method delete">DELETE</span> <code>/api/jobs/{job_id}</code>
-                    </div>
-                    <p style="color: #666;">Delete a transcription job and its files</p>
-                </div>
-
-                <h3>🎯 Supported Models</h3>
-                <div class="demo-section">
+            <div class="services-grid">
+                <div class="service-card">
+                    <h3>Video Transcriber</h3>
+                    <p>AI-powered subtitle generation using OpenAI Whisper</p>
                     <ul class="feature-list">
-                        <li><strong>tiny:</strong> Fastest, lowest accuracy (~40MB)</li>
-                        <li><strong>base:</strong> Balanced speed/accuracy (~140MB)</li>
-                        <li><strong>small:</strong> Good accuracy (~500MB)</li>
-                        <li><strong>medium:</strong> High accuracy (~1.5GB)</li>
-                        <li><strong>large-v3:</strong> Highest accuracy (~3GB)</li>
+                        <li>Multi-language support (57+ languages)</li>
+                        <li>Real-time transcription progress</li>
+                        <li>SRT subtitle export</li>
+                        <li>Multiple quality levels</li>
                     </ul>
+                    <div class="card-actions">
+                        <button class="btn btn-accent" onclick="switchTab('transcriber')">View API</button>
+                        <a class="btn btn-green" href="https://subs.ayush.ltd" target="_blank">Open App</a>
+                    </div>
                 </div>
 
-                <h3>🌍 Supported Languages</h3>
-                <p style="color: #666;">99+ languages including English, Spanish, French, German, Chinese, Japanese, Arabic, Hindi, and more.</p>
+                <div class="service-card">
+                    <h3>Guess the Imposter</h3>
+                    <p>Real-time multiplayer deception game with AI topics</p>
+                    <ul class="feature-list">
+                        <li>AI topic generation</li>
+                        <li>Real-time synchronization</li>
+                        <li>Voting mechanics</li>
+                        <li>Live player tracking</li>
+                    </ul>
+                    <div class="card-actions">
+                        <button class="btn btn-accent" onclick="switchTab('game')">View API</button>
+                        <a class="btn btn-green" href="https://game.ayush.ltd" target="_blank">Play Game</a>
+                    </div>
+                </div>
+            </div>
 
-                <h3>📋 Request Parameters</h3>
-                <div class="demo-section">
-                    <p><strong>file:</strong> Video file to transcribe (required)</p>
-                    <p><strong>language:</strong> Language code (e.g., 'en', 'es', 'fr') - auto-detect if not specified</p>
-                    <p><strong>translate:</strong> 'on' or 'off' - translate to English</p>
-                    <p><strong>model:</strong> tiny, base, small, medium, large-v3 (default: medium)</p>
+            <div class="tech-strip">
+                <div class="tech-item">
+                    <div class="tech-label">Backend</div>
+                    <div class="tech-val">FastAPI</div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-label">Database</div>
+                    <div class="tech-val">MongoDB</div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-label">AI Models</div>
+                    <div class="tech-val">Whisper</div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-label">Topics</div>
+                    <div class="tech-val">Gemini</div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-label">Capacity</div>
+                    <div class="tech-val">1000+</div>
                 </div>
             </div>
         </div>
 
-        <!-- GAME API PANEL -->
-        <div class="panel" id="game-panel">
-            <div class="card">
-                <h2>🎮 Guess the Imposter API</h2>
-                <p style="color: #666; margin-bottom: 20px;">Real-time multiplayer game where players guess who has a different topic</p>
+        <!-- ═══ TRANSCRIBER API ═══ -->
+        <div class="panel" id="transcriber-panel">
+            <div class="docs-card">
+                <h2>Video Transcriber API</h2>
+                <p class="subtitle">Convert videos to timestamped subtitles with AI transcription</p>
 
-                <h3>🎯 Game Features</h3>
-                <div class="demo-section">
+                <div class="section-title">Core Endpoints</div>
+
+                <div class="endpoint-block">
+                    <h4>Create Transcription Job</h4>
+                    <div class="endpoint-line">
+                        <span class="method-badge post">POST</span>
+                        <span class="endpoint-path">/api/jobs</span>
+                    </div>
+                    <p class="endpoint-desc">Upload a video file and start transcription</p>
+                </div>
+
+                <div class="endpoint-block">
+                    <h4>Get Job Status</h4>
+                    <div class="endpoint-line">
+                        <span class="method-badge get">GET</span>
+                        <span class="endpoint-path">/api/jobs/{job_id}</span>
+                    </div>
+                    <p class="endpoint-desc">Check status and progress of a transcription job</p>
+                </div>
+
+                <div class="endpoint-block">
+                    <h4>Download Subtitles</h4>
+                    <div class="endpoint-line">
+                        <span class="method-badge get">GET</span>
+                        <span class="endpoint-path">/api/jobs/{job_id}/subtitles</span>
+                    </div>
+                    <p class="endpoint-desc">Download the generated SRT subtitle file</p>
+                </div>
+
+                <div class="endpoint-block">
+                    <h4>List All Jobs</h4>
+                    <div class="endpoint-line">
+                        <span class="method-badge get">GET</span>
+                        <span class="endpoint-path">/api/jobs</span>
+                    </div>
+                    <p class="endpoint-desc">Retrieve a list of all transcription jobs</p>
+                </div>
+
+                <div class="endpoint-block">
+                    <h4>Delete Job</h4>
+                    <div class="endpoint-line">
+                        <span class="method-badge delete">DELETE</span>
+                        <span class="endpoint-path">/api/jobs/{job_id}</span>
+                    </div>
+                    <p class="endpoint-desc">Delete a transcription job and its files</p>
+                </div>
+
+                <div class="section-title">Supported Models</div>
+                <div class="info-box">
+                    <p><strong>tiny</strong> — Fastest, lowest accuracy (~40 MB)</p>
+                    <p><strong>base</strong> — Balanced speed/accuracy (~140 MB)</p>
+                    <p><strong>small</strong> — Good accuracy (~500 MB)</p>
+                    <p><strong>medium</strong> — High accuracy (~1.5 GB)</p>
+                    <p><strong>large-v3</strong> — Highest accuracy (~3 GB)</p>
+                </div>
+
+                <div class="section-title">Supported Languages</div>
+                <p style="color:#9CA3AF;font-size:0.875rem;">57+ languages including English, Spanish, French, German,
+                    Chinese, Japanese, Arabic, Hindi, and more.</p>
+
+                <div class="section-title">Request Parameters</div>
+                <div class="info-box">
+                    <p><strong>file</strong> — Video file to transcribe (required)</p>
+                    <p><strong>language</strong> — Language code (e.g. <code>en</code>, <code>es</code>) — auto-detect
+                        if omitted</p>
+                    <p><strong>translate</strong> — <code>on</code> or <code>off</code> — translate to English</p>
+                    <p><strong>model</strong> — <code>tiny</code>, <code>base</code>, <code>small</code>,
+                        <code>medium</code>, <code>large-v3</code> (default: medium)
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ GAME API ═══ -->
+        <div class="panel" id="game-panel">
+            <div class="docs-card">
+                <h2>Guess the Imposter API</h2>
+                <p class="subtitle">Real-time multiplayer game where players guess who has a different topic</p>
+
+                <div class="section-title">Game Features</div>
+                <div class="info-box">
                     <ul class="feature-list">
-                        <li>AI-generated topic pairs using DeepSeek</li>
+                        <li>AI-generated topic pairs using Gemini</li>
                         <li>Random imposter assignment</li>
-                        <li>3-minute discussion phase</li>
-                        <li>1-minute voting phase</li>
+                        <li>10-minute discussion phase</li>
+                        <li>2-minute voting phase</li>
                         <li>Real-time player synchronization</li>
-                        <li>Support for 2-16 players per game</li>
+                        <li>Support for 3–8 players per game</li>
                         <li>8+ game categories with AI variations</li>
                     </ul>
                 </div>
 
-                <h3>📝 Core Endpoints</h3>
+                <div class="section-title">Core Endpoints</div>
 
-                <div style="margin: 20px 0;">
-                    <h4 style="color: #333;">Create Game</h4>
-                    <div class="endpoint post">
-                        <span class="method post">POST</span> <code>/api/game/create</code>
-                    </div>
-                    <p style="color: #666;">Create a new game session with a category</p>
+                <div class="endpoint-block">
+                    <h4>Create Game</h4>
+                    <div class="endpoint-line"><span class="method-badge post">POST</span><span
+                            class="endpoint-path">/api/game/create</span></div>
+                    <p class="endpoint-desc">Create a new game session with a category</p>
                 </div>
 
-                <div style="margin: 20px 0;">
-                    <h4 style="color: #333;">Join Game</h4>
-                    <div class="endpoint post">
-                        <span class="method post">POST</span> <code>/api/game/{session_id}/join</code>
-                    </div>
-                    <p style="color: #666;">Join an existing game with session code</p>
+                <div class="endpoint-block">
+                    <h4>Join Game</h4>
+                    <div class="endpoint-line"><span class="method-badge post">POST</span><span
+                            class="endpoint-path">/api/game/{session_id}/join</span></div>
+                    <p class="endpoint-desc">Join an existing game with session code</p>
                 </div>
 
-                <div style="margin: 20px 0;">
-                    <h4 style="color: #333;">Start Game</h4>
-                    <div class="endpoint post">
-                        <span class="method post">POST</span> <code>/api/game/{session_id}/start</code>
-                    </div>
-                    <p style="color: #666;">Start the game and assign imposter (minimum 2 players required)</p>
+                <div class="endpoint-block">
+                    <h4>Start Game</h4>
+                    <div class="endpoint-line"><span class="method-badge post">POST</span><span
+                            class="endpoint-path">/api/game/{session_id}/start</span></div>
+                    <p class="endpoint-desc">Start the game and assign imposter (minimum 3 players)</p>
                 </div>
 
-                <div style="margin: 20px 0;">
-                    <h4 style="color: #333;">Get Game State</h4>
-                    <div class="endpoint get">
-                        <span class="method get">GET</span> <code>/api/game/{session_id}?player_id={player_id}</code>
-                    </div>
-                    <p style="color: #666;">Get current game state and player information (shows different topic based on role)</p>
+                <div class="endpoint-block">
+                    <h4>Get Game State</h4>
+                    <div class="endpoint-line"><span class="method-badge get">GET</span><span
+                            class="endpoint-path">/api/game/{session_id}?player_id={id}</span></div>
+                    <p class="endpoint-desc">Get current game state — shows different topic based on role</p>
                 </div>
 
-                <div style="margin: 20px 0;">
-                    <h4 style="color: #333;">Submit Vote</h4>
-                    <div class="endpoint post">
-                        <span class="method post">POST</span> <code>/api/game/{session_id}/vote?player_id={player_id}</code>
-                    </div>
-                    <p style="color: #666;">Vote for suspected imposter during voting phase</p>
+                <div class="endpoint-block">
+                    <h4>Submit Vote</h4>
+                    <div class="endpoint-line"><span class="method-badge post">POST</span><span
+                            class="endpoint-path">/api/game/{session_id}/vote</span></div>
+                    <p class="endpoint-desc">Vote for suspected imposter during voting phase</p>
                 </div>
 
-                <div style="margin: 20px 0;">
-                    <h4 style="color: #333;">Transition to Voting</h4>
-                    <div class="endpoint post">
-                        <span class="method post">POST</span> <code>/api/game/{session_id}/transition-voting</code>
-                    </div>
-                    <p style="color: #666;">End discussion phase and start voting phase</p>
+                <div class="endpoint-block">
+                    <h4>Transition to Voting</h4>
+                    <div class="endpoint-line"><span class="method-badge post">POST</span><span
+                            class="endpoint-path">/api/game/{session_id}/transition-voting</span></div>
+                    <p class="endpoint-desc">End discussion and start voting phase</p>
                 </div>
 
-                <div style="margin: 20px 0;">
-                    <h4 style="color: #333;">End Voting & Get Results</h4>
-                    <div class="endpoint post">
-                        <span class="method post">POST</span> <code>/api/game/{session_id}/end-voting</code>
-                    </div>
-                    <p style="color: #666;">End voting and determine game results</p>
+                <div class="endpoint-block">
+                    <h4>End Voting & Get Results</h4>
+                    <div class="endpoint-line"><span class="method-badge post">POST</span><span
+                            class="endpoint-path">/api/game/{session_id}/end-voting</span></div>
+                    <p class="endpoint-desc">End voting and determine game results</p>
                 </div>
 
-                <div style="margin: 20px 0;">
-                    <h4 style="color: #333;">List Available Games</h4>
-                    <div class="endpoint get">
-                        <span class="method get">GET</span> <code>/api/games/available</code>
-                    </div>
-                    <p style="color: #666;">Get list of all games waiting for players</p>
+                <div class="endpoint-block">
+                    <h4>Get Game Result</h4>
+                    <div class="endpoint-line"><span class="method-badge get">GET</span><span
+                            class="endpoint-path">/api/game/{session_id}/result</span></div>
+                    <p class="endpoint-desc">Retrieve reveal/result after voting</p>
                 </div>
 
-                <div style="margin: 20px 0;">
-                    <h4 style="color: #333;">Start New Round</h4>
-                    <div class="endpoint post">
-                        <span class="method post">POST</span> <code>/api/game/{session_id}/new-round</code>
-                    </div>
-                    <p style="color: #666;">Start a fresh round for the same players (creator only)</p>
+                <div class="endpoint-block">
+                    <h4>List Available Games</h4>
+                    <div class="endpoint-line"><span class="method-badge get">GET</span><span
+                            class="endpoint-path">/api/games/available</span></div>
+                    <p class="endpoint-desc">Get list of all games waiting for players</p>
                 </div>
 
-                <div style="margin: 20px 0;">
-                    <h4 style="color: #333;">Get Game Result</h4>
-                    <div class="endpoint get">
-                        <span class="method get">GET</span> <code>/api/game/{session_id}/result</code>
-                    </div>
-                    <p style="color: #666;">Retrieve the reveal/result after voting (shows voted out player and winners)</p>
+                <div class="endpoint-block">
+                    <h4>Start New Round</h4>
+                    <div class="endpoint-line"><span class="method-badge post">POST</span><span
+                            class="endpoint-path">/api/game/{session_id}/new-round</span></div>
+                    <p class="endpoint-desc">Start a fresh round for the same players</p>
                 </div>
 
-                <div style="margin: 20px 0;">
-                    <h4 style="color: #333;">Player Heartbeat</h4>
-                    <div class="endpoint post">
-                        <span class="method post">POST</span> <code>/api/game/{session_id}/heartbeat</code>
-                    </div>
-                    <p style="color: #666;">Keep a player marked active in a session (body: <code>{"player_id":"..."}</code>)</p>
+                <div class="endpoint-block">
+                    <h4>Player Heartbeat</h4>
+                    <div class="endpoint-line"><span class="method-badge post">POST</span><span
+                            class="endpoint-path">/api/game/{session_id}/heartbeat</span></div>
+                    <p class="endpoint-desc">Keep a player marked active in a session</p>
                 </div>
 
-                <div style="margin: 20px 0;">
-                    <h4 style="color: #333;">Cleanup Inactive Players</h4>
-                    <div class="endpoint post">
-                        <span class="method post">POST</span> <code>/api/games/cleanup-inactive</code>
-                    </div>
-                    <p style="color: #666;">Trigger a cleanup pass to remove inactive players from waiting games</p>
+                <div class="section-title">Admin Endpoints</div>
+
+                <div class="endpoint-block">
+                    <h4>Cleanup Inactive Players</h4>
+                    <div class="endpoint-line"><span class="method-badge post">POST</span><span
+                            class="endpoint-path">/api/games/cleanup-inactive</span></div>
+                    <p class="endpoint-desc">Remove inactive players from waiting games</p>
                 </div>
 
-                <div style="margin: 20px 0;">
-                    <h4 style="color: #333;">Cleanup Old Games</h4>
-                    <div class="endpoint post">
-                        <span class="method post">POST</span> <code>/api/games/cleanup</code>
-                    </div>
-                    <p style="color: #666;">Delete old/waiting game sessions (server-side maintenance)</p>
+                <div class="endpoint-block">
+                    <h4>Cleanup Old Games</h4>
+                    <div class="endpoint-line"><span class="method-badge post">POST</span><span
+                            class="endpoint-path">/api/games/cleanup</span></div>
+                    <p class="endpoint-desc">Delete old/waiting game sessions</p>
                 </div>
 
-                <div style="margin: 20px 0;">
-                    <h4 style="color: #333;">Delete Game</h4>
-                    <div class="endpoint delete">
-                        <span class="method delete">DELETE</span> <code>/api/game/{session_id}</code>
-                    </div>
-                    <p style="color: #666;">Delete a game session and all its players/data</p>
+                <div class="endpoint-block">
+                    <h4>Delete Game</h4>
+                    <div class="endpoint-line"><span class="method-badge delete">DELETE</span><span
+                            class="endpoint-path">/api/game/{session_id}</span></div>
+                    <p class="endpoint-desc">Delete a game session and all its data</p>
                 </div>
 
-                <h3>🎯 Game Categories</h3>
-                <div class="demo-section">
-                    <p>🦁 Animals • 👨‍💼 Professions • 🌍 Countries • 🍎 Fruits • ⚽ Sports • 🎬 Movies • 🦸 Superheroes • 🍕 Foods</p>
+                <div class="section-title">Game Categories</div>
+                <div class="chip-row">
+                    <span class="chip">🦁 Animals</span>
+                    <span class="chip">👨‍💼 Professions</span>
+                    <span class="chip">🌍 Countries</span>
+                    <span class="chip">🍎 Fruits</span>
+                    <span class="chip">⚽ Sports</span>
+                    <span class="chip">🎬 Movies</span>
+                    <span class="chip">🦸 Superheroes</span>
+                    <span class="chip">🍕 Foods</span>
                 </div>
 
-                <h3>⏱️ Game Phases</h3>
-                <div class="demo-section">
-                    <p><strong>Waiting:</strong> Players can join the game</p>
-                    <p><strong>Playing (Discussion):</strong> 3 minutes - Players discuss the topic naturally</p>
-                    <p><strong>Playing (Voting):</strong> 1 minute - Players vote for suspected imposter</p>
-                    <p><strong>Ended:</strong> Results are shown</p>
+                <div class="section-title">Game Phases</div>
+                <div class="info-box">
+                    <p><strong>Waiting</strong> — Players can join the game</p>
+                    <p><strong>Discussion</strong> — 10 minutes — players discuss the topic</p>
+                    <p><strong>Voting</strong> — 1 minute — players vote for suspected imposter</p>
+                    <p><strong>Result</strong> — Reveal and scores shown</p>
                 </div>
 
-                <a href="https://game.ayush.ltd" target="_blank" class="api-card-button" style="display: inline-block; margin-top: 20px; padding: 12px 24px;">
-                    🎮 Play Game Now
-                </a>
+                <div style="margin-top:24px;">
+                    <a href="https://game.ayush.ltd" target="_blank" class="btn btn-accent">Play Game Now →</a>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
         function switchTab(tabName) {
-            // Hide all panels
-            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-            
-            // Remove active from all buttons
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            
-            // Show selected panel
+            document.querySelectorAll('.panel').forEach(function (p) { p.classList.remove('active'); });
+            document.querySelectorAll('.tab-btn').forEach(function (b) { b.classList.remove('active'); });
             document.getElementById(tabName + '-panel').classList.add('active');
-            
-            // Highlight active button
-            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+            document.querySelector('[data-tab="' + tabName + '"]').classList.add('active');
         }
     </script>
 </body>
 
 </html>
-

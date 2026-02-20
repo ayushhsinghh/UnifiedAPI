@@ -4,5 +4,4 @@ app/app.log
 *.log*
 app/certs/*
 app/frontend/*
-app/__pycache__/*
-.aiexclude
+**/__pycache__/

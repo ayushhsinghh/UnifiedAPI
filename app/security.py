@@ -9,30 +9,24 @@ import uuid
 import logging
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
-from starlette.responses import Response, JSONResponse
+from starlette.responses import Response
 from fastapi import HTTPException
+
+from configs.config import get_config
 
 logger = logging.getLogger(__name__)
 
-# --------------- Configuration ---------------
+cfg = get_config()
 
-ENVIRONMENT = os.getenv("ENVIRONMENT", "production")
-ADMIN_API_KEY = os.getenv("ADMIN_API_KEY", "change-me-in-production")
+# --------------- Input Validation Patterns ---------------
 
-# File upload constraints
-MAX_UPLOAD_SIZE = 5 * 1024 * 1024 * 1024  # 5 GB
-ALLOWED_EXTENSIONS = {
-    ".mp4", ".mkv", ".avi", ".mov", ".webm", ".flv", ".wmv",
-    ".mp3", ".wav", ".aac", ".ogg", ".flac", ".m4a",
-}
-
-# Input validation patterns
 JOB_ID_PATTERN = re.compile(r"^job_[a-z0-9]{4}$")
 SESSION_ID_PATTERN = re.compile(r"^[A-Z0-9]{5}$")
 PLAYER_NAME_PATTERN = re.compile(r"^[a-zA-Z0-9 _\-]{1,30}$")
 UUID_PATTERN = re.compile(
     r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
 )
+
 
 # --------------- Middlewares ---------------
 
@@ -81,7 +75,7 @@ class RequestIdMiddleware(BaseHTTPMiddleware):
 def validate_job_id(job_id: str) -> str:
     """Validate and return a safe job_id, or raise 400."""
     if not JOB_ID_PATTERN.match(job_id):
-        logger.warning(f"Rejected invalid job_id: {job_id!r}")
+        logger.warning("Rejected invalid job_id: %r", job_id)
         raise HTTPException(status_code=400, detail="Invalid job ID format")
     return job_id
 
@@ -89,8 +83,10 @@ def validate_job_id(job_id: str) -> str:
 def validate_session_id(session_id: str) -> str:
     """Validate and return a safe session_id, or raise 400."""
     if not SESSION_ID_PATTERN.match(session_id):
-        logger.warning(f"Rejected invalid session_id: {session_id!r}")
-        raise HTTPException(status_code=400, detail="Invalid session ID format")
+        logger.warning("Rejected invalid session_id: %r", session_id)
+        raise HTTPException(
+            status_code=400, detail="Invalid session ID format"
+        )
     return session_id
 
 
@@ -99,11 +95,16 @@ def validate_file_extension(filename: str) -> str:
     if not filename:
         raise HTTPException(status_code=400, detail="Filename is required")
     ext = os.path.splitext(filename)[1].lower()
-    if ext not in ALLOWED_EXTENSIONS:
-        logger.warning(f"Rejected file with disallowed extension: {filename!r}")
+    if ext not in cfg.ALLOWED_EXTENSIONS:
+        logger.warning(
+            "Rejected file with disallowed extension: %r", filename
+        )
         raise HTTPException(
             status_code=400,
-            detail=f"File type '{ext}' not allowed. Allowed: {', '.join(sorted(ALLOWED_EXTENSIONS))}",
+            detail=(
+                f"File type '{ext}' not allowed. "
+                f"Allowed: {', '.join(sorted(cfg.ALLOWED_EXTENSIONS))}"
+            ),
         )
     return filename
 
@@ -112,17 +113,20 @@ def validate_file_extension(filename: str) -> str:
 
 
 def safe_error_response(
-    e: Exception, context: str = "operation", status_code: int = 500
+    exc: Exception, context: str = "operation", status_code: int = 500
 ):
     """
     Log the real exception but return a sanitized message to the client.
     In development mode, the real error is included for debugging.
     """
-    logger.error(f"Error in {context}: {str(e)}", exc_info=True)
-    if ENVIRONMENT == "development":
-        detail = f"[DEV] {context}: {str(e)}"
+    logger.error("Error in %s: %s", context, exc, exc_info=True)
+    if cfg.ENVIRONMENT == "development":
+        detail = f"[DEV] {context}: {exc}"
     else:
-        detail = f"An internal error occurred during {context}. Please try again later."
+        detail = (
+            f"An internal error occurred during {context}. "
+            "Please try again later."
+        )
     raise HTTPException(status_code=status_code, detail=detail)
 
 
@@ -135,8 +139,11 @@ def require_admin_key(request: Request):
     Raises 403 if missing or incorrect.
     """
     provided_key = request.headers.get("X-Admin-Key", "")
-    if not provided_key or provided_key != ADMIN_API_KEY:
+    if not provided_key or provided_key != cfg.ADMIN_API_KEY:
         logger.warning(
-            f"Unauthorized admin access attempt from {request.client.host}"
+            "Unauthorized admin access attempt from %s",
+            request.client.host,
         )
-        raise HTTPException(status_code=403, detail="Forbidden: invalid admin key")
+        raise HTTPException(
+            status_code=403, detail="Forbidden: invalid admin key"
+        )
