@@ -20,12 +20,14 @@ from fastapi import (
     HTTPException,
     Request,
     UploadFile,
+    Depends,
 )
 from fastapi.responses import FileResponse
 
 from commons import generate_job_id, limiter
 from configs.config import get_config
-from security import validate_file_extension, validate_job_id, safe_error_response
+from security import validate_file_extension, validate_job_id
+from src.auth.tokens import get_current_user
 from src.database.job_repository import create_job, delete_job, get_all_jobs, get_job
 from src.transcription.models import JobStatus
 from src.transcription.worker import transcribe_job
@@ -49,6 +51,7 @@ async def create_job_endpoint(
     translate: str = Form(default="off"),
     model: str = Form(default="medium"),
     background_tasks: BackgroundTasks = BackgroundTasks(),
+    current_user: dict = Depends(get_current_user),
 ) -> dict:
     """Upload a video file and queue a transcription job."""
     validate_file_extension(file.filename)
@@ -123,7 +126,7 @@ async def create_job_endpoint(
 
 @router.get("/jobs/{job_id}")
 @limiter.limit("120/minute")
-def get_status(request: Request, job_id: str) -> dict:
+def get_status(request: Request, job_id: str, current_user: dict = Depends(get_current_user)) -> dict:
     """Return current status and progress of a job."""
     validate_job_id(job_id)
     logger.debug("Status check for job %s", job_id)
@@ -150,7 +153,7 @@ def get_status(request: Request, job_id: str) -> dict:
 
 @router.get("/jobs/{job_id}/subtitles")
 @limiter.limit("30/minute")
-def get_srt(request: Request, job_id: str) -> FileResponse:
+def get_srt(request: Request, job_id: str, current_user: dict = Depends(get_current_user)) -> FileResponse:
     """Download the generated SRT subtitle file."""
     validate_job_id(job_id)
     job = get_job(job_id)

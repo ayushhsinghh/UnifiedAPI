@@ -22,6 +22,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
+from starlette.middleware.sessions import SessionMiddleware
 
 from commons import limiter
 from configs.config import get_config
@@ -56,6 +57,11 @@ app.add_middleware(
     allow_methods=cfg.CORS_METHODS,
     allow_headers=cfg.CORS_HEADERS,
 )
+app.add_middleware(
+    SessionMiddleware, 
+    secret_key=cfg.JWT_SECRET_KEY, 
+    max_age=3600  # 1 hour
+)
 
 # ── Directories ──────────────────────────────────────────────────────────
 os.makedirs(cfg.UPLOAD_DIR, exist_ok=True)
@@ -77,7 +83,9 @@ except Exception as exc:
 from src.routes.transcription_routes import router as transcription_router  # noqa: E402
 from src.routes.game_routes import router as game_router  # noqa: E402
 from src.routes.admin_routes import router as admin_router  # noqa: E402
+from src.routes.auth_routes import router as auth_router  # noqa: E402
 
+app.include_router(auth_router)
 app.include_router(transcription_router)
 app.include_router(game_router)
 app.include_router(admin_router)

@@ -30,6 +30,15 @@ DATABASE_NAME = "video_transcriber"
 JOBS_COLLECTION = "jobs"
 GAME_SESSIONS_COLLECTION = "game_sessions"
 GAME_PLAYERS_COLLECTION = "game_players"
+USERS_COLLECTION = "users"
+
+# Authentication & Security
+JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "fallback-secret-key-change-in-production")
+JWT_ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24 hours
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
+GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
 
 # File storage
 UPLOAD_DIR = "/mnt/extra/uploads"
@@ -44,7 +53,7 @@ ALLOWED_EXTENSIONS = frozenset({
     ".mp3", ".wav", ".aac", ".ogg", ".flac", ".m4a",
 })
 
-CORS_METHODS = ["GET", "POST", "DELETE", "OPTIONS"]
+CORS_METHODS = ["GET", "POST", "DELETE", "OPTIONS", "PUT", "PATCH"]
 CORS_HEADERS = [
     "Accept",
     "Accept-Language",

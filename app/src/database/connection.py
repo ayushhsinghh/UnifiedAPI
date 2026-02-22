@@ -75,6 +75,9 @@ class DatabaseManager:
         db[cfg.JOBS_COLLECTION].create_index("job_id", unique=True)
         db[cfg.JOBS_COLLECTION].create_index("created_at")
 
+        # User indexes
+        db[cfg.USERS_COLLECTION].create_index("email", unique=True)
+
         # Game session indexes
         db[cfg.GAME_SESSIONS_COLLECTION].create_index(
             "session_id", unique=True
