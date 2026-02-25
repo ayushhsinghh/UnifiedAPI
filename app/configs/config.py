@@ -46,7 +46,7 @@ OUTPUT_DIR = "/mnt/extra/outputs"
 
 # Security
 ADMIN_API_KEY = os.getenv("ADMIN_API_KEY", "change-me-in-production")
-MAX_UPLOAD_SIZE = 5 * 1024 * 1024 * 1024  # 5 GB
+MAX_UPLOAD_SIZE = 6 * 1024 * 1024 * 1024  # 6 GB
 
 ALLOWED_EXTENSIONS = frozenset({
     ".mp4", ".mkv", ".avi", ".mov", ".webm", ".flv", ".wmv",

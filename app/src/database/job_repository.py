@@ -20,15 +20,17 @@ cfg = get_config()
 # ── Create ───────────────────────────────────────────────────────────────
 
 
-def create_job(job_id: str, job_data: Dict) -> Dict:
+def create_job(job_id: str, user_email: str, job_data: Dict) -> Dict:
     """Insert a new transcription job document."""
     db = get_db()
     job_document = {
         "job_id": job_id,
+        "user_email": user_email,
         "status": job_data["status"],
         "video": job_data["video"],
         "audio": job_data["audio"],
         "srt": job_data["srt"],
+        "original_filename": job_data.get("original_filename", ""),
         "translate": job_data.get("translate", False),
         "language": job_data.get("language"),
         "model": job_data.get("model", "medium"),
@@ -48,11 +50,15 @@ def create_job(job_id: str, job_data: Dict) -> Dict:
 # ── Read ─────────────────────────────────────────────────────────────────
 
 
-def get_job(job_id: str) -> Optional[Dict]:
-    """Retrieve a single job by its ID."""
+def get_job(job_id: str, user_email: Optional[str] = None) -> Optional[Dict]:
+    """Retrieve a single job by its ID, optionally enforcing ownership."""
     try:
         db = get_db()
-        job = db[cfg.JOBS_COLLECTION].find_one({"job_id": job_id})
+        query = {"job_id": job_id}
+        if user_email:
+            query["user_email"] = user_email
+            
+        job = db[cfg.JOBS_COLLECTION].find_one(query)
         if job:
             job.pop("_id", None)
             logger.debug("Job %s retrieved from MongoDB", job_id)
@@ -66,11 +72,14 @@ def get_job(job_id: str) -> Optional[Dict]:
         return None
 
 
-def get_all_jobs(status: Optional[str] = None) -> List[Dict]:
-    """Return all jobs, optionally filtered by status."""
+def get_all_jobs(user_email: str, status: Optional[str] = None) -> List[Dict]:
+    """Return all jobs for a specific user, optionally filtered by status."""
     try:
         db = get_db()
-        query = {} if status is None else {"status": status}
+        query = {"user_email": user_email}
+        if status is not None:
+            query["status"] = status
+            
         jobs = list(
             db[cfg.JOBS_COLLECTION].find(query).sort("created_at", -1)
         )
@@ -140,6 +149,36 @@ def update_job_progress(
         return False
 
 
+def update_job_total_segments(job_id: str, total_segments: int) -> bool:
+    """Set the total number of segments/chunks for a running job."""
+    try:
+        db = get_db()
+        result = db[cfg.JOBS_COLLECTION].update_one(
+            {"job_id": job_id},
+            {
+                "$set": {
+                    "total_segments": total_segments,
+                    "updated_at": datetime.utcnow(),
+                }
+            },
+        )
+        if result.modified_count > 0:
+            logger.info(
+                "Job %s total_segments set to %d", job_id, total_segments
+            )
+        else:
+            logger.warning(
+                "Job %s total_segments update failed — no match", job_id
+            )
+        return result.modified_count > 0
+    except Exception as exc:
+        logger.error(
+            "Job %s total_segments update error: %s",
+            job_id, exc, exc_info=True,
+        )
+        return False
+
+
 def update_job_error(job_id: str, error: str) -> bool:
     """Mark a job as errored with a descriptive message."""
     try:
@@ -197,11 +236,15 @@ def update_job_completion(job_id: str, detected_language: str) -> bool:
 # ── Delete ───────────────────────────────────────────────────────────────
 
 
-def delete_job(job_id: str) -> bool:
-    """Remove a job document from the database."""
+def delete_job(job_id: str, user_email: Optional[str] = None) -> bool:
+    """Remove a job document from the database, optionally enforcing ownership."""
     try:
         db = get_db()
-        result = db[cfg.JOBS_COLLECTION].delete_one({"job_id": job_id})
+        query = {"job_id": job_id}
+        if user_email:
+            query["user_email"] = user_email
+            
+        result = db[cfg.JOBS_COLLECTION].delete_one(query)
         if result.deleted_count > 0:
             logger.info("Job %s deleted from MongoDB", job_id)
             return True

@@ -102,13 +102,15 @@ async def create_job_endpoint(
             "video": video_path,
             "audio": audio_path,
             "srt": srt_path,
+            "original_filename": file.filename,
             "translate": translate_bool,
             "language": language_str,
             "model": model_str,
         }
 
-        create_job(job_id, job_data)
-        logger.debug("Job %s initialised in MongoDB (PENDING)", job_id)
+        user_email = current_user["email"]
+        create_job(job_id, user_email, job_data)
+        logger.debug("Job %s initialised in MongoDB (PENDING) for user %s", job_id, user_email)
 
         background_tasks.add_task(transcribe_job, job_id)
         logger.info("Background task queued for job %s", job_id)
@@ -130,9 +132,9 @@ def get_status(request: Request, job_id: str, current_user: dict = Depends(get_c
     """Return current status and progress of a job."""
     validate_job_id(job_id)
     logger.debug("Status check for job %s", job_id)
-    job = get_job(job_id)
+    job = get_job(job_id, user_email=current_user["email"])
     if not job:
-        logger.warning("Job %s not found", job_id)
+        logger.warning("Job %s not found for user %s", job_id, current_user["email"])
         raise HTTPException(status_code=404, detail="Job not found")
 
     return {
@@ -156,9 +158,9 @@ def get_status(request: Request, job_id: str, current_user: dict = Depends(get_c
 def get_srt(request: Request, job_id: str, current_user: dict = Depends(get_current_user)) -> FileResponse:
     """Download the generated SRT subtitle file."""
     validate_job_id(job_id)
-    job = get_job(job_id)
+    job = get_job(job_id, user_email=current_user["email"])
     if not job or job["status"] != JobStatus.DONE:
-        raise HTTPException(status_code=404, detail="Subtitles not ready")
+        raise HTTPException(status_code=404, detail="Subtitles not ready or job not found")
 
     logger.info("Subtitle file retrieved for job %s", job_id)
     return FileResponse(
@@ -173,10 +175,10 @@ def get_srt(request: Request, job_id: str, current_user: dict = Depends(get_curr
 
 @router.get("/jobs")
 @limiter.limit("60/minute")
-def list_jobs(request: Request, status: str | None = None) -> dict:
-    """List all jobs, optionally filtered by status."""
-    logger.debug("Listing jobs with status filter: %s", status)
-    jobs_list = get_all_jobs(status)
+def list_jobs(request: Request, status: str | None = None, current_user: dict = Depends(get_current_user)) -> dict:
+    """List all jobs for the currently authenticated user, optionally filtered by status."""
+    logger.debug("Listing jobs with status filter: %s for user %s", status, current_user["email"])
+    jobs_list = get_all_jobs(user_email=current_user["email"], status=status)
     return {"jobs": jobs_list, "total": len(jobs_list)}
 
 
@@ -185,16 +187,16 @@ def list_jobs(request: Request, status: str | None = None) -> dict:
 
 @router.delete("/jobs/{job_id}")
 @limiter.limit("10/minute")
-def delete_job_endpoint(request: Request, job_id: str) -> dict:
-    """Delete a job by ID."""
+def delete_job_endpoint(request: Request, job_id: str, current_user: dict = Depends(get_current_user)) -> dict:
+    """Delete a job by ID, ensuring ownership."""
     validate_job_id(job_id)
-    logger.info("Deleting job %s", job_id)
-    job = get_job(job_id)
+    logger.info("Deleting job %s for user %s", job_id, current_user["email"])
+    job = get_job(job_id, user_email=current_user["email"])
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
 
     try:
-        success = delete_job(job_id)
+        success = delete_job(job_id, user_email=current_user["email"])
         if success:
             logger.info("Job %s deleted successfully", job_id)
             return {

@@ -84,11 +84,13 @@ from src.routes.transcription_routes import router as transcription_router  # no
 from src.routes.game_routes import router as game_router  # noqa: E402
 from src.routes.admin_routes import router as admin_router  # noqa: E402
 from src.routes.auth_routes import router as auth_router  # noqa: E402
+from src.routes.riva_routes import router as riva_router  # noqa: E402
 
 app.include_router(auth_router)
 app.include_router(transcription_router)
 app.include_router(game_router)
 app.include_router(admin_router)
+app.include_router(riva_router)
 
 # ── Static Files ─────────────────────────────────────────────────────────
 _base_dir = os.path.dirname(__file__)
