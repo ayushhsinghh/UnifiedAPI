@@ -1,9 +1,9 @@
 import logging
 from typing import Any, Dict
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, JSONResponse
 from authlib.integrations.starlette_client import OAuth, OAuthError
 
 from configs.config import get_config
@@ -66,7 +66,18 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()) -> 
         )
         
     access_token = create_access_token(data={"sub": user["email"]})
-    return {"access_token": access_token, "token_type": "bearer"}
+    
+    response = JSONResponse(content={"message": "Successfully logged in", "email": user["email"]})
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        secure=True, # Must be true for samesite=none
+        samesite="none",
+        domain=".ayush.ltd" if cfg.ENVIRONMENT == "production" else None,
+        max_age=cfg.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+    )
+    return response
 
 
 # ── Google OAuth2 Routes ─────────────────────────────────────────────────
@@ -114,9 +125,20 @@ async def google_auth_callback(request: Request):
         
     access_token = create_access_token(data={"sub": email})
     
-    # Return a redirect response to the frontend with the token as a query parameter
-    frontend_redirect_url = f"{cfg.FRONTEND_URL}/?token={access_token}&email={email}"
-    return RedirectResponse(url=frontend_redirect_url)
+    # Return a redirect response to the frontend without the token in the URL
+    frontend_redirect_url = f"{cfg.FRONTEND_URL}/?email={email}"
+    response = RedirectResponse(url=frontend_redirect_url)
+    
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        secure=True,
+        samesite="none",
+        domain=".ayush.ltd" if cfg.ENVIRONMENT == "production" else None,
+        max_age=cfg.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+    )
+    return response
 
 
 # ── Common Routes ────────────────────────────────────────────────────────
@@ -128,3 +150,16 @@ async def get_current_logged_in_user(current_user: Dict[str, Any] = Depends(get_
     user_data = current_user.copy()
     user_data.pop("hashed_password", None)
     return user_data
+
+@router.post("/logout")
+async def logout():
+    """Clear the HttpOnly authentication cookie."""
+    response = JSONResponse(content={"message": "Logged out successfully"})
+    response.delete_cookie(
+        key="access_token",
+        httponly=True,
+        secure=True,
+        samesite="none",
+        domain=".ayush.ltd" if cfg.ENVIRONMENT == "production" else None,
+    )
+    return response

@@ -2,7 +2,7 @@ import logging
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -43,14 +43,24 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     return encoded_jwt
 
 
-async def get_current_user(token: str = Depends(oauth2_scheme)) -> Dict[str, Any]:
-    """Dependency to retrieve the current user from the JWT token."""
+async def get_current_user(request: Request) -> Dict[str, Any]:
+    """Dependency to retrieve the current user from the HttpOnly cookie or Authorization header."""
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
     
+    # Try fetching from cookie first, fallback to Authorization header
+    token = request.cookies.get("access_token")
+    if not token:
+        authorization = request.headers.get("Authorization")
+        if authorization and authorization.startswith("Bearer "):
+            token = authorization.split(" ")[1]
+            
+    if not token:
+        raise credentials_exception
+
     try:
         payload = jwt.decode(token, cfg.JWT_SECRET_KEY, algorithms=[cfg.JWT_ALGORITHM])
         email: str = payload.get("sub")

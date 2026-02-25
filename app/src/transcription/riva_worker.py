@@ -14,6 +14,7 @@ import tempfile
 import grpc
 import riva.client
 
+from configs.config import get_config
 from src.database.job_repository import (
     get_job,
     update_job_completion,
@@ -35,6 +36,8 @@ NVIDIA_API_KEY = os.getenv("NVIDIA_API_KEY", "")
 
 # gRPC message size — large enough for full audio files (500 MB)
 MAX_GRPC_MESSAGE_LENGTH = 1024 * 1024 * 1024
+
+cfg = get_config()
 
 
 # ── Audio helpers ────────────────────────────────────────────────────────
@@ -162,14 +165,18 @@ def riva_transcribe_job(
         logger.error("Job %s not found in database", job_id)
         return
 
+    video_path = f"{cfg.UPLOAD_DIR}/{job['video']}"
+    audio_path = f"{cfg.UPLOAD_DIR}/{job['audio']}"
+    srt_path = f"{cfg.OUTPUT_DIR}/{job['srt']}"
+
     logger.info("Starting Riva transcription for job %s", job_id)
     update_job_status(job_id, JobStatus.RUNNING)
 
     try:
         # Step 1: Extract audio
-        extract_audio(job["video"], job["audio"])
-        audio_duration = get_audio_duration(job["audio"])
-        file_size_mb = os.path.getsize(job["audio"]) / (1024 * 1024)
+        extract_audio(video_path, audio_path)
+        audio_duration = get_audio_duration(audio_path)
+        file_size_mb = os.path.getsize(audio_path) / (1024 * 1024)
         logger.info(
             "Riva job %s — audio: %.1fs (%.1f min), %.1f MB",
             job_id, audio_duration, audio_duration / 60, file_size_mb,
@@ -178,17 +185,17 @@ def riva_transcribe_job(
         # Step 2: Build Riva client and config
         asr_service = _build_riva_service()
         config = _build_riva_config(
-            language=language or "en-US",
+            language=language or "ja",
             translate=translate,
         )
         # Set sample_rate_hertz and audio_channel_count from the actual WAV file
-        riva.client.add_audio_file_specs_to_config(config, job["audio"])
+        riva.client.add_audio_file_specs_to_config(config, audio_path)
 
         # Step 3: Send full audio to Riva
         update_job_progress(job_id, 0, 10)
         logger.info("Job %s — Sending %.1f MB to Riva...", job_id, file_size_mb)
 
-        with open(job["audio"], "rb") as fh:
+        with open(audio_path, "rb") as fh:
             audio_data = fh.read()
 
         response = asr_service.offline_recognize(audio_data, config)
@@ -214,7 +221,7 @@ def riva_transcribe_job(
         entries = extract_srt_entries(response, time_offset_seconds=0.0)
 
         if len(entries) > 0:
-            write_combined_srt(entries, job["srt"])
+            write_combined_srt(entries, srt_path)
             logger.info(
                 "Job %s — SRT written: %d entries",
                 job_id, len(entries),

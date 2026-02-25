@@ -69,13 +69,16 @@ async def create_riva_job_endpoint(
         job_id, file.filename, current_user["email"],
     )
 
-    video_path = f"{cfg.UPLOAD_DIR}/{job_id}_{file.filename}"
-    audio_path = f"{cfg.UPLOAD_DIR}/{job_id}.wav"
-    srt_path = f"{cfg.OUTPUT_DIR}/{job_id}.srt"
+    video_filename = f"{job_id}_{file.filename}"
+    audio_filename = f"{job_id}.wav"
+    srt_filename = f"{job_id}.srt"
+
+    video_path = f"{cfg.UPLOAD_DIR}/{video_filename}"
+    audio_path = f"{cfg.UPLOAD_DIR}/{audio_filename}"
+    srt_path = f"{cfg.OUTPUT_DIR}/{srt_filename}"
 
     translate_bool = translate.lower() in ("on", "true", "1", "yes")
-    # language_str = language if language else "ja-JP"
-    language_str = "ja"
+    language_str = language if language else "ja"
 
     logger.info(
         "Riva job config — language: %s, translate: %s",
@@ -107,13 +110,13 @@ async def create_riva_job_endpoint(
 
         job_data = {
             "status": JobStatus.PENDING,
-            "video": video_path,
-            "audio": audio_path,
-            "srt": srt_path,
+            "video": video_filename,
+            "audio": audio_filename,
+            "srt": srt_filename,
             "original_filename": file.filename,
             "translate": translate_bool,
             "language": language_str,
-            "model": "riva",
+            "model": "online",
         }
 
         user_email = current_user["email"]

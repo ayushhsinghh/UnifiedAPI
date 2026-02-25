@@ -10,6 +10,7 @@ import subprocess
 
 from faster_whisper import WhisperModel
 
+from configs.config import get_config
 from src.database.job_repository import (
     get_job,
     update_job_completion,
@@ -20,6 +21,7 @@ from src.database.job_repository import (
 from src.transcription.models import JobStatus
 
 logger = logging.getLogger(__name__)
+cfg = get_config()
 
 # ── Model cache ──────────────────────────────────────────────────────────
 _model_cache: dict = {}
@@ -116,10 +118,14 @@ def transcribe_job(job_id: str) -> None:
     logger.info("Starting transcription for job %s", job_id)
     update_job_status(job_id, JobStatus.RUNNING)
 
-    try:
-        extract_audio(job["video"], job["audio"])
+    video_path = f"{cfg.UPLOAD_DIR}/{job['video']}"
+    audio_path = f"{cfg.UPLOAD_DIR}/{job['audio']}"
+    srt_path = f"{cfg.OUTPUT_DIR}/{job['srt']}"
 
-        audio_duration = get_audio_duration(job["audio"])
+    try:
+        extract_audio(video_path, audio_path)
+
+        audio_duration = get_audio_duration(audio_path)
 
         model_name = job.get("model", "base")
         logger.info(
@@ -129,7 +135,7 @@ def transcribe_job(job_id: str) -> None:
 
         model = get_model(model_name)
         segments, info = model.transcribe(
-            job["audio"],
+            audio_path,
             language=job.get("language"),
             task="translate" if job.get("translate") else "transcribe",
             beam_size=5,
@@ -141,7 +147,7 @@ def transcribe_job(job_id: str) -> None:
         )
 
         segment_count = _write_srt(
-            job_id, job["srt"], segments, audio_duration
+            job_id, srt_path, segments, audio_duration
         )
 
         logger.debug("SRT written with %d segments", segment_count)

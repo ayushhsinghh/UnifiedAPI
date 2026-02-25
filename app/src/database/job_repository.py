@@ -33,7 +33,7 @@ def create_job(job_id: str, user_email: str, job_data: Dict) -> Dict:
         "original_filename": job_data.get("original_filename", ""),
         "translate": job_data.get("translate", False),
         "language": job_data.get("language"),
-        "model": job_data.get("model", "medium"),
+        "model": job_data.get("model", "online"),
         "detected_language": None,
         "total_segments": 0,
         "completed_segments": 0,

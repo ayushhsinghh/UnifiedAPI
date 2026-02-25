@@ -59,9 +59,13 @@ async def create_job_endpoint(
     job_id = generate_job_id()
     logger.info("Creating new job %s for file: %s", job_id, file.filename)
 
-    video_path = f"{cfg.UPLOAD_DIR}/{job_id}_{file.filename}"
-    audio_path = f"{cfg.UPLOAD_DIR}/{job_id}.wav"
-    srt_path = f"{cfg.OUTPUT_DIR}/{job_id}.srt"
+    video_filename = f"{job_id}_{file.filename}"
+    audio_filename = f"{job_id}.wav"
+    srt_filename = f"{job_id}.srt"
+
+    video_path = f"{cfg.UPLOAD_DIR}/{video_filename}"
+    audio_path = f"{cfg.UPLOAD_DIR}/{audio_filename}"
+    srt_path = f"{cfg.OUTPUT_DIR}/{srt_filename}"
 
     translate_bool = translate.lower() in ("on", "true", "1", "yes")
     language_str = language if language else None
@@ -99,9 +103,9 @@ async def create_job_endpoint(
 
         job_data = {
             "status": JobStatus.PENDING,
-            "video": video_path,
-            "audio": audio_path,
-            "srt": srt_path,
+            "video": video_filename,
+            "audio": audio_filename,
+            "srt": srt_filename,
             "original_filename": file.filename,
             "translate": translate_bool,
             "language": language_str,
@@ -163,8 +167,9 @@ def get_srt(request: Request, job_id: str, current_user: dict = Depends(get_curr
         raise HTTPException(status_code=404, detail="Subtitles not ready or job not found")
 
     logger.info("Subtitle file retrieved for job %s", job_id)
+    srt_file_path = f"{cfg.OUTPUT_DIR}/{job['srt']}"
     return FileResponse(
-        job["srt"],
+        srt_file_path,
         media_type="application/x-subrip",
         filename="subtitles.srt",
     )
