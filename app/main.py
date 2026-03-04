@@ -212,6 +212,6 @@ if __name__ == "__main__":
         log_level="info",
         ssl_certfile=args.cert_file,
         ssl_keyfile=args.key_file,
-        limit_concurrency=1000,
-        limit_max_requests=10000,
+        limit_concurrency=200,
+        limit_max_requests=5000,
     )
