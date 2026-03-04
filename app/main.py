@@ -28,6 +28,8 @@ from commons import limiter
 from configs.config import get_config
 from logging_config import setup_logging
 from security import RequestIdMiddleware, SecurityHeadersMiddleware
+from telemetry import setup_telemetry
+from logging_loki import LokiQueueHandler
 
 # ── Logging ──────────────────────────────────────────────────────────────
 setup_logging()
@@ -45,6 +47,17 @@ app = FastAPI(
 )
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# ── Telemetry ─────────────────────────────────────────────────────────────
+# Must be called BEFORE add_middleware so the instrumentor can wrap the full
+# ASGI stack. Returns a shutdown callable to flush providers on exit.
+_otel_shutdown = setup_telemetry(app)
+
+
+@app.on_event("shutdown")
+def _on_app_shutdown() -> None:
+    """Flush and close OpenTelemetry providers on graceful shutdown."""
+    _otel_shutdown()
 
 # ── Middleware Stack (outermost first) ───────────────────────────────────
 app.add_middleware(RequestIdMiddleware)
@@ -64,8 +77,15 @@ app.add_middleware(
 )
 
 # ── Directories ──────────────────────────────────────────────────────────
-os.makedirs(cfg.UPLOAD_DIR, exist_ok=True)
-os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
+for _dir in (cfg.UPLOAD_DIR, cfg.OUTPUT_DIR):
+    try:
+        os.makedirs(_dir, exist_ok=True)
+    except PermissionError:
+        logger.warning(
+            "Cannot create directory '%s': permission denied. "
+            "Ensure the mount point exists and is writable before uploading files.",
+            _dir,
+        )
 
 # ── Database ─────────────────────────────────────────────────────────────
 try:
@@ -85,12 +105,14 @@ from src.routes.game_routes import router as game_router  # noqa: E402
 from src.routes.admin_routes import router as admin_router  # noqa: E402
 from src.routes.auth_routes import router as auth_router  # noqa: E402
 from src.routes.riva_routes import router as riva_router  # noqa: E402
+from src.routes.model_routes import router as model_router  # noqa: E402
 
 app.include_router(auth_router)
 app.include_router(transcription_router)
 app.include_router(game_router)
 app.include_router(admin_router)
 app.include_router(riva_router)
+app.include_router(model_router)
 
 # ── Static Files ─────────────────────────────────────────────────────────
 _base_dir = os.path.dirname(__file__)

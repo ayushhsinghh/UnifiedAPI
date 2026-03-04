@@ -41,7 +41,7 @@ router = APIRouter(prefix="/api/riva", tags=["riva-transcription"])
 
 
 @router.post("/jobs")
-@limiter.limit("5/hour")
+@limiter.limit("10/hour")
 async def create_riva_job_endpoint(
     request: Request,
     file: UploadFile = File(...),

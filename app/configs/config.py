@@ -24,8 +24,8 @@ ENVIRONMENT = os.getenv("ENVIRONMENT", "production")
 
 _CREDS = os.getenv("CREDS", "")
 
-# Database
-MONGODB_URL = f"mongodb://admin:{_CREDS}@127.0.0.1:27017/video_transcriber?authSource=admin"
+
+MONGODB_URL = f"mongodb+srv://ayush-admin:{_CREDS}@ayush-api.vq10ryu.mongodb.net/?appName=ayush-api"
 DATABASE_NAME = "video_transcriber"
 JOBS_COLLECTION = "jobs"
 GAME_SESSIONS_COLLECTION = "game_sessions"
@@ -43,9 +43,11 @@ FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
 # File storage
 UPLOAD_DIR = "/mnt/extra/uploads"
 OUTPUT_DIR = "/mnt/extra/outputs"
+MODELS_DIR = "/home/ubuntu/models"
 
 # Security
 ADMIN_API_KEY = os.getenv("ADMIN_API_KEY", "change-me-in-production")
+MODELS_API_KEY = os.getenv("MODELS_API_KEY", "change-me-in-production")
 MAX_UPLOAD_SIZE = 6 * 1024 * 1024 * 1024  # 6 GB
 
 ALLOWED_EXTENSIONS = frozenset({
@@ -62,6 +64,7 @@ CORS_HEADERS = [
     "Origin",
     "X-Requested-With",
     "X-Admin-Key",
+    "X-Api-Key",
     "X-Request-ID",
 ]
 
@@ -87,6 +90,33 @@ AVAILABLE_GAME_WINDOW_MINUTES = 10
 # Whisper defaults
 WHISPER_DEFAULT_MODEL = "medium"
 WHISPER_ALLOWED_MODELS = frozenset({"tiny", "base", "small", "medium", "large-v3"})
+
+# Telemetry — Oracle APM (OpenTelemetry)
+# Set OTEL_APM_ENDPOINT + OTEL_APM_DATA_KEY to enable remote export.
+# Leave them empty for console-only (local dev / CI).
+#
+# OTEL_APM_ENDPOINT  → base data-upload URL from your APM domain details page
+#   e.g. https://<ID>.apm-agt.ap-mumbai-1.oci.oraclecloud.com
+# OTEL_APM_DATA_KEY  → private data key (required for traces & metrics)
+# OTEL_APM_USE_PRIVATE_KEY → "true" (default) sends traces via /private/ path;
+#                            "false" uses /public/ path instead
+OTEL_SERVICE_NAME = os.getenv("OTEL_SERVICE_NAME", "video-transcriber")
+OTEL_APM_ENDPOINT = os.getenv("OTEL_APM_ENDPOINT", "")           # empty = disabled
+OTEL_APM_DATA_KEY = os.getenv("OTEL_APM_DATA_KEY", "")            # private data key
+OTEL_APM_USE_PRIVATE_KEY = os.getenv("OTEL_APM_USE_PRIVATE_KEY", "true")  # traces key tier
+OTEL_METRIC_EXPORT_INTERVAL_MS = int(os.getenv("OTEL_METRIC_EXPORT_INTERVAL_MS", "60000"))  # 60 s
+OTEL_EXCLUDED_URLS = os.getenv("OTEL_EXCLUDED_URLS", "/health,/metrics,/openapi.json")
+
+# ── Generic OTLP Exporter (Grafana Tempo, Jaeger, SigNoz, etc.) ──────────
+# Standard OTLP/HTTP — appends /v1/traces and /v1/metrics automatically.
+OTLP_ENDPOINT = os.getenv("OTLP_ENDPOINT", "")         # e.g. https://otlp-gateway-prod-xxx.grafana.net/otlp
+OTLP_AUTH_HEADER = os.getenv("OTLP_AUTH_HEADER", "")    # e.g. "Basic base64encodedcreds" or "Bearer token"
+
+# ── Grafana Loki Logging ──────────────────────────────────────────────────
+LOKI_ENDPOINT = os.getenv("LOKI_ENDPOINT", "")
+LOKI_USERNAME = os.getenv("LOKI_USERNAME", "")
+LOKI_PASSWORD = os.getenv("LOKI_PASSWORD", "")
+LOKI_TAGS = {"environment": ENVIRONMENT, "service": "video-transcriber"}
 
 
 # ── Config loader ────────────────────────────────────────────────────────

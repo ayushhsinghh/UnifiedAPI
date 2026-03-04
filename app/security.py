@@ -147,3 +147,19 @@ def require_admin_key(request: Request):
         raise HTTPException(
             status_code=403, detail="Forbidden: invalid admin key"
         )
+
+
+def require_models_api_key(request: Request):
+    """
+    Dependency that checks for a valid X-Api-Key header.
+    Raises 403 if missing or incorrect.
+    """
+    provided_key = request.headers.get("X-Api-Key", "")
+    if not provided_key or provided_key != cfg.MODELS_API_KEY:
+        logger.warning(
+            "Unauthorized models API access attempt from %s",
+            request.client.host,
+        )
+        raise HTTPException(
+            status_code=403, detail="Forbidden: invalid API key"
+        )
