@@ -297,7 +297,7 @@
             border-radius: 12px;
             padding: 20px;
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
+            grid-template-columns: repeat(6, 1fr);
             gap: 12px;
         }
 
@@ -509,9 +509,11 @@
             <span class="nav-logo">APIs</span>
             <div class="nav-tabs">
                 <button class="tab-btn active" data-tab="home" onclick="switchTab('home')">Home</button>
+                <button class="tab-btn" data-tab="auth" onclick="switchTab('auth')">Auth API</button>
                 <button class="tab-btn" data-tab="transcriber" onclick="switchTab('transcriber')">Transcriber
                     API</button>
                 <button class="tab-btn" data-tab="game" onclick="switchTab('game')">Game API</button>
+                <button class="tab-btn" data-tab="models" onclick="switchTab('models')">Models API</button>
             </div>
         </nav>
 
@@ -533,12 +535,12 @@
             <div class="services-grid">
                 <div class="service-card">
                     <h3>Video Transcriber</h3>
-                    <p>AI-powered subtitle generation using OpenAI Whisper</p>
+                    <p>AI-powered subtitle generation using OpenAI Whisper & NVIDIA Riva</p>
                     <ul class="feature-list">
                         <li>Multi-language support (57+ languages)</li>
                         <li>Real-time transcription progress</li>
                         <li>SRT subtitle export</li>
-                        <li>Multiple quality levels</li>
+                        <li>Whisper + NVIDIA Riva engines</li>
                     </ul>
                     <div class="card-actions">
                         <button class="btn btn-accent" onclick="switchTab('transcriber')">View API</button>
@@ -560,6 +562,34 @@
                         <a class="btn btn-green" href="https://game.ayush.ltd" target="_blank">Play Game</a>
                     </div>
                 </div>
+
+                <div class="service-card">
+                    <h3>Authentication</h3>
+                    <p>Secure user auth with email/password and Google OAuth2</p>
+                    <ul class="feature-list">
+                        <li>JWT cookie-based sessions</li>
+                        <li>Google OAuth2 sign-in</li>
+                        <li>Email/password registration</li>
+                        <li>Secure HttpOnly cookies</li>
+                    </ul>
+                    <div class="card-actions">
+                        <button class="btn btn-accent" onclick="switchTab('auth')">View API</button>
+                    </div>
+                </div>
+
+                <div class="service-card">
+                    <h3>Model Registry</h3>
+                    <p>Browse and download AI model files via authenticated API</p>
+                    <ul class="feature-list">
+                        <li>Model metadata & checksums</li>
+                        <li>Streaming file downloads</li>
+                        <li>API key authentication</li>
+                        <li>Auto-scanned model directory</li>
+                    </ul>
+                    <div class="card-actions">
+                        <button class="btn btn-accent" onclick="switchTab('models')">View API</button>
+                    </div>
+                </div>
             </div>
 
             <div class="tech-strip">
@@ -576,12 +606,16 @@
                     <div class="tech-val">Whisper</div>
                 </div>
                 <div class="tech-item">
+                    <div class="tech-label">Speech</div>
+                    <div class="tech-val">Riva</div>
+                </div>
+                <div class="tech-item">
                     <div class="tech-label">Topics</div>
                     <div class="tech-val">Gemini</div>
                 </div>
                 <div class="tech-item">
-                    <div class="tech-label">Capacity</div>
-                    <div class="tech-val">1000+</div>
+                    <div class="tech-label">Auth</div>
+                    <div class="tech-val">OAuth2</div>
                 </div>
             </div>
         </div>
@@ -662,6 +696,27 @@
                         <code>medium</code>, <code>large-v3</code> (default: medium)
                     </p>
                 </div>
+
+                <div class="section-title">NVIDIA Riva Endpoint</div>
+
+                <div class="endpoint-block">
+                    <h4>Create Riva Transcription Job</h4>
+                    <div class="endpoint-line">
+                        <span class="method-badge post">POST</span>
+                        <span class="endpoint-path">/api/riva/jobs</span>
+                    </div>
+                    <p class="endpoint-desc">Upload a video/audio file and queue transcription via NVIDIA Riva. Supports
+                        large files with automatic chunking.</p>
+                </div>
+
+                <div class="info-box">
+                    <p><strong>file</strong> — Video or audio file to transcribe (required)</p>
+                    <p><strong>language</strong> — Source language code (default: <code>ja</code>)</p>
+                    <p><strong>translate</strong> — <code>on</code> or <code>off</code> — translate to English (default:
+                        on)</p>
+                </div>
+                <p style="color:#6B7280;font-size:0.8125rem;margin-top:8px;">Status, download, list, and delete reuse
+                    the standard <code>/api/jobs</code> endpoints above.</p>
             </div>
         </div>
 
@@ -808,6 +863,156 @@
 
                 <div style="margin-top:24px;">
                     <a href="https://game.ayush.ltd" target="_blank" class="btn btn-accent">Play Game Now →</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ AUTH API ═══ -->
+        <div class="panel" id="auth-panel">
+            <div class="docs-card">
+                <h2>Authentication API</h2>
+                <p class="subtitle">Secure user authentication with email/password and Google OAuth2</p>
+
+                <div class="section-title">How It Works</div>
+                <div class="info-box">
+                    <p>Authentication uses <strong>JWT tokens</strong> stored in <strong>HttpOnly cookies</strong>.
+                        After login, a secure cookie is set automatically&mdash;no need to manage tokens manually.</p>
+                    <p>Two flows are supported: <strong>email/password</strong> registration & login, and <strong>Google
+                            OAuth2</strong> single sign-on.</p>
+                </div>
+
+                <div class="section-title">Password Authentication</div>
+
+                <div class="endpoint-block">
+                    <h4>Register</h4>
+                    <div class="endpoint-line">
+                        <span class="method-badge post">POST</span>
+                        <span class="endpoint-path">/auth/register</span>
+                    </div>
+                    <p class="endpoint-desc">Create a new account with email and password. Uses OAuth2 form encoding.
+                    </p>
+                </div>
+
+                <div class="endpoint-block">
+                    <h4>Login</h4>
+                    <div class="endpoint-line">
+                        <span class="method-badge post">POST</span>
+                        <span class="endpoint-path">/auth/token</span>
+                    </div>
+                    <p class="endpoint-desc">Authenticate with email/password. Returns a JWT in a secure HttpOnly
+                        cookie.</p>
+                </div>
+
+                <div class="section-title">Google OAuth2</div>
+
+                <div class="endpoint-block">
+                    <h4>Start Google Login</h4>
+                    <div class="endpoint-line">
+                        <span class="method-badge get">GET</span>
+                        <span class="endpoint-path">/auth/google/login</span>
+                    </div>
+                    <p class="endpoint-desc">Redirects to the Google OAuth2 consent screen</p>
+                </div>
+
+                <div class="endpoint-block">
+                    <h4>Google Callback</h4>
+                    <div class="endpoint-line">
+                        <span class="method-badge get">GET</span>
+                        <span class="endpoint-path">/auth/google/callback</span>
+                    </div>
+                    <p class="endpoint-desc">Handles the OAuth2 callback, creates/updates user, sets JWT cookie, and
+                        redirects to the frontend</p>
+                </div>
+
+                <div class="section-title">Session Management</div>
+
+                <div class="endpoint-block">
+                    <h4>Get Current User</h4>
+                    <div class="endpoint-line">
+                        <span class="method-badge get">GET</span>
+                        <span class="endpoint-path">/auth/me</span>
+                    </div>
+                    <p class="endpoint-desc">Return the profile of the currently authenticated user</p>
+                </div>
+
+                <div class="endpoint-block">
+                    <h4>Logout</h4>
+                    <div class="endpoint-line">
+                        <span class="method-badge post">POST</span>
+                        <span class="endpoint-path">/auth/logout</span>
+                    </div>
+                    <p class="endpoint-desc">Clear the HttpOnly authentication cookie and end the session</p>
+                </div>
+
+                <div class="section-title">Request Format</div>
+                <div class="info-box">
+                    <p><strong>Register & Login</strong> use OAuth2 form data
+                        (<code>application/x-www-form-urlencoded</code>):</p>
+                    <p>&nbsp;&nbsp;<strong>username</strong> — User's email address</p>
+                    <p>&nbsp;&nbsp;<strong>password</strong> — User's password</p>
+                </div>
+
+                <div class="section-title">Auth Cookie Details</div>
+                <div class="info-box">
+                    <p><strong>Cookie name:</strong> <code>access_token</code></p>
+                    <p><strong>HttpOnly:</strong> Yes &mdash; not accessible via JavaScript</p>
+                    <p><strong>Secure:</strong> Yes &mdash; HTTPS only</p>
+                    <p><strong>SameSite:</strong> None &mdash; cross-origin supported</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ MODELS API ═══ -->
+        <div class="panel" id="models-panel">
+            <div class="docs-card">
+                <h2>Models API</h2>
+                <p class="subtitle">Browse and download AI model files from the server</p>
+
+                <div class="section-title">Authentication</div>
+                <div class="info-box">
+                    <p>All model endpoints require a valid <code>X-Api-Key</code> header. Contact the administrator to
+                        obtain an API key.</p>
+                </div>
+
+                <div class="section-title">Endpoints</div>
+
+                <div class="endpoint-block">
+                    <h4>List All Models</h4>
+                    <div class="endpoint-line">
+                        <span class="method-badge get">GET</span>
+                        <span class="endpoint-path">/api/models</span>
+                    </div>
+                    <p class="endpoint-desc">Return metadata for every available model file</p>
+                </div>
+
+                <div class="endpoint-block">
+                    <h4>Download Model</h4>
+                    <div class="endpoint-line">
+                        <span class="method-badge get">GET</span>
+                        <span class="endpoint-path">/api/models/download/{model_id}</span>
+                    </div>
+                    <p class="endpoint-desc">Stream a model file as a binary download</p>
+                </div>
+
+                <div class="section-title">Response Schema</div>
+                <div class="info-box">
+                    <p>Each model object includes:</p>
+                    <p><strong>id</strong> — Stable, URL-safe short ID (SHA-256 derived)</p>
+                    <p><strong>name</strong> — Human-readable model name</p>
+                    <p><strong>fileName</strong> — Original file name on disk</p>
+                    <p><strong>downloadUrl</strong> — Direct download path</p>
+                    <p><strong>sizeBytes</strong> — File size in bytes</p>
+                    <p><strong>lastModified</strong> — ISO 8601 timestamp (UTC)</p>
+                    <p><strong>checksum</strong> — SHA-256 hex digest for verification</p>
+                </div>
+
+                <div class="section-title">Example Request</div>
+                <pre>curl -H "X-Api-Key: YOUR_KEY" https://api.ayush.ltd/api/models</pre>
+
+                <div class="section-title">Rate Limits</div>
+                <div class="info-box">
+                    <p><strong>List models:</strong> 2 requests / minute</p>
+                    <p><strong>Download model:</strong> 5 requests / hour</p>
                 </div>
             </div>
         </div>
