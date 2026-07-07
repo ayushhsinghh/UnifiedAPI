@@ -64,7 +64,7 @@ def setup_logging() -> None:
     # We do this AFTER dictConfig because LokiQueueHandler requires 
     # an actual multiprocessing/threading Queue object which dictConfig 
     # struggles to instantiate correctly.
-    if cfg.LOKI_ENDPOINT:
+    if False: # cfg.LOKI_ENDPOINT disabled per user request
         import logging_loki
         import queue
         

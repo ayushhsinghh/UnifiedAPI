@@ -93,10 +93,9 @@ from opentelemetry import trace, metrics
 from opentelemetry.metrics import Observation
 from opentelemetry.sdk.resources import Resource, SERVICE_NAME, SERVICE_VERSION
 from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import (
-    ConsoleMetricExporter,
     PeriodicExportingMetricReader,
 )
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
@@ -442,18 +441,18 @@ def setup_telemetry(app: FastAPI) -> Callable[[], None]:
     resource = _build_resource()
 
     # ── Read config ───────────────────────────────────────────────────────
-    # Oracle APM
+    # Oracle APM (Disabled per user request to stop sending logs and metrics to OCI)
     apm_base: str = os.getenv("OTEL_APM_ENDPOINT", "").strip()
     apm_data_key: str = os.getenv("OTEL_APM_DATA_KEY", "").strip()
     use_private_for_traces: bool = (
         os.getenv("OTEL_APM_USE_PRIVATE_KEY", "true").lower() != "false"
     )
-    oracle_apm_enabled = bool(apm_base and apm_data_key)
+    oracle_apm_enabled = False
 
     # Generic OTLP
     otlp_endpoint: str = os.getenv("OTLP_ENDPOINT", "").strip()
     otlp_auth_header: str = os.getenv("OTLP_AUTH_HEADER", "").strip()
-    generic_otlp_enabled = bool(otlp_endpoint)
+    generic_otlp_enabled = False  # Disabled per user request
 
     # Shared
     export_interval_ms: int = int(
@@ -475,8 +474,9 @@ def setup_telemetry(app: FastAPI) -> Callable[[], None]:
     # ══════════════════════════════════════════════════════════════════════
     tracer_provider = TracerProvider(resource=resource)
 
-    # Console exporter — always on (visible in journalctl / stdout)
-    tracer_provider.add_span_processor(BatchSpanProcessor(ConsoleSpanExporter()))
+    # Console exporter removed — it was flooding syslog/gunicorn.log with
+    # multi-line JSON (31 GB in /var/log/syslog).  Remote exporters below
+    # are sufficient for observability.
 
     # --- Oracle APM trace exporter ---
     if oracle_apm_enabled:
@@ -529,12 +529,9 @@ def setup_telemetry(app: FastAPI) -> Callable[[], None]:
     # ══════════════════════════════════════════════════════════════════════
     #  METER PROVIDER
     # ══════════════════════════════════════════════════════════════════════
-    metric_readers = [
-        PeriodicExportingMetricReader(
-            ConsoleMetricExporter(),
-            export_interval_millis=export_interval_ms,
-        )
-    ]
+    metric_readers = []
+    # ConsoleMetricExporter removed — it was dumping verbose JSON metrics
+    # to stdout every 60 s, contributing to disk exhaustion.
 
     # --- Oracle APM metric exporter ---
     if oracle_apm_enabled:

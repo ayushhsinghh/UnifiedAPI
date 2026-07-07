@@ -41,7 +41,8 @@ class CreateGameRequest(BaseModel):
     )
     game_category: str = Field(
         ..., min_length=1, max_length=50,
-        description="Topic category for the game",
+        pattern=r"^[a-zA-Z0-9 _\-,]+$",
+        description="Topic category for the game (letters, numbers, spaces, hyphens, underscores, commas)",
     )
     max_players: int = Field(default=8, ge=3, le=20)
 

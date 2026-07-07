@@ -20,7 +20,7 @@ from pydantic import BaseModel
 
 from commons import limiter
 from configs.config import get_config
-from security import require_models_api_key
+from security import require_models_api_key, validate_model_id
 
 logger = logging.getLogger(__name__)
 
@@ -148,6 +148,7 @@ async def download_model(
     request: Request, model_id: str, _=Depends(require_models_api_key)
 ):
     """Stream a model file as a binary download."""
+    validate_model_id(model_id)  # reject non-hex-12 IDs before touching the filesystem
     result = _find_model_by_id(model_id)
     if result is None:
         raise HTTPException(status_code=404, detail="Model not found")

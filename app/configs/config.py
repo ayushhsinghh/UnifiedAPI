@@ -35,7 +35,9 @@ USERS_COLLECTION = "users"
 # Authentication & Security
 JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "fallback-secret-key-change-in-production")
 JWT_ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24 hours
+# Clamp token lifetime: minimum 5 minutes, maximum 24 hours
+_raw_expire = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", str(60 * 24)))
+ACCESS_TOKEN_EXPIRE_MINUTES = max(5, min(1440, _raw_expire))
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")

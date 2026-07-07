@@ -26,7 +26,7 @@ from fastapi.responses import FileResponse
 
 from commons import generate_job_id, limiter
 from configs.config import get_config
-from security import validate_file_extension, validate_job_id
+from security import validate_file_extension, validate_job_id, safe_error_response
 from src.auth.tokens import get_current_user
 from src.database.job_repository import create_job, delete_job, get_all_jobs, get_job
 from src.transcription.models import JobStatus

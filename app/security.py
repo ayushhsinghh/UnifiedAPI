@@ -26,6 +26,37 @@ PLAYER_NAME_PATTERN = re.compile(r"^[a-zA-Z0-9 _\-]{1,30}$")
 UUID_PATTERN = re.compile(
     r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
 )
+PLAYER_ID_PATTERN = re.compile(
+    r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+)
+# SHA-256 hex truncated to 12 chars (used as model ID)
+MODEL_ID_PATTERN = re.compile(r"^[0-9a-f]{12}$")
+
+# Default / fallback secret values that must never be used in production
+_INSECURE_DEFAULTS = {
+    "JWT_SECRET_KEY": "fallback-secret-key-change-in-production",
+    "ADMIN_API_KEY": "change-me-in-production",
+    "MODELS_API_KEY": "change-me-in-production",
+}
+
+
+# --------------- Startup Checks ---------------
+
+
+def check_insecure_defaults() -> None:
+    """
+    Emit loud WARNING logs if any secret config value is still set to its
+    default placeholder.  Call this once at application startup.
+    """
+    for attr, default_value in _INSECURE_DEFAULTS.items():
+        actual = getattr(cfg, attr, None)
+        if actual == default_value:
+            logger.warning(
+                "⚠️  SECURITY RISK: %s is set to the insecure default value "
+                "'%s'. Set the %s environment variable before deploying to "
+                "production.",
+                attr, default_value, attr,
+            )
 
 
 # --------------- Middlewares ---------------
@@ -36,21 +67,38 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next):
         response: Response = await call_next(request)
+
+        # Prevent MIME sniffing
         response.headers["X-Content-Type-Options"] = "nosniff"
+        # Clickjacking protection
         response.headers["X-Frame-Options"] = "DENY"
+        # Legacy XSS filter (belt-and-suspenders)
         response.headers["X-XSS-Protection"] = "1; mode=block"
+        # Referrer leakage control
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        # Disable unneeded browser features
         response.headers["Permissions-Policy"] = (
             "camera=(), microphone=(), geolocation=()"
         )
+        # Prevent other origins from loading this site in certain contexts
+        response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
+        # Prevent cross-origin reads of this resource
+        response.headers["Cross-Origin-Resource-Policy"] = "same-origin"
+        # Block Flash/PDF cross-domain requests
+        response.headers["X-Permitted-Cross-Domain-Policies"] = "none"
+
+        # Content-Security-Policy
         response.headers["Content-Security-Policy"] = (
             "default-src 'self'; "
             "script-src 'self' 'unsafe-inline'; "
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
             "font-src 'self' https://fonts.gstatic.com; "
             "img-src 'self' data:; "
-            "connect-src 'self'"
+            "connect-src 'self'; "
+            "frame-ancestors 'none'"
         )
+
+        # HSTS — only over HTTPS
         if request.url.scheme == "https":
             response.headers["Strict-Transport-Security"] = (
                 "max-age=63072000; includeSubDomains; preload"
@@ -88,6 +136,24 @@ def validate_session_id(session_id: str) -> str:
             status_code=400, detail="Invalid session ID format"
         )
     return session_id
+
+
+def validate_player_id(player_id: str) -> str:
+    """Validate and return a safe UUID player_id, or raise 400."""
+    if not PLAYER_ID_PATTERN.match(player_id):
+        logger.warning("Rejected invalid player_id: %r", player_id)
+        raise HTTPException(status_code=400, detail="Invalid player ID format")
+    return player_id
+
+
+def validate_model_id(model_id: str) -> str:
+    """Validate and return a safe 12-char hex model_id, or raise 400."""
+    if not MODEL_ID_PATTERN.match(model_id):
+        logger.warning(
+            "Rejected invalid model_id: %r (security_event=True)", model_id
+        )
+        raise HTTPException(status_code=400, detail="Invalid model ID format")
+    return model_id
 
 
 def validate_file_extension(filename: str) -> str:
@@ -141,7 +207,7 @@ def require_admin_key(request: Request):
     provided_key = request.headers.get("X-Admin-Key", "")
     if not provided_key or provided_key != cfg.ADMIN_API_KEY:
         logger.warning(
-            "Unauthorized admin access attempt from %s",
+            "Unauthorized admin access attempt from %s (security_event=True)",
             request.client.host,
         )
         raise HTTPException(
@@ -157,7 +223,7 @@ def require_models_api_key(request: Request):
     provided_key = request.headers.get("X-Api-Key", "")
     if not provided_key or provided_key != cfg.MODELS_API_KEY:
         logger.warning(
-            "Unauthorized models API access attempt from %s",
+            "Unauthorized models API access attempt from %s (security_event=True)",
             request.client.host,
         )
         raise HTTPException(
