@@ -31,12 +31,15 @@ PLAYER_ID_PATTERN = re.compile(
 )
 # SHA-256 hex truncated to 12 chars (used as model ID)
 MODEL_ID_PATTERN = re.compile(r"^[0-9a-f]{12}$")
+# Alphanumeric category with underscores (for Daily Facts)
+CATEGORY_PATTERN = re.compile(r"^[a-zA-Z][a-zA-Z0-9_]{0,49}$")
 
 # Default / fallback secret values that must never be used in production
 _INSECURE_DEFAULTS = {
     "JWT_SECRET_KEY": "fallback-secret-key-change-in-production",
     "ADMIN_API_KEY": "change-me-in-production",
     "MODELS_API_KEY": "change-me-in-production",
+    "FACTS_API_KEY": "change-me-in-production",
 }
 
 
@@ -154,6 +157,20 @@ def validate_model_id(model_id: str) -> str:
         )
         raise HTTPException(status_code=400, detail="Invalid model ID format")
     return model_id
+
+
+def validate_category(category: str) -> str:
+    """Validate and return a safe category string for the Daily Facts API."""
+    if not category or not CATEGORY_PATTERN.match(category):
+        logger.warning("Rejected invalid category: %r", category)
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Invalid category format. Use letters, numbers, and "
+                "underscores only (e.g., 'food', 'indian_politics')."
+            ),
+        )
+    return category.lower().strip()
 
 
 def validate_file_extension(filename: str) -> str:

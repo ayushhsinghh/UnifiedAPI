@@ -11,6 +11,7 @@ CORS_ORIGINS = [
     "https://game.ayush.ltd",
     "https://subs.ayush.ltd",
     "https://ayush.ltd",
+    "https://fact.ayush.ltd",
 ]
 
 ALLOWED_HOSTS = [

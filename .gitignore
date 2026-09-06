@@ -5,3 +5,4 @@ app/app.log
 app/certs/*
 app/frontend/*
 **/__pycache__/
+SKILL.md

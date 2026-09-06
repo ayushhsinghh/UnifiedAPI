@@ -103,6 +103,27 @@ class DatabaseManager:
             expire_seconds=cfg.PLAYER_TTL_SECONDS,
         )
 
+        # Daily Facts indexes
+        db[cfg.DAILY_FACTS_COLLECTION].create_index(
+            [("category", 1), ("created_at", -1)]
+        )
+        db[cfg.DAILY_FACTS_COLLECTION].create_index(
+            "content_hash", unique=True
+        )
+        self._setup_ttl_index(
+            cfg.DAILY_FACTS_COLLECTION,
+            "created_at",
+            expire_seconds=cfg.FACTS_TTL_SECONDS,
+        )
+        
+        # Fact Jobs indexes
+        db[cfg.FACT_JOBS_COLLECTION].create_index("job_id", unique=True)
+        self._setup_ttl_index(
+            cfg.FACT_JOBS_COLLECTION,
+            "created_at",
+            expire_seconds=cfg.FACT_JOB_TTL_SECONDS,
+        )
+
     def _setup_ttl_index(
         self, collection_name: str, field: str, expire_seconds: int
     ) -> None:

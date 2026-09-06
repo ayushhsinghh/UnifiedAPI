@@ -107,6 +107,7 @@ from src.routes.auth_routes import router as auth_router  # noqa: E402
 from src.routes.riva_routes import router as riva_router  # noqa: E402
 from src.routes.model_routes import router as model_router  # noqa: E402
 from src.routes.openai_routes import router as openai_router  # noqa: E402
+from src.routes.facts_routes import router as facts_router  # noqa: E402
 
 app.include_router(auth_router)
 app.include_router(transcription_router)
@@ -115,6 +116,7 @@ app.include_router(admin_router)
 app.include_router(riva_router)
 app.include_router(model_router)
 app.include_router(openai_router)
+app.include_router(facts_router)
 
 # ── Static Files ─────────────────────────────────────────────────────────
 _base_dir = os.path.dirname(__file__)

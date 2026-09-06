@@ -72,7 +72,7 @@ CORS_HEADERS = [
 
 # Gemini / topic generation
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-GEMINI_MODEL_NAME = "gemini-3-flash-preview"
+GEMINI_MODEL_NAME = "gemini-3.8-flash"
 
 # Logging
 LOG_FILE_APP = "app.log"
@@ -87,6 +87,14 @@ HEARTBEAT_TIMEOUT_SECONDS = 45
 SESSION_TTL_SECONDS = 21600       # 6 hours
 PLAYER_TTL_SECONDS = 3600         # 1 hour
 OLD_GAME_THRESHOLD_MINUTES = 30
+
+# Daily Facts feature
+DAILY_FACTS_COLLECTION = "daily_facts"
+FACT_JOBS_COLLECTION = "fact_jobs"
+FACT_JOB_TTL_SECONDS = 24 * 3600        # 1 day
+FACTS_TTL_SECONDS = 30 * 24 * 3600      # 30 days
+FACTS_DEDUP_LIMIT = 50                  # topic keys to send as blocklist (per category)
+FACTS_API_KEY = os.getenv("FACTS_API_KEY", "change-me-in-production")
 AVAILABLE_GAME_WINDOW_MINUTES = 10
 
 # Whisper defaults

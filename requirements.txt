@@ -7,3 +7,4 @@ requests==2.31.0
 slowapi==0.1.9
 openai
 pydub
+google-genai
