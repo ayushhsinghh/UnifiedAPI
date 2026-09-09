@@ -74,6 +74,13 @@ CORS_HEADERS = [
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 GEMINI_MODEL_NAME = "gemini-3.8-flash"
 
+# OpenAI / fallback generation
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+OPENAI_MODEL_NAME = "gpt-5.6-luna"
+
+# NVIDIA NIM / image generation
+NVIDIA_API_KEY = os.getenv("NVIDIA_API_KEY", "")
+
 # Logging
 LOG_FILE_APP = "app.log"
 LOG_FILE_ERRORS = "errors.log"

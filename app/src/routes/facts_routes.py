@@ -6,6 +6,7 @@ Endpoints:
     GET /api/facts/categories            — list supported categories
 """
 
+import asyncio
 import hmac
 import logging
 import time
@@ -28,11 +29,13 @@ from src.database.facts_repository import (
     get_random_cached_fact,
     get_recent_topic_keys,
     store_fact,
+    update_fact_image,
 )
 from src.facts.fact_generator import (
     SUPPORTED_CATEGORIES,
     generate_daily_fact,
 )
+from src.facts.image_generator import generate_and_save_image
 
 logger = logging.getLogger(__name__)
 
@@ -120,13 +123,24 @@ async def process_fact_generation_task(
 
     # Store for dedup & caching
     try:
-        store_fact(fact, category)
+        content_hash = store_fact(fact, category)
+        if content_hash and fact.get("visual_suggestion"):
+            logger.info("Visual suggestion found, dispatching background image generation for hash %s", content_hash)
+            asyncio.create_task(_background_image_task(fact["visual_suggestion"], content_hash))
     except Exception as exc:
         logger.warning("Failed to store fact for job %s: %s", job_id, exc)
 
     # Update job
     update_fact_job(job_id, "completed", fact_data=fact_response)
     logger.info("Task for job %s completed successfully", job_id)
+
+async def _background_image_task(prompt: str, content_hash: str):
+    image_filename = f"{content_hash}.jpg"
+    success = await generate_and_save_image(prompt, image_filename)
+    if success:
+        image_url = f"/static/images/{image_filename}"
+        update_fact_image(content_hash, image_url)
+        logger.info("Background image generation complete, DB updated for %s", content_hash)
 
 
 @router.post("/facts/generate")

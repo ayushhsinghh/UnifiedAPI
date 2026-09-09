@@ -63,11 +63,11 @@ def get_recent_topic_keys(category: str, limit: Optional[int] = None) -> List[st
     return [doc["topic_key"] for doc in cursor if "topic_key" in doc]
 
 
-def store_fact(fact_response: dict, category: str) -> bool:
+def store_fact(fact_response: dict, category: str) -> Optional[str]:
     """
     Store a generated fact in MongoDB for deduplication and caching.
 
-    Returns True on success, False if a duplicate was detected.
+    Returns the content_hash on success, None if a duplicate was detected.
     """
     headline = fact_response.get("headline_fact", "")
     topic = fact_response.get("topic", "")
@@ -89,13 +89,13 @@ def store_fact(fact_response: dict, category: str) -> bool:
         logger.info(
             "Stored fact for category '%s': %s", category, topic
         )
-        return True
+        return content_hash
     except DuplicateKeyError:
         logger.info(
             "Duplicate fact detected (hash=%s), skipping storage",
             content_hash[:12],
         )
-        return False
+        return None
 
 
 def get_random_cached_fact(category: str) -> Optional[dict]:
@@ -147,3 +147,15 @@ def get_facts_list(
         results.append(fact_data)
         
     return results
+
+
+def update_fact_image(content_hash: str, image_url: str) -> bool:
+    """
+    Update a fact with its generated image URL.
+    """
+    db = get_db()
+    result = db[cfg.DAILY_FACTS_COLLECTION].update_one(
+        {"content_hash": content_hash},
+        {"$set": {"image_url": image_url, "image_ready": True}}
+    )
+    return result.modified_count > 0

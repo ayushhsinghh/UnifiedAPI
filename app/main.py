@@ -121,6 +121,12 @@ app.include_router(facts_router)
 # ── Static Files ─────────────────────────────────────────────────────────
 _base_dir = os.path.dirname(__file__)
 
+app.mount(
+    "/static",
+    StaticFiles(directory=os.path.join(_base_dir, "static")),
+    name="static",
+)
+
 # app.mount(
 #     "/frontend",
 #     StaticFiles(directory=os.path.join(_base_dir, "frontend")),

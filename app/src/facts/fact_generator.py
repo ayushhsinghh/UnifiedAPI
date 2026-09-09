@@ -7,11 +7,13 @@ backoff and emergency fallback to cached facts from MongoDB.
 """
 
 import asyncio
+import json
 import logging
 import random
 import time
 from typing import Dict, List, Optional
 
+import openai
 from google import genai
 
 from configs.config import get_config
@@ -157,6 +159,94 @@ CATEGORY_HINTS: Dict[str, str] = {
         "handloom weaving traditions, evolution of the Indian wedding attire, "
         "modern Indian designers on the global stage, "
         "historical jewelry making (Kundan, Polki)"
+    ),
+    "art": (
+        "Indian miniature painting traditions (Mughal, Rajput, Pahari), "
+        "Ajanta & Ellora cave murals, Madhubani & Warli folk art, "
+        "Tanjore painting technique, Indian sculpture (Chola bronzes, Gandhara art), "
+        "Pattachitra scroll painting of Odisha, Indian pottery & terracotta traditions, "
+        "contemporary Indian art scene (Husain, Raza, Souza), "
+        "Rangoli & Kolam as living art forms, "
+        "Indian mural art & temple architecture aesthetics"
+    ),
+    "architecture": (
+        "Indian stepwell (baoli) engineering, Mughal geometric design (Taj Mahal, Red Fort), "
+        "South Indian gopuram tower construction, Dravidian vs Nagara temple styles, "
+        "colonial-era Indo-Saracenic buildings, IIM Ahmedabad & modernist architecture, "
+        "Chandigarh city planning (Le Corbusier), cave temple architecture (Badami, Elephanta), "
+        "Indian fort engineering (Mehrangarh, Golconda), sustainable mud & bamboo architecture"
+    ),
+    "music": (
+        "Raga system & emotional science of Indian classical music, "
+        "Carnatic vs Hindustani traditions, tabla rhythmic mathematics (taal system), "
+        "Indian classical instruments (sitar, veena, sarangi, mridangam), "
+        "Bollywood playback singing history, Tansen & Akbar's court music, "
+        "Baul folk music of Bengal, Qawwali & Sufi musical tradition, "
+        "Indian film music composers (R.D. Burman, A.R. Rahman), "
+        "Vedic chanting & its UNESCO recognition"
+    ),
+    "sports": (
+        "Cricket as India's cultural religion, chess origins in India (Chaturanga), "
+        "kabaddi's ancient roots & Pro Kabaddi League, Indian hockey golden era (1928-1956), "
+        "India's Olympic journey & medal history, wrestling (kushti) traditions, "
+        "Indian Premier League's economic impact, badminton rise (Saina, Sindhu, Srikanth), "
+        "polo origins in Manipur, indigenous sports (gilli-danda, kho-kho, mallakhamb)"
+    ),
+    "defense": (
+        "INS Vikrant indigenous aircraft carrier, Agni & BrahMos missile programs, "
+        "Indian Navy submarine fleet & nuclear triad, Tejas indigenous fighter jet, "
+        "Indian Army mountain warfare expertise, DRDO research & development, "
+        "Siachen Glacier military operations, Indian border infrastructure (roads, tunnels), "
+        "Indian peacekeeping forces worldwide, Arjun main battle tank development"
+    ),
+    "languages": (
+        "Sanskrit's computational & grammatical structure (Panini's Ashtadhyayi), "
+        "Devanagari script design principles, India's 22 scheduled languages, "
+        "how multilingualism works in daily Indian life, endangered tribal languages, "
+        "Tamil as one of the oldest living languages, Indian sign language development, "
+        "Urdu-Hindi linguistic continuum, Brahmi script evolution, "
+        "Indian languages' influence on Southeast Asian scripts"
+    ),
+    "mythology": (
+        "Mahabharata's game theory & political philosophy, Ramayana's geographical mapping, "
+        "Vedic cosmology parallels with modern physics, regional folk myths & oral traditions, "
+        "temple iconography & symbolism, Puranic timekeeping (yugas & kalpas), "
+        "Panchatantra fables & their global spread, Shakti tradition & goddess worship, "
+        "Naga & serpent mythology across Indian cultures, "
+        "astronomical references in ancient Indian texts"
+    ),
+    "agriculture": (
+        "Green Revolution & Norman Borlaug in India, MSP politics & farmer movements, "
+        "Indian spice farming & global trade dominance, organic farming movements, "
+        "traditional irrigation systems (stepwells, tanks, johads), "
+        "India's crop diversity & seed banks, sugarcane & tea plantation history, "
+        "cooperative dairy farming (Amul & Operation Flood), "
+        "millets revival & nutritional security, GM crops debate (Bt cotton)"
+    ),
+    "transport": (
+        "Indian Railways engineering marvels & station architecture, "
+        "Delhi Metro & urban metro expansion, Konkan Railway tunnel engineering, "
+        "National Highway network development, inland waterways revival, "
+        "Indian aviation growth & Air India history, Vande Bharat train technology, "
+        "Mumbai local train culture, mountain railways (Darjeeling, Shimla, Nilgiri), "
+        "Indian shipping & port modernization (Sagarmala project)"
+    ),
+    "cinema": (
+        "Bollywood's global cultural reach, Dadasaheb Phalke & Raja Harishchandra, "
+        "Satyajit Ray's Apu Trilogy & international acclaim, regional cinema movements "
+        "(Malayalam New Wave, Tamil commercial cinema, Bengali parallel cinema), "
+        "Indian animation history, Bombay Talkies & studio era, "
+        "playback singing revolution, Indian documentary filmmaking, "
+        "Cannes & Oscar recognition for Indian films, "
+        "censorship & the CBFC's role in Indian cinema"
+    ),
+    "philosophy": (
+        "Vedanta & Advaita (non-duality) tradition, Buddhism's Indian origins & spread, "
+        "Jain logic systems (Anekantavada & Syadvada), Charvaka materialist philosophy, "
+        "Guru-Shishya knowledge transmission tradition, Yoga Sutras of Patanjali, "
+        "Indian influence on Western philosophers (Schopenhauer, Emerson), "
+        "Nyaya school of logic & epistemology, Bhakti movement's philosophical revolution, "
+        "Thiruvalluvar's Thirukkural & Tamil ethical philosophy"
     ),
 }
 
@@ -442,8 +532,8 @@ def _build_prompt(category: str, blocklist: List[str]) -> str:
 
 # ── Retry constants ──────────────────────────────────────────────────────
 
-_MAX_RETRIES = 2
-_BACKOFF_SECONDS = [1, 2]
+_MAX_RETRIES = 3
+_BACKOFF_SECONDS = [1, 2, 4]
 _REQUEST_TIMEOUT_SECONDS = 30
 
 
@@ -473,28 +563,49 @@ async def generate_daily_fact(
 
     prompt = _build_prompt(category, blocklist)
     last_error: Optional[Exception] = None
+    
+    fallback_models = [cfg.GEMINI_MODEL_NAME, "gemini-3.7-flash", "gemini-3.6-flash", cfg.OPENAI_MODEL_NAME]
 
     for attempt in range(_MAX_RETRIES + 1):
+        model_name = fallback_models[attempt] if attempt < len(fallback_models) else fallback_models[-1]
         try:
-            client = genai.Client(api_key=cfg.GEMINI_API_KEY)
-            logger.debug(
-                "Gemini fact generation attempt %d for category '%s'",
-                attempt + 1, category,
-            )
+            if model_name.startswith("gemini"):
+                client = genai.Client(api_key=cfg.GEMINI_API_KEY)
+                logger.debug(
+                    "Gemini fact generation attempt %d using model '%s' for category '%s'",
+                    attempt + 1, model_name, category,
+                )
 
-            response = await client.aio.models.generate_content(
-                model=cfg.GEMINI_MODEL_NAME,
-                contents=prompt,
-                config={
-                    "temperature": 0.9,
-                    "top_p": 0.95,
-                    "top_k": 40,
-                    "response_mime_type": "application/json",
-                    "response_schema": FACT_RESPONSE_SCHEMA,
-                },
-            )
+                response = await client.aio.models.generate_content(
+                    model=model_name,
+                    contents=prompt,
+                    config={
+                        "temperature": 0.9,
+                        "top_p": 0.95,
+                        "top_k": 40,
+                        "response_mime_type": "application/json",
+                        "response_schema": FACT_RESPONSE_SCHEMA,
+                    },
+                )
+                fact = response.parsed
+            else:
+                openai_client = openai.AsyncOpenAI(api_key=cfg.OPENAI_API_KEY)
+                logger.debug(
+                    "OpenAI fallback generation attempt %d using model '%s' for category '%s'",
+                    attempt + 1, model_name, category,
+                )
+                
+                openai_prompt = prompt + "\n\nRETURN YOUR RESPONSE AS A VALID JSON OBJECT MATCHING THIS SCHEMA EXACTLY:\n" + json.dumps(FACT_RESPONSE_SCHEMA)
+                
+                response = await openai_client.chat.completions.create(
+                    model=model_name,
+                    messages=[{"role": "user", "content": openai_prompt}],
+                    response_format={"type": "json_object"},
+                    top_p=0.95,
+                )
+                fact_str = response.choices[0].message.content
+                fact = json.loads(fact_str) if fact_str else None
 
-            fact = response.parsed
             if isinstance(fact, dict) and fact.get("headline_fact"):
                 logger.info(
                     "Generated fact for '%s': %s",
@@ -503,14 +614,14 @@ async def generate_daily_fact(
                 return fact
 
             logger.warning(
-                "Gemini returned empty or malformed response on attempt %d",
+                "Model returned empty or malformed response on attempt %d",
                 attempt + 1,
             )
 
         except Exception as exc:
             last_error = exc
             logger.error(
-                "Gemini API error on attempt %d: %s", attempt + 1, exc,
+                "API error on attempt %d: %s", attempt + 1, exc,
             )
 
         # Exponential backoff before retry (skip on last attempt)
