@@ -72,7 +72,7 @@ CORS_HEADERS = [
 
 # Gemini / topic generation
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-GEMINI_MODEL_NAME = "gemini-3.8-flash"
+GEMINI_MODEL_NAME = "gemini-3.6-flash"
 
 # OpenAI / fallback generation
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
@@ -100,7 +100,7 @@ DAILY_FACTS_COLLECTION = "daily_facts"
 FACT_JOBS_COLLECTION = "fact_jobs"
 FACT_JOB_TTL_SECONDS = 24 * 3600        # 1 day
 FACTS_TTL_SECONDS = 30 * 24 * 3600      # 30 days
-FACTS_DEDUP_LIMIT = 50                  # topic keys to send as blocklist (per category)
+FACTS_DEDUP_LIMIT = 20                  # topic keys to send as blocklist (per category)
 FACTS_API_KEY = os.getenv("FACTS_API_KEY", "change-me-in-production")
 AVAILABLE_GAME_WINDOW_MINUTES = 10
 

@@ -282,25 +282,31 @@ _TIMELINE_ITEM_SCHEMA = {
 _BREAKDOWN_SCHEMA = {
     "type": "OBJECT",
     "properties": {
-        "key_mechanisms_or_types": {
+        "detailed_processes": {
             "type": "ARRAY",
-            "items": {"type": "STRING"},
+            "items": {
+                "type": "OBJECT",
+                "properties": {
+                    "title": {"type": "STRING"},
+                    "description": {"type": "STRING"},
+                    "steps": {
+                        "type": "ARRAY",
+                        "items": {"type": "STRING"}
+                    }
+                },
+                "required": ["title", "description", "steps"]
+            }
         },
         "real_world_application": {"type": "STRING"},
         "fascinating_trivia": {
             "type": "ARRAY",
             "items": {"type": "STRING"},
         },
-        "step_by_step_process": {
-            "type": "ARRAY",
-            "items": {"type": "STRING"},
-        },
     },
     "required": [
-        "key_mechanisms_or_types",
+        "detailed_processes",
         "real_world_application",
         "fascinating_trivia",
-        "step_by_step_process",
     ],
 }
 
@@ -325,15 +331,47 @@ FACT_RESPONSE_SCHEMA = {
         "cultural_significance": {"type": "STRING"},
         "common_misconceptions": {
             "type": "ARRAY",
-            "items": {"type": "STRING"},
+            "items": {
+                "type": "OBJECT",
+                "properties": {
+                    "myth": {"type": "STRING"},
+                    "reality": {"type": "STRING"},
+                    "evidence": {"type": "STRING"}
+                },
+                "required": ["myth", "reality", "evidence"]
+            }
         },
 
         # Key Highlights
         "key_year": {"type": "STRING"},
         "key_figure": {"type": "STRING"},
         "key_stat": {"type": "STRING"},
-        "quote": {"type": "STRING"},
-        "global_comparison": {"type": "STRING"},
+        "quote": {
+            "type": "OBJECT",
+            "properties": {
+                "text": {"type": "STRING"},
+                "confidence": {"type": "STRING", "enum": ["verified", "unverified"]}
+            },
+            "required": ["text", "confidence"]
+        },
+        "global_comparison": {
+            "type": "OBJECT",
+            "properties": {
+                "summary": {"type": "STRING"},
+                "comparisons": {
+                    "type": "ARRAY",
+                    "items": {
+                        "type": "OBJECT",
+                        "properties": {
+                            "country": {"type": "STRING"},
+                            "comparison_point": {"type": "STRING"}
+                        },
+                        "required": ["country", "comparison_point"]
+                    }
+                }
+            },
+            "required": ["summary", "comparisons"]
+        },
 
         # Timeline
         "timeline": {
@@ -348,6 +386,10 @@ FACT_RESPONSE_SCHEMA = {
         },
 
         # Metadata & UI Helpers
+        "content_freshness": {
+            "type": "STRING",
+            "enum": ["evergreen", "time-sensitive"]
+        },
         "emoji_icon": {"type": "STRING"},
         "difficulty_level": {"type": "STRING"},
         "region": {"type": "STRING"},
@@ -380,7 +422,7 @@ FACT_RESPONSE_SCHEMA = {
         "learning_takeaways",
         "emoji_icon", "difficulty_level", "region", "fun_rating",
         "read_time_seconds", "tags", "related_categories",
-        "visual_suggestion", "share_text",
+        "visual_suggestion", "share_text", "content_freshness",
         "sources_or_references",
     ],
 }
@@ -416,6 +458,10 @@ def _build_prompt(category: str, blocklist: List[str]) -> str:
         "Wikipedia deep-dive or a chapter from a brilliant non-fiction book.\n\n"
 
         "CRITICAL — CONTENT DEPTH REQUIREMENTS (do NOT summarize, provide exhaustive detail):\n\n"
+
+        "'topic':\n"
+        "Must be a concise 4-6 word noun phrase that clearly identifies the subject (e.g., 'Indian Black Pepper Trade History'). "
+        "NEVER write a full sentence or include punctuation. This is used for database deduplication.\n\n"
 
         "'history':\n"
         "Cover the complete origin story from the very beginning. Trace the evolution through "
@@ -454,24 +500,26 @@ def _build_prompt(category: str, blocklist: List[str]) -> str:
         "How is this woven into festivals, traditions, art, literature, or daily rituals? "
         "What symbolic or emotional weight does it carry?\n\n"
 
-        "'in_depth_breakdown.key_mechanisms_or_types':\n"
-        "List detailed points, each explaining a specific mechanism, type, variant, or aspect. "
-        "Every point should include context and explanation, not just a label.\n\n"
+        "'in_depth_breakdown.detailed_processes':\n"
+        "Provide clear, structured explanations of mechanisms, types, or step-by-step processes. "
+        "Each process must have a title, a brief description, and a 'steps' array detailing the sequence of actions or components.\n\n"
 
         "'in_depth_breakdown.fascinating_trivia':\n"
         "List truly surprising details that even knowledgeable people would not know. "
         "Each point should include enough context to understand why it is surprising.\n\n"
 
-        "'in_depth_breakdown.step_by_step_process':\n"
-        "Explain the process, method, or technique in sequential order. "
-        "Each step should be self-contained and clear.\n\n"
-
         "'in_depth_breakdown.real_world_application':\n"
         "Describe practical applications today — who uses this, where, and how?\n\n"
 
         "'common_misconceptions':\n"
-        "List myths or wrong beliefs people commonly have, each with a clear "
-        "correction and the evidence behind it.\n\n"
+        "List myths or wrong beliefs people commonly have, structuring each with the 'myth', "
+        "the actual 'reality', and the 'evidence' supporting the reality.\n\n"
+        "'quote':\n"
+        "Provide a highly relevant quote. Set 'confidence' to 'verified' if you are absolutely certain of its authenticity, otherwise 'unverified'.\n\n"
+        "'global_comparison':\n"
+        "Provide a high-level 'summary' string explaining how India compares globally, followed by a 'comparisons' array detailing specific points of comparison with other countries.\n\n"
+        "'content_freshness':\n"
+        "Determine if this fact is 'evergreen' (timeless) or 'time-sensitive' (likely to change or become outdated soon).\n\n"
 
         "'learning_takeaways':\n"
         "List key lessons or insights the reader should remember. "
@@ -564,7 +612,7 @@ async def generate_daily_fact(
     prompt = _build_prompt(category, blocklist)
     last_error: Optional[Exception] = None
     
-    fallback_models = [cfg.GEMINI_MODEL_NAME, "gemini-3.7-flash", "gemini-3.6-flash", cfg.OPENAI_MODEL_NAME]
+    fallback_models = [cfg.GEMINI_MODEL_NAME, "gemini-3.8-flash", "gemini-3.5-flash", cfg.OPENAI_MODEL_NAME]
 
     for attempt in range(_MAX_RETRIES + 1):
         model_name = fallback_models[attempt] if attempt < len(fallback_models) else fallback_models[-1]
@@ -601,7 +649,6 @@ async def generate_daily_fact(
                     model=model_name,
                     messages=[{"role": "user", "content": openai_prompt}],
                     response_format={"type": "json_object"},
-                    top_p=0.95,
                 )
                 fact_str = response.choices[0].message.content
                 fact = json.loads(fact_str) if fact_str else None

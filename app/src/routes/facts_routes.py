@@ -30,6 +30,7 @@ from src.database.facts_repository import (
     get_recent_topic_keys,
     store_fact,
     update_fact_image,
+    delete_fact,
 )
 from src.facts.fact_generator import (
     SUPPORTED_CATEGORIES,
@@ -125,8 +126,10 @@ async def process_fact_generation_task(
     try:
         content_hash = store_fact(fact, category)
         if content_hash and fact.get("visual_suggestion"):
-            logger.info("Visual suggestion found, dispatching background image generation for hash %s", content_hash)
-            asyncio.create_task(_background_image_task(fact["visual_suggestion"], content_hash))
+            # Temporarily disabled image generation background task
+            pass
+            # logger.info("Visual suggestion found, dispatching background image generation for hash %s", content_hash)
+            # asyncio.create_task(_background_image_task(fact["visual_suggestion"], content_hash))
     except Exception as exc:
         logger.warning("Failed to store fact for job %s: %s", job_id, exc)
 
@@ -234,3 +237,13 @@ async def get_facts_history(
         "category_filter": category,
         "facts": facts,
     }
+
+@router.delete("/facts/{content_hash}")
+async def delete_fact_endpoint(content_hash: str) -> dict:
+    """
+    Delete a specific fact by its content hash.
+    """
+    success = delete_fact(content_hash)
+    if not success:
+        raise HTTPException(status_code=404, detail="Fact not found")
+    return {"status": "success", "message": "Fact deleted"}

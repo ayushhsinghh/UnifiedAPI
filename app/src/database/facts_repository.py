@@ -33,11 +33,7 @@ def _extract_topic_key(topic: str) -> str:
         'Chandrayaan Moon Mission' -> 'Moon Mission'
         'UPI' -> 'UPI'
     """
-    words = topic.strip().split()
-    if len(words) <= 2:
-        return topic.strip()
-    # Drop leading generic adjective (e.g., 'Indian') and take last 2 words
-    return " ".join(words[-2:])
+    return topic.strip()
 
 
 def get_recent_topic_keys(category: str, limit: Optional[int] = None) -> List[str]:
@@ -144,6 +140,11 @@ def get_facts_list(
         # Optionally attach the generation timestamp
         if "created_at" in doc:
             fact_data["generated_at"] = doc["created_at"].isoformat()
+        
+        # Attach the content_hash so the frontend can reference it (e.g., for deletion)
+        if "content_hash" in doc:
+            fact_data["content_hash"] = doc["content_hash"]
+            
         results.append(fact_data)
         
     return results
@@ -159,3 +160,12 @@ def update_fact_image(content_hash: str, image_url: str) -> bool:
         {"$set": {"image_url": image_url, "image_ready": True}}
     )
     return result.modified_count > 0
+
+
+def delete_fact(content_hash: str) -> bool:
+    """
+    Delete a fact by its content_hash.
+    """
+    db = get_db()
+    result = db[cfg.DAILY_FACTS_COLLECTION].delete_one({"content_hash": content_hash})
+    return result.deleted_count > 0
