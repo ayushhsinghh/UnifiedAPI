@@ -145,19 +145,23 @@ def get_facts_list(
         if "content_hash" in doc:
             fact_data["content_hash"] = doc["content_hash"]
             
+        # Attach the OCI PAR image URLs
+        if "images" in doc:
+            fact_data["images"] = doc["images"]
+            
         results.append(fact_data)
         
     return results
 
 
-def update_fact_image(content_hash: str, image_url: str) -> bool:
+def update_fact_images(content_hash: str, images: dict) -> bool:
     """
-    Update a fact with its generated image URL.
+    Update a fact with its generated image URLs (cover, history, how_it_works).
     """
     db = get_db()
     result = db[cfg.DAILY_FACTS_COLLECTION].update_one(
         {"content_hash": content_hash},
-        {"$set": {"image_url": image_url, "image_ready": True}}
+        {"$set": {"images": images, "image_ready": True}}
     )
     return result.modified_count > 0
 
@@ -169,3 +173,11 @@ def delete_fact(content_hash: str) -> bool:
     db = get_db()
     result = db[cfg.DAILY_FACTS_COLLECTION].delete_one({"content_hash": content_hash})
     return result.deleted_count > 0
+
+
+def get_fact_by_hash(content_hash: str) -> Optional[dict]:
+    """
+    Fetch a fact by its content hash.
+    """
+    db = get_db()
+    return db[cfg.DAILY_FACTS_COLLECTION].find_one({"content_hash": content_hash}, {"_id": 0})

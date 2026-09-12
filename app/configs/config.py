@@ -81,6 +81,13 @@ OPENAI_MODEL_NAME = "gpt-5.6-luna"
 # NVIDIA NIM / image generation
 NVIDIA_API_KEY = os.getenv("NVIDIA_API_KEY", "")
 
+# OpenRouter
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
+
+# OCI Object Storage
+OCI_NAMESPACE = os.getenv("OCI_NAMESPACE", "")
+OCI_BUCKET_NAME = os.getenv("OCI_BUCKET_NAME", "fact_images")
+
 # Logging
 LOG_FILE_APP = "app.log"
 LOG_FILE_ERRORS = "errors.log"
@@ -102,6 +109,7 @@ FACT_JOB_TTL_SECONDS = 24 * 3600        # 1 day
 FACTS_TTL_SECONDS = 30 * 24 * 3600      # 30 days
 FACTS_DEDUP_LIMIT = 20                  # topic keys to send as blocklist (per category)
 FACTS_API_KEY = os.getenv("FACTS_API_KEY", "change-me-in-production")
+ADMIN_KEY = os.getenv("ADMIN_KEY", "change-me-in-production")
 AVAILABLE_GAME_WINDOW_MINUTES = 10
 
 # Whisper defaults

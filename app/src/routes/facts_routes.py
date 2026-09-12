@@ -13,7 +13,7 @@ import time
 import uuid
 from typing import Optional
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, Request
+from fastapi import APIRouter, BackgroundTasks, Header, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 
 from commons import limiter
@@ -29,8 +29,9 @@ from src.database.facts_repository import (
     get_random_cached_fact,
     get_recent_topic_keys,
     store_fact,
-    update_fact_image,
+    update_fact_images,
     delete_fact,
+    get_fact_by_hash,
 )
 from src.facts.fact_generator import (
     SUPPORTED_CATEGORIES,
@@ -74,8 +75,7 @@ async def list_categories(request: Request) -> dict:
     for key in sorted(CATEGORY_HINTS.keys()):
         categories.append({
             "id": key,
-            "name": key.replace("_", " ").title(),
-            "hints": CATEGORY_HINTS[key],
+            "name": key.replace("_", " ").title()
         })
 
     return {
@@ -125,11 +125,9 @@ async def process_fact_generation_task(
     # Store for dedup & caching
     try:
         content_hash = store_fact(fact, category)
-        if content_hash and fact.get("visual_suggestion"):
-            # Temporarily disabled image generation background task
-            pass
-            # logger.info("Visual suggestion found, dispatching background image generation for hash %s", content_hash)
-            # asyncio.create_task(_background_image_task(fact["visual_suggestion"], content_hash))
+        if content_hash and fact.get("visual_suggestions"):
+            logger.info("Visual suggestions found, dispatching background image generation for hash %s", content_hash)
+            asyncio.create_task(_background_image_task(fact["visual_suggestions"], content_hash))
     except Exception as exc:
         logger.warning("Failed to store fact for job %s: %s", job_id, exc)
 
@@ -137,13 +135,47 @@ async def process_fact_generation_task(
     update_fact_job(job_id, "completed", fact_data=fact_response)
     logger.info("Task for job %s completed successfully", job_id)
 
-async def _background_image_task(prompt: str, content_hash: str):
-    image_filename = f"{content_hash}.jpg"
-    success = await generate_and_save_image(prompt, image_filename)
-    if success:
-        image_url = f"/static/images/{image_filename}"
-        update_fact_image(content_hash, image_url)
-        logger.info("Background image generation complete, DB updated for %s", content_hash)
+async def _background_image_task(visual_suggestions: dict, content_hash: str, existing_images: dict = None):
+    if existing_images is None:
+        existing_images = {}
+    images = existing_images.copy()
+    
+    async def process_image(key: str, filename: str, prompt: str, aspect_ratio: str, context: str):
+        if key in existing_images:
+            return
+        url = await generate_and_save_image(prompt, filename, aspect_ratio=aspect_ratio, extra_context=context)
+        if url:
+            images[key] = url
+
+    tasks = []
+    
+    # 1. Cover
+    if cover_prompt := visual_suggestions.get("cover"):
+        tasks.append(process_image(
+            "cover", f"{content_hash}_cover.jpg", cover_prompt, "16:9",
+            "This image will be used as the main cover background at the top of the UI. It must leave negative left space for a headline overlay and MUST NOT contain any text."
+        ))
+
+    # 2. Overview (fallback to history for older structures)
+    if overview_prompt := visual_suggestions.get("overview") or visual_suggestions.get("history"):
+        tasks.append(process_image(
+            "overview", f"{content_hash}_overview.jpg", overview_prompt, "4:3",
+            "This image is placed directly beneath 'The short version' summary of the topic in the UI. It should visually summarize the core idea."
+        ))
+            
+    # 3. How it works
+    if how_it_works_prompt := visual_suggestions.get("how_it_works"):
+        tasks.append(process_image(
+            "how_it_works", f"{content_hash}_how_it_works.jpg", how_it_works_prompt, "4:3",
+            "This image is placed inline in the 'How it works' section of the UI. It should visually illustrate the mechanics, processes, or technicalities. IN THE IMAGE, MAKE SURE THE SPELLING OF WORDS IS ABSOLUTELY CORRECT"
+        ))
+
+    if tasks:
+        await asyncio.gather(*tasks)
+
+    if images:
+        update_fact_images(content_hash, images)
+        logger.info("Background image generation complete, DB updated for %s with %d images", content_hash, len(images))
 
 
 @router.post("/facts/generate")
@@ -239,11 +271,61 @@ async def get_facts_history(
     }
 
 @router.delete("/facts/{content_hash}")
-async def delete_fact_endpoint(content_hash: str) -> dict:
+async def delete_fact_endpoint(content_hash: str, x_admin_key: str = Header(None)) -> dict:
     """
     Delete a specific fact by its content hash.
+    Requires X-Admin-Key header matching the config.
     """
+    cfg = get_config()
+    if not x_admin_key or x_admin_key != cfg.ADMIN_KEY:
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+
     success = delete_fact(content_hash)
     if not success:
         raise HTTPException(status_code=404, detail="Fact not found")
     return {"status": "success", "message": "Fact deleted"}
+
+@router.post("/facts/{content_hash}/retry-images")
+@limiter.limit("10/day")
+async def retry_image_generation(
+    request: Request,
+    background_tasks: BackgroundTasks,
+    content_hash: str
+) -> dict:
+    """
+    Retry image generation for a fact, but only if the previous default run failed
+    or did not generate all expected images.
+    """
+    fact_doc = get_fact_by_hash(content_hash)
+    if not fact_doc:
+        raise HTTPException(status_code=404, detail="Fact not found")
+        
+    full_response = fact_doc.get("full_response", {})
+    visual_suggestions = full_response.get("visual_suggestions", {})
+    if not visual_suggestions:
+        raise HTTPException(status_code=400, detail="No visual suggestions available for this fact")
+        
+    existing_images = fact_doc.get("images", {})
+    
+    # Calculate expected images
+    expected_keys = []
+    if visual_suggestions.get("cover"): 
+        expected_keys.append("cover")
+    if visual_suggestions.get("overview") or visual_suggestions.get("history"): 
+        expected_keys.append("overview")
+    if visual_suggestions.get("how_it_works"): 
+        expected_keys.append("how_it_works")
+        
+    # Check if we have all expected keys
+    missing_keys = [k for k in expected_keys if k not in existing_images]
+    
+    if not missing_keys:
+        raise HTTPException(status_code=400, detail="Previous run was successful. All expected images are already generated.")
+        
+    logger.info("Retrying image generation for %s. Missing keys: %s", content_hash, missing_keys)
+    background_tasks.add_task(_background_image_task, visual_suggestions, content_hash, existing_images)
+    
+    return {
+        "success": True,
+        "message": f"Retrying background image generation for missing keys: {missing_keys}"
+    }
