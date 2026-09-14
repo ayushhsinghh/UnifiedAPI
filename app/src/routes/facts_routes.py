@@ -153,7 +153,7 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
     if cover_prompt := visual_suggestions.get("cover"):
         tasks.append(process_image(
             "cover", f"{content_hash}_cover.jpg", cover_prompt, "16:9",
-            "This image will be used as the main cover background at the top of the UI. It must leave negative left space for a headline overlay and MUST NOT contain any text, but make sure the negative left space is full gradiend colors."
+            "This image will be used as the main cover background at the top of the UI. It must leave negative left space for a headline overlay and MUST NOT contain any text, but make sure the negative left space is not full gradient colours."
         ))
 
     # 2. Overview (standard fact) — fallback to history for older structures
