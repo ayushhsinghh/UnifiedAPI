@@ -246,3 +246,20 @@ def require_models_api_key(request: Request):
         raise HTTPException(
             status_code=403, detail="Forbidden: invalid API key"
         )
+
+
+def require_facts_api_key(request: Request):
+    """
+    Dependency that checks for a valid X-Facts-Api-Key header.
+    Raises 403 if missing or incorrect.
+    """
+    provided_key = request.headers.get("X-Facts-Api-Key", "")
+    if not provided_key or provided_key != cfg.FACTS_API_KEY:
+        logger.warning(
+            "Unauthorized facts API access attempt from %s (security_event=True)",
+            request.client.host,
+        )
+        raise HTTPException(
+            status_code=403, detail="Forbidden: invalid facts API key"
+        )
+

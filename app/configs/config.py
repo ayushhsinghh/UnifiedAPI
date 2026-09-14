@@ -68,6 +68,7 @@ CORS_HEADERS = [
     "X-Admin-Key",
     "X-Api-Key",
     "X-Request-ID",
+    "X-Facts-Api-Key",
 ]
 
 # Gemini / topic generation

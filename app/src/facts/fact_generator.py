@@ -109,6 +109,7 @@ async def generate_daily_fact(
                 fact = json.loads(fact_str) if fact_str else None
 
             if isinstance(fact, dict) and fact.get("headline_fact"):
+                fact["category"] = category
                 logger.info(
                     "Generated fact for '%s': %s",
                     category, fact.get("topic", "unknown"),

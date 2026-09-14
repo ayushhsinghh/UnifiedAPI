@@ -13,12 +13,12 @@ import time
 import uuid
 from typing import Optional
 
-from fastapi import APIRouter, BackgroundTasks, Header, HTTPException, Query, Request
+from fastapi import APIRouter, BackgroundTasks, Header, HTTPException, Query, Request, Depends
 from fastapi.responses import JSONResponse
 
 from commons import limiter
 from configs.config import get_config
-from security import safe_error_response, validate_category
+from security import safe_error_response, validate_category, require_facts_api_key
 from src.database.fact_jobs_repository import (
     create_fact_job,
     get_fact_job,
@@ -123,6 +123,7 @@ async def process_fact_generation_task(
     }
 
     # Store for dedup & caching
+    content_hash = None
     try:
         content_hash = store_fact(fact, category)
         if content_hash and fact.get("visual_suggestions"):
@@ -131,7 +132,8 @@ async def process_fact_generation_task(
     except Exception as exc:
         logger.warning("Failed to store fact for job %s: %s", job_id, exc)
 
-    # Update job
+    # Update job — include content_hash so the status endpoint can look up images later
+    fact_response["content_hash"] = content_hash
     update_fact_job(job_id, "completed", fact_data=fact_response)
     logger.info("Task for job %s completed successfully", job_id)
 
@@ -153,7 +155,7 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
     if cover_prompt := visual_suggestions.get("cover"):
         tasks.append(process_image(
             "cover", f"{content_hash}_cover.jpg", cover_prompt, "16:9",
-            "This image will be used as the main cover background at the top of the UI. It must leave negative left space for a headline overlay and MUST NOT contain any text, but make sure the negative left space is not full gradient colours."
+            "This image will be used as the main cover background at the top of the UI. It must leave a little negative left space for a headline overlay and MUST NOT contain any text, but make sure the negative left space is not full gradient colours."
         ))
 
     # 2. Overview (standard fact) — fallback to history for older structures
@@ -192,7 +194,8 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
         logger.info("Background image generation complete, DB updated for %s with %d images", content_hash, len(images))
 
 
-@router.post("/facts/generate")
+
+@router.post("/facts/generate", dependencies=[Depends(require_facts_api_key)])
 @limiter.limit("10/day")
 async def generate_fact_job(
     request: Request,
@@ -240,6 +243,8 @@ async def get_fact_job_status(job_id: str) -> dict:
     Check the status of a fact generation job.
     Returns status: 'processing', 'completed', or 'failed'.
     If 'completed', it includes the fact_data payload.
+    Images are generated asynchronously, so we merge them from the
+    facts collection on every poll until they arrive.
     """
     job = get_fact_job(job_id)
     if not job:
@@ -252,7 +257,16 @@ async def get_fact_job_status(job_id: str) -> dict:
     }
     
     if job["status"] == "completed":
-        response["data"] = job["fact_data"]
+        fact_data = job["fact_data"]
+        # Merge images from the facts collection (they arrive after job completes)
+        content_hash = fact_data.get("content_hash") if fact_data else None
+        if content_hash and (not fact_data.get("fact", {}).get("images")):
+            stored = get_fact_by_hash(content_hash)
+            if stored and stored.get("images"):
+                if "fact" not in fact_data:
+                    fact_data["fact"] = {}
+                fact_data["fact"]["images"] = stored["images"]
+        response["data"] = fact_data
     elif job["status"] == "failed":
         response["error"] = job.get("error", "Unknown error")
         
