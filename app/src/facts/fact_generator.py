@@ -24,8 +24,8 @@ cfg = get_config()
 
 # ── Category sub-topic hints ────────────────────────────────────────────
 from .constants import CATEGORY_HINTS, SUPPORTED_CATEGORIES, CLICHED_FACTS
-from .schemas import FACT_RESPONSE_SCHEMA
-from .prompts import _build_prompt
+from .schemas import FACT_RESPONSE_SCHEMA, MYTHBUSTER_RESPONSE_SCHEMA
+from .prompts import _build_prompt, _build_mythbuster_prompt
 
 # ── Retry constants ──────────────────────────────────────────────────────
 
@@ -58,7 +58,13 @@ async def generate_daily_fact(
     if blocklist is None:
         blocklist = []
 
-    prompt = _build_prompt(category, blocklist)
+    if category == "mythbusters":
+        prompt = _build_mythbuster_prompt(blocklist)
+        response_schema = MYTHBUSTER_RESPONSE_SCHEMA
+    else:
+        prompt = _build_prompt(category, blocklist)
+        response_schema = FACT_RESPONSE_SCHEMA
+
     last_error: Optional[Exception] = None
     
     fallback_models = [cfg.GEMINI_MODEL_NAME, "gemini-3.8-flash", "gemini-3.5-flash", cfg.OPENAI_MODEL_NAME]
@@ -81,7 +87,7 @@ async def generate_daily_fact(
                         "top_p": 0.95,
                         "top_k": 40,
                         "response_mime_type": "application/json",
-                        "response_schema": FACT_RESPONSE_SCHEMA,
+                        "response_schema": response_schema,
                     },
                 )
                 fact = response.parsed
@@ -92,7 +98,7 @@ async def generate_daily_fact(
                     attempt + 1, model_name, category,
                 )
                 
-                openai_prompt = prompt + "\n\nRETURN YOUR RESPONSE AS A VALID JSON OBJECT MATCHING THIS SCHEMA EXACTLY:\n" + json.dumps(FACT_RESPONSE_SCHEMA)
+                openai_prompt = prompt + "\n\nRETURN YOUR RESPONSE AS A VALID JSON OBJECT MATCHING THIS SCHEMA EXACTLY:\n" + json.dumps(response_schema)
                 
                 response = await openai_client.chat.completions.create(
                     model=model_name,

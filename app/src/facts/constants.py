@@ -235,9 +235,15 @@ CATEGORY_HINTS: Dict[str, str] = {
         "Nyaya school of logic & epistemology, Bhakti movement's philosophical revolution, "
         "Thiruvalluvar's Thirukkural & Tamil ethical philosophy"
     ),
+    "mythbusters": (
+        "Pick a widely believed misconception from ANY of these domains: "
+        "health & nutrition, science & physics, psychology & behavior, "
+        "technology, food & cooking, nature & animals, medicine & body. "
+        "Prefer myths that are actively harmful or that most educated adults still believe. "
+    )
 }
 
-SUPPORTED_CATEGORIES = frozenset(CATEGORY_HINTS.keys())
+SUPPORTED_CATEGORIES = list(CATEGORY_HINTS.keys())
 
 # ── Clichéd facts blocklist ─────────────────────────────────────────────
 # Common overused facts the LLM must avoid.

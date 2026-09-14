@@ -163,3 +163,145 @@ FACT_RESPONSE_SCHEMA = {
     ],
 }
 
+_EVIDENCE_ITEM_SCHEMA = {
+    "type": "OBJECT",
+    "properties": {
+        "study": {"type": "STRING"},
+        "year": {"type": "STRING"},
+        "finding": {"type": "STRING"},
+        "source": {"type": "STRING"},
+    },
+    "required": ["study", "year", "finding", "source"],
+}
+
+MYTHBUSTER_RESPONSE_SCHEMA = {
+    "type": "OBJECT",
+    "properties": {
+        # Core identification
+        "category": {"type": "STRING"},
+        "topic": {"type": "STRING"},
+        "headline_fact": {"type": "STRING"},
+        "summary": {"type": "STRING"},
+        "did_you_know": {"type": "STRING"},
+
+        # Myth-specific fields
+        "myth_statement": {"type": "STRING"},
+        "verdict": {
+            "type": "STRING",
+            "enum": ["BUSTED", "PARTIALLY_TRUE", "PLAUSIBLE", "TRUE"],
+        },
+        "verdict_confidence": {
+            "type": "STRING",
+            "enum": ["strong", "moderate", "emerging"],
+        },
+        "myth_origin": {"type": "STRING"},
+        "spread_psychology": {"type": "STRING"},
+        "grain_of_truth": {"type": "STRING"},
+        "the_reality": {"type": "STRING"},
+        "counter_arguments": {"type": "STRING"},
+        "how_to_explain": {"type": "STRING"},
+        "myth_sub_category": {
+            "type": "STRING",
+            "enum": [
+                "health", "science", "history", "nutrition",
+                "psychology", "society", "technology", "nature",
+            ],
+        },
+        "prevalence": {"type": "STRING"},
+
+        # Structured evidence
+        "debunk_evidence": {
+            "type": "ARRAY",
+            "items": _EVIDENCE_ITEM_SCHEMA,
+        },
+
+        # Misconceptions (can still have related myths)
+        "common_misconceptions": {
+            "type": "ARRAY",
+            "items": {
+                "type": "OBJECT",
+                "properties": {
+                    "myth": {"type": "STRING"},
+                    "reality": {"type": "STRING"},
+                    "evidence": {"type": "STRING"},
+                },
+                "required": ["myth", "reality", "evidence"],
+            },
+        },
+
+        # Timeline (myth evolution)
+        "timeline": {
+            "type": "ARRAY",
+            "items": _TIMELINE_ITEM_SCHEMA,
+        },
+
+        # Learning
+        "learning_takeaways": {
+            "type": "ARRAY",
+            "items": {"type": "STRING"},
+        },
+
+        # Key highlights
+        "key_figure": {"type": "STRING"},
+        "key_stat": {"type": "STRING"},
+        "quote": {
+            "type": "OBJECT",
+            "properties": {
+                "text": {"type": "STRING"},
+                "confidence": {
+                    "type": "STRING",
+                    "enum": ["verified", "unverified"],
+                },
+            },
+            "required": ["text", "confidence"],
+        },
+
+        # Metadata & UI helpers
+        "content_freshness": {
+            "type": "STRING",
+            "enum": ["evergreen", "time-sensitive"],
+        },
+        "emoji_icon": {"type": "STRING"},
+        "difficulty_level": {"type": "STRING"},
+        "region": {"type": "STRING"},
+        "fun_rating": {"type": "NUMBER"},
+        "read_time_seconds": {"type": "NUMBER"},
+        "tags": {
+            "type": "ARRAY",
+            "items": {"type": "STRING"},
+        },
+        "related_categories": {
+            "type": "ARRAY",
+            "items": {"type": "STRING"},
+        },
+        "visual_suggestions": {
+            "type": "OBJECT",
+            "properties": {
+                "cover": {"type": "STRING"},
+                "myth_visual": {"type": "STRING"},
+                "truth_visual": {"type": "STRING"},
+            },
+            "required": ["cover", "myth_visual", "truth_visual"],
+        },
+        "share_text": {"type": "STRING"},
+
+        # Sources
+        "sources_or_references": {
+            "type": "ARRAY",
+            "items": {"type": "STRING"},
+        },
+    },
+    "required": [
+        "category", "topic", "headline_fact", "summary", "did_you_know",
+        "myth_statement", "verdict", "verdict_confidence",
+        "myth_origin", "spread_psychology", "grain_of_truth",
+        "the_reality", "counter_arguments", "how_to_explain",
+        "myth_sub_category", "prevalence", "debunk_evidence",
+        "common_misconceptions", "timeline", "learning_takeaways",
+        "key_figure", "key_stat", "quote",
+        "emoji_icon", "difficulty_level", "region", "fun_rating",
+        "read_time_seconds", "tags", "related_categories",
+        "visual_suggestions", "share_text", "content_freshness",
+        "sources_or_references",
+    ],
+}

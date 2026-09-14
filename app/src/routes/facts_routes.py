@@ -149,25 +149,39 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
 
     tasks = []
     
-    # 1. Cover
+    # 1. Cover (shared by both fact and mythbuster)
     if cover_prompt := visual_suggestions.get("cover"):
         tasks.append(process_image(
             "cover", f"{content_hash}_cover.jpg", cover_prompt, "16:9",
-            "This image will be used as the main cover background at the top of the UI. It must leave negative left space for a headline overlay and MUST NOT contain any text."
+            "This image will be used as the main cover background at the top of the UI. It must leave negative left space for a headline overlay and MUST NOT contain any text, but make sure the negative left space is full gradiend colors."
         ))
 
-    # 2. Overview (fallback to history for older structures)
+    # 2. Overview (standard fact) — fallback to history for older structures
     if overview_prompt := visual_suggestions.get("overview") or visual_suggestions.get("history"):
         tasks.append(process_image(
             "overview", f"{content_hash}_overview.jpg", overview_prompt, "4:3",
             "This image is placed directly beneath 'The short version' summary of the topic in the UI. It should visually summarize the core idea."
         ))
             
-    # 3. How it works
+    # 3. How it works (standard fact)
     if how_it_works_prompt := visual_suggestions.get("how_it_works"):
         tasks.append(process_image(
             "how_it_works", f"{content_hash}_how_it_works.jpg", how_it_works_prompt, "4:3",
             "This image is placed inline in the 'How it works' section of the UI. It should visually illustrate the mechanics, processes, or technicalities. IN THE IMAGE, MAKE SURE THE SPELLING OF WORDS IS ABSOLUTELY CORRECT"
+        ))
+
+    # 4. Myth visual (mythbuster only)
+    if myth_visual_prompt := visual_suggestions.get("myth_visual"):
+        tasks.append(process_image(
+            "myth_visual", f"{content_hash}_myth_visual.jpg", myth_visual_prompt, "4:3",
+            "This image depicts the myth AS IF IT WERE TRUE — the dramatic, exaggerated version people imagine. It is shown in the 'The Myth' section of a myth-busting article."
+        ))
+
+    # 5. Truth visual (mythbuster only)
+    if truth_visual_prompt := visual_suggestions.get("truth_visual"):
+        tasks.append(process_image(
+            "truth_visual", f"{content_hash}_truth_visual.jpg", truth_visual_prompt, "4:3",
+            "This image depicts the scientific reality — what actually happens. It is shown in the 'The Truth' section of a myth-busting article, alongside the debunking explanation."
         ))
 
     if tasks:
@@ -315,6 +329,10 @@ async def retry_image_generation(
         expected_keys.append("overview")
     if visual_suggestions.get("how_it_works"): 
         expected_keys.append("how_it_works")
+    if visual_suggestions.get("myth_visual"):
+        expected_keys.append("myth_visual")
+    if visual_suggestions.get("truth_visual"):
+        expected_keys.append("truth_visual")
         
     # Check if we have all expected keys
     missing_keys = [k for k in expected_keys if k not in existing_images]

@@ -157,3 +157,169 @@ def _build_prompt(category: str, blocklist: List[str]) -> str:
     )
     return prompt
 
+
+def _build_mythbuster_prompt(blocklist: List[str]) -> str:
+    """
+    Build a generation prompt specifically for myth-busting content.
+
+    Unlike the generic fact prompt, this asks the model to start from a
+    misconception and structure the response as a debunking investigation.
+    """
+    hints = CATEGORY_HINTS.get("mythbusters", "common misconceptions")
+    random_seed = random.randint(1, 100000)
+
+    blocklist_instruction = ""
+    if blocklist:
+        joined = ", ".join(f'"{t}"' for t in blocklist[:cfg.FACTS_DEDUP_LIMIT])
+        blocklist_instruction = (
+            f"\n\nDO NOT debunk any of these previously covered myths: "
+            f"[{joined}]. Pick something completely different."
+        )
+
+    cliches = ", ".join(f'"{c}"' for c in CLICHED_FACTS)
+
+    prompt = (
+        "You are a world-class science communicator and investigative journalist "
+        "specializing in debunking widely held misconceptions. "
+        "Your goal is to dismantle ONE specific myth with rigorous evidence, "
+        "psychological insight, and genuine empathy for why people believe it. "
+        "The reader should finish feeling enlightened, not belittled.\n\n"
+
+        "CRITICAL — YOU ARE A MYTH BUSTER, NOT A FACT GENERATOR:\n"
+        "Start from a SPECIFIC, WIDELY BELIEVED MISCONCEPTION. "
+        "Structure everything as an investigation that builds toward a verdict.\n\n"
+
+        "CONTENT DEPTH REQUIREMENTS:\n\n"
+
+        "'topic':\n"
+        "Must be a concise 4-8 word noun phrase identifying the myth subject "
+        "(e.g., 'Cracking Knuckles Causes Arthritis Myth'). "
+        "NEVER write a full sentence. Used for deduplication.\n\n"
+
+        "'headline_fact':\n"
+        "A one-sentence hook that grabs attention by stating the myth and hinting at the truth "
+        "(e.g., 'Despite what your parents told you, cracking your knuckles does NOT cause arthritis — "
+        "and a doctor spent 60 years proving it on his own hands.').\n\n"
+
+        "'myth_statement':\n"
+        "The exact popular claim in quotation marks, stated exactly as believers would say it "
+        "(e.g., '\"You need to drink at least 8 glasses of water a day to stay healthy.\"'). "
+        "This is the central claim being investigated.\n\n"
+
+        "'verdict':\n"
+        "Your definitive ruling. Must be one of: BUSTED (completely false), "
+        "PARTIALLY_TRUE (has a kernel of truth but is misleading), "
+        "PLAUSIBLE (not enough evidence to fully confirm or deny), "
+        "TRUE (actually correct despite sounding like a myth). "
+        "Be rigorous — most entries should be BUSTED or PARTIALLY_TRUE.\n\n"
+
+        "'verdict_confidence':\n"
+        "How strong is the evidence behind your verdict? "
+        "'strong' = meta-analyses, RCTs, overwhelming scientific consensus. "
+        "'moderate' = solid observational studies, expert consensus but limited RCTs. "
+        "'emerging' = preliminary research, limited data, active scientific debate.\n\n"
+
+        "'myth_origin':\n"
+        "Trace the FULL origin story of this myth. When did it first appear? "
+        "Who popularized it? Was it a misunderstood study, a marketing campaign, "
+        "a cultural tradition, or a logical-sounding assumption? "
+        "Include specific names, dates, publications, and the chain of events "
+        "that turned an idea into a widely held belief. Write as a narrative "
+        "with rich historical detail. Use Markdown formatting.\n\n"
+
+        "'spread_psychology':\n"
+        "Analyze the cognitive biases and psychological mechanisms that make this myth sticky. "
+        "Name SPECIFIC biases (confirmation bias, availability heuristic, anchoring effect, "
+        "authority bias, illusory correlation, etc.) and explain exactly how each one "
+        "applies to THIS myth. Why does your brain WANT to believe it? "
+        "What emotional or evolutionary purpose does the belief serve? Use Markdown.\n\n"
+
+        "'grain_of_truth':\n"
+        "Almost every myth contains a distorted real observation. What is it? "
+        "Explain the genuine phenomenon that the myth misinterprets or exaggerates. "
+        "This is crucial for empathy — it shows WHY the myth seems plausible. Use Markdown.\n\n"
+
+        "'the_reality':\n"
+        "The comprehensive, evidence-based truth. Explain what actually happens, "
+        "why the myth is wrong (or partially wrong), and what the science says. "
+        "Use analogies a curious 15-year-old could follow, then build to full technical depth. "
+        "This should be the most detailed section. Use Markdown.\n\n"
+
+        "'counter_arguments':\n"
+        "Steelman the myth. What do believers cite as evidence? What anecdotes or studies "
+        "do they reference? Then systematically explain why each counter-argument is "
+        "insufficient, outdated, or misinterpreted. Use Markdown.\n\n"
+
+        "'how_to_explain':\n"
+        "Provide a practical, empathetic script for how to gently correct someone "
+        "who believes this myth. Include conversation starters, the key evidence "
+        "to mention, and how to avoid making the person feel stupid. "
+        "This should read like advice from a communication expert. Use Markdown.\n\n"
+
+        "'myth_sub_category':\n"
+        "Classify this myth into one of: health, science, history, nutrition, "
+        "psychology, society, technology, nature.\n\n"
+
+        "'prevalence':\n"
+        "How widespread is this myth? Describe its geographic and demographic reach "
+        "(e.g., 'Global — believed across all cultures', 'Mostly Western — rooted in "
+        "American marketing', 'Indian-specific — tied to Ayurvedic misinterpretations').\n\n"
+
+        "'debunk_evidence':\n"
+        "An array of 3-5 specific studies or evidence items. Each must have: "
+        "'study' (name of study or experiment), 'year' (publication year), "
+        "'finding' (key result in one sentence), 'source' (journal or publication name). "
+        "These must be REAL, verifiable studies.\n\n"
+
+        "'common_misconceptions':\n"
+        "List 2-3 RELATED myths that stem from the same family of misunderstanding. "
+        "Each with 'myth', 'reality', and 'evidence'.\n\n"
+
+        "'timeline':\n"
+        "Chronological milestones of how this myth evolved — from its origin through "
+        "peak belief to modern debunking efforts. Include specific dates/years.\n\n"
+
+        "'learning_takeaways':\n"
+        "3-5 key lessons the reader should remember. "
+        "Frame as critical thinking skills, not just 'this myth is false'.\n\n"
+
+        "'visual_suggestions':\n"
+        "This object must contain EXACTLY 3 highly detailed image generation prompts:\n"
+        "1. 'cover': A dramatic, investigative-themed background image. Think magnifying glass, "
+        "detective evidence board, forensic aesthetic. MUST CONTAIN NO TEXT OR WORDS. "
+        "Compose with negative space on the left for headline overlay. "
+        "Use dramatic lighting (e.g., 'noir lighting, dramatic shadows, 8k resolution').\n"
+        "2. 'myth_visual': A vivid, cinematic depiction of the myth AS IF IT WERE TRUE — "
+        "the dramatic, exaggerated version that people imagine. Make it visually striking.\n"
+        "3. 'truth_visual': A clear, scientific depiction of the actual reality — "
+        "what really happens, shown through an educational or documentary lens.\n\n"
+
+        "'sources_or_references':\n"
+        "List specific, verifiable sources — research papers, meta-analyses, "
+        "textbooks, government health reports with authors and years.\n\n"
+
+        "'quote':\n"
+        "A relevant quote from a scientist, researcher, or expert related to this myth. "
+        "Set 'confidence' to 'verified' if absolutely certain, otherwise 'unverified'.\n\n"
+
+        f"MYTH DOMAIN HINTS: {hints}\n"
+        f"RANDOMNESS SEED: {random_seed}\n"
+        f"TIMESTAMP: {int(time.time())}\n\n"
+
+        "QUALITY RULES:\n"
+        "- Pick myths that MOST EDUCATED ADULTS still believe — not obvious ones.\n"
+        "- Avoid common clichés and overused myths. NEVER use any of these: "
+        f"[{cliches}].\n"
+        "- TONE: Empathetic investigator, not smug know-it-all. You are helping, not mocking.\n"
+        "- EVIDENCE: All claims must be backed by real, verifiable research.\n"
+        "- MARKDOWN FORMATTING: For all long text fields, use Markdown formatting "
+        "inside the JSON string value. Separate paragraphs with blank lines "
+        "(use literal \\n\\n). Use **bold** for key terms, bullet points for lists.\n"
+        "- The 'share_text' must be under 280 characters, formatted as: "
+        "'MYTH: [claim] — VERDICT: [ruling]. [one-line truth]'\n"
+        "- The 'fun_rating' should be 1-10. Myth-busting is inherently fun, so aim 7+.\n"
+        "- The 'read_time_seconds' should estimate TOTAL read time (expect 5-10 mins).\n"
+        "- The 'difficulty_level' must be one of: beginner, intermediate, advanced.\n"
+        f"{blocklist_instruction}\n"
+    )
+    return prompt
