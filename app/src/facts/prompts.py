@@ -127,6 +127,10 @@ def _build_prompt(category: str, blocklist: List[str]) -> str:
         f"TIMESTAMP: {int(time.time())}\n\n"
 
         "QUALITY RULES:\n"
+        "- WRITING STYLE (CRITICAL): Make sure the content follows ASD-STE100 "
+        "(Simplified Technical English). Follow about 70% of the rules strictly. "
+        "Keep the other 30% natural, so the text reads like a clear human "
+        "explanation and not like a manual.\n"
         "- TERMINOLOGY RULE (CRITICAL): Whenever you use a local, regional, or "
         "non-English term (Hindi, Sanskrit, Tamil, etc.), IMMEDIATELY define it "
         "in plain English. Example: 'Jugaad (a frugal, innovative workaround)' "
@@ -307,6 +311,10 @@ def _build_mythbuster_prompt(blocklist: List[str]) -> str:
         f"TIMESTAMP: {int(time.time())}\n\n"
 
         "QUALITY RULES:\n"
+        "- WRITING STYLE (CRITICAL): Make sure the content follows ASD-STE100 "
+        "(Simplified Technical English). Follow about 70% of the rules strictly. "
+        "Keep the other 30% natural, so the text reads like a clear human "
+        "explanation and not like a manual.\n"
         "- Pick myths that MOST EDUCATED ADULTS still believe — not obvious ones.\n"
         "- Avoid common clichés and overused myths. NEVER use any of these: "
         f"[{cliches}].\n"

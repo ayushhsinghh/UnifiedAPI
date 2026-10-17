@@ -110,11 +110,6 @@ class DatabaseManager:
         db[cfg.DAILY_FACTS_COLLECTION].create_index(
             "content_hash", unique=True
         )
-        self._setup_ttl_index(
-            cfg.DAILY_FACTS_COLLECTION,
-            "created_at",
-            expire_seconds=cfg.FACTS_TTL_SECONDS,
-        )
         
         # Fact Jobs indexes
         db[cfg.FACT_JOBS_COLLECTION].create_index("job_id", unique=True)
