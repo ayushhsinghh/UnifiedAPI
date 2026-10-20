@@ -88,7 +88,7 @@ async def generate_and_save_image(prompt: str, image_filename: str, aspect_ratio
                         "Content-Type": "application/json",
                     },
                     json={
-                        "model": "black-forest-labs/flux.2-pro",
+                        "model": "qwen/qwen-image-2.1-turbo",
                         "prompt": full_prompt,
                         "aspect_ratio": aspect_ratio
                     },
