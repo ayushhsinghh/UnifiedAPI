@@ -1,3 +1,32 @@
+# Additive evidence fields keep existing sources_or_references strings compatible.
+_SOURCE_IDS_SCHEMA = {"type": "ARRAY", "items": {"type": "STRING"}}
+_SOURCES_SCHEMA = {
+    "type": "ARRAY",
+    "items": {
+        "type": "OBJECT",
+        "properties": {
+            "id": {"type": "STRING"},
+            "title": {"type": "STRING"},
+            "url": {"type": "STRING"},
+            "author": {"type": "STRING"},
+            "published_date": {"type": "STRING"},
+        },
+        "required": ["id", "title", "url"],
+    },
+}
+_CLAIM_CITATIONS_SCHEMA = {
+    "type": "ARRAY",
+    "items": {
+        "type": "OBJECT",
+        "properties": {
+            "claim": {"type": "STRING"},
+            "section": {"type": "STRING"},
+            "source_ids": _SOURCE_IDS_SCHEMA,
+        },
+        "required": ["claim", "section", "source_ids"],
+    },
+}
+
 _TIMELINE_ITEM_SCHEMA = {
     "type": "OBJECT",
     "properties": {
@@ -64,6 +93,7 @@ FACT_RESPONSE_SCHEMA = {
                 "properties": {
                     "myth": {"type": "STRING"},
                     "reality": {"type": "STRING"},
+                    "source_ids": _SOURCE_IDS_SCHEMA,
                     "evidence": {"type": "STRING"}
                 },
                 "required": ["myth", "reality", "evidence"]
@@ -78,6 +108,7 @@ FACT_RESPONSE_SCHEMA = {
             "type": "OBJECT",
             "properties": {
                 "text": {"type": "STRING"},
+                "source_ids": _SOURCE_IDS_SCHEMA,
                 "confidence": {"type": "STRING", "enum": ["verified", "unverified"]}
             },
             "required": ["text", "confidence"]
@@ -143,6 +174,8 @@ FACT_RESPONSE_SCHEMA = {
         "share_text": {"type": "STRING"},
 
         # Sources
+        "sources": _SOURCES_SCHEMA,
+        "claim_citations": _CLAIM_CITATIONS_SCHEMA,
         "sources_or_references": {
             "type": "ARRAY",
             "items": {"type": "STRING"},
@@ -159,7 +192,7 @@ FACT_RESPONSE_SCHEMA = {
         "emoji_icon", "difficulty_level", "region", "fun_rating",
         "read_time_seconds", "tags", "related_categories",
         "visual_suggestions", "share_text", "content_freshness",
-        "sources_or_references",
+        "sources_or_references", "sources", "claim_citations",
     ],
 }
 
@@ -170,6 +203,7 @@ _EVIDENCE_ITEM_SCHEMA = {
         "year": {"type": "STRING"},
         "finding": {"type": "STRING"},
         "source": {"type": "STRING"},
+        "source_ids": _SOURCE_IDS_SCHEMA,
     },
     "required": ["study", "year", "finding", "source"],
 }
@@ -223,6 +257,7 @@ MYTHBUSTER_RESPONSE_SCHEMA = {
                 "properties": {
                     "myth": {"type": "STRING"},
                     "reality": {"type": "STRING"},
+                    "source_ids": _SOURCE_IDS_SCHEMA,
                     "evidence": {"type": "STRING"},
                 },
                 "required": ["myth", "reality", "evidence"],
@@ -248,6 +283,7 @@ MYTHBUSTER_RESPONSE_SCHEMA = {
             "type": "OBJECT",
             "properties": {
                 "text": {"type": "STRING"},
+                "source_ids": _SOURCE_IDS_SCHEMA,
                 "confidence": {
                     "type": "STRING",
                     "enum": ["verified", "unverified"],
@@ -286,6 +322,8 @@ MYTHBUSTER_RESPONSE_SCHEMA = {
         "share_text": {"type": "STRING"},
 
         # Sources
+        "sources": _SOURCES_SCHEMA,
+        "claim_citations": _CLAIM_CITATIONS_SCHEMA,
         "sources_or_references": {
             "type": "ARRAY",
             "items": {"type": "STRING"},
@@ -302,6 +340,6 @@ MYTHBUSTER_RESPONSE_SCHEMA = {
         "emoji_icon", "difficulty_level", "region", "fun_rating",
         "read_time_seconds", "tags", "related_categories",
         "visual_suggestions", "share_text", "content_freshness",
-        "sources_or_references",
+        "sources_or_references", "sources", "claim_citations",
     ],
 }

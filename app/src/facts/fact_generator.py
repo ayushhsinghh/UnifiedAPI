@@ -3,7 +3,7 @@ Daily Learning Fact Generator.
 
 Uses Google Gemini with structured JSON output to generate rich,
 educational, India-biased facts. Includes retry logic with exponential
-backoff and emergency fallback to cached facts from MongoDB.
+backoff and provider fallback. The route handles cached facts from MongoDB.
 """
 
 import asyncio
@@ -25,13 +25,14 @@ cfg = get_config()
 # ── Category sub-topic hints ────────────────────────────────────────────
 from .constants import CATEGORY_HINTS, SUPPORTED_CATEGORIES, CLICHED_FACTS
 from .schemas import FACT_RESPONSE_SCHEMA, MYTHBUSTER_RESPONSE_SCHEMA
+from .evidence import normalize_evidence
 from .prompts import _build_prompt, _build_mythbuster_prompt
 
 # ── Retry constants ──────────────────────────────────────────────────────
 
 _MAX_RETRIES = 3
 _BACKOFF_SECONDS = [1, 2, 4]
-_REQUEST_TIMEOUT_SECONDS = 30
+_REQUEST_TIMEOUT_SECONDS = cfg.FACT_REQUEST_TIMEOUT_SECONDS
 
 
 # ── Main generation function ────────────────────────────────────────────
@@ -40,6 +41,7 @@ _REQUEST_TIMEOUT_SECONDS = 30
 async def generate_daily_fact(
     category: str,
     blocklist: Optional[List[str]] = None,
+    generation_metadata: Optional[dict] = None,
 ) -> dict:
     """
     Generate a rich, structured educational fact using Google Gemini.
@@ -48,12 +50,13 @@ async def generate_daily_fact(
         category: The fact category (must be from SUPPORTED_CATEGORIES
                   or a custom sanitized category).
         blocklist: List of short topic keys to avoid (dedup).
+        generation_metadata: Optional output dictionary for actual provider and model.
 
     Returns:
         A dict matching the FACT_RESPONSE_SCHEMA structure.
 
     Raises:
-        No exceptions — falls back to cached or emergency data on failure.
+        Provider failures are retried; returns None when all attempts fail.
     """
     if blocklist is None:
         blocklist = []
@@ -79,7 +82,7 @@ async def generate_daily_fact(
                     attempt + 1, model_name, category,
                 )
 
-                response = await client.aio.models.generate_content(
+                response = await asyncio.wait_for(client.aio.models.generate_content(
                     model=model_name,
                     contents=prompt,
                     config={
@@ -89,7 +92,7 @@ async def generate_daily_fact(
                         "response_mime_type": "application/json",
                         "response_schema": response_schema,
                     },
-                )
+                ), timeout=_REQUEST_TIMEOUT_SECONDS)
                 fact = response.parsed
             else:
                 openai_client = openai.AsyncOpenAI(api_key=cfg.OPENAI_API_KEY)
@@ -100,16 +103,19 @@ async def generate_daily_fact(
                 
                 openai_prompt = prompt + "\n\nRETURN YOUR RESPONSE AS A VALID JSON OBJECT MATCHING THIS SCHEMA EXACTLY:\n" + json.dumps(response_schema)
                 
-                response = await openai_client.chat.completions.create(
+                response = await asyncio.wait_for(openai_client.chat.completions.create(
                     model=model_name,
                     messages=[{"role": "user", "content": openai_prompt}],
                     response_format={"type": "json_object"},
-                )
+                ), timeout=_REQUEST_TIMEOUT_SECONDS)
                 fact_str = response.choices[0].message.content
                 fact = json.loads(fact_str) if fact_str else None
 
             if isinstance(fact, dict) and fact.get("headline_fact"):
+                normalize_evidence(fact)
                 fact["category"] = category
+                if generation_metadata is not None:
+                    generation_metadata.update(provider="gemini" if model_name.startswith("gemini") else "openai", model=model_name)
                 logger.info(
                     "Generated fact for '%s': %s",
                     category, fact.get("topic", "unknown"),
@@ -133,9 +139,9 @@ async def generate_daily_fact(
             logger.info("Retrying in %ds...", backoff)
             await asyncio.sleep(backoff)
 
-    # All retries exhausted — fall back to cached fact
+    # The route selects a cached fact after all providers fail.
     logger.warning(
-        "All %d Gemini attempts failed for category '%s'. Last error: %s",
+        "All %d generation attempts failed for category '%s'. Last error: %s",
         _MAX_RETRIES + 1, category, last_error,
     )
     return None

@@ -59,7 +59,7 @@ def get_recent_topic_keys(category: str, limit: Optional[int] = None) -> List[st
     return [doc["topic_key"] for doc in cursor if "topic_key" in doc]
 
 
-def store_fact(fact_response: dict, category: str) -> Optional[str]:
+def store_fact(fact_response: dict, category: str, generation_metadata: Optional[dict] = None) -> Optional[str]:
     """
     Store a generated fact in MongoDB for deduplication and caching.
 
@@ -77,6 +77,7 @@ def store_fact(fact_response: dict, category: str) -> Optional[str]:
         "full_response": fact_response,
         "content_hash": content_hash,
         "created_at": datetime.now(timezone.utc),
+        "generation_metadata": generation_metadata or {},
     }
 
     db = get_db()
@@ -94,7 +95,7 @@ def store_fact(fact_response: dict, category: str) -> Optional[str]:
         return None
 
 
-def get_random_cached_fact(category: str) -> Optional[dict]:
+def get_random_cached_fact(category: str, include_metadata: bool = False) -> Optional[dict]:
     """
     Retrieve a random previously-generated fact for emergency fallback.
 
@@ -104,11 +105,11 @@ def get_random_cached_fact(category: str) -> Optional[dict]:
     pipeline = [
         {"$match": {"category": category}},
         {"$sample": {"size": 1}},
-        {"$project": {"full_response": 1, "_id": 0}},
+        {"$project": {"full_response": 1, "content_hash": 1, "images": 1, "image_status": 1, "image_started_at": 1, "generation_metadata": 1, "_id": 0}},
     ]
     results = list(db[cfg.DAILY_FACTS_COLLECTION].aggregate(pipeline))
     if results:
-        return results[0].get("full_response")
+        return results[0] if include_metadata else results[0].get("full_response")
     return None
 
 
@@ -181,3 +182,32 @@ def get_fact_by_hash(content_hash: str) -> Optional[dict]:
     """
     db = get_db()
     return db[cfg.DAILY_FACTS_COLLECTION].find_one({"content_hash": content_hash}, {"_id": 0})
+
+
+def start_fact_images(content_hash: str, keys: list) -> None:
+    """Persist image work before scheduling it, including retry attempts."""
+    updates = {f"image_status.{key}": "processing" for key in keys}
+    updates.update(image_started_at=datetime.now(timezone.utc), image_ready=False)
+    get_db()[cfg.DAILY_FACTS_COLLECTION].update_one(
+        {"content_hash": content_hash}, {"$set": updates})
+
+
+def set_fact_image_state(content_hash: str, key: str, status: str, url=None) -> None:
+    """Save each result separately so partial results are immediately visible."""
+    updates = {f"image_status.{key}": status}
+    if url:
+        updates[f"images.{key}"] = url
+    get_db()[cfg.DAILY_FACTS_COLLECTION].update_one(
+        {"content_hash": content_hash}, {"$set": updates})
+
+
+def finish_fact_images(content_hash: str) -> None:
+    """Update the legacy completion flag without overwriting concurrent results."""
+    from src.facts.lifecycle import image_generation_state
+    document = get_fact_by_hash(content_hash)
+    if document:
+        state = image_generation_state(document, cfg.FACT_IMAGE_TIMEOUT_SECONDS)
+        get_db()[cfg.DAILY_FACTS_COLLECTION].update_one(
+            {"content_hash": content_hash},
+            {"$set": {"image_ready": state["status"] == "completed"}},
+        )

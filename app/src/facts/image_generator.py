@@ -75,7 +75,11 @@ async def generate_and_save_image(prompt: str, image_filename: str, aspect_ratio
         logger.error("OPENROUTER_API_KEY is not set. Cannot generate image.")
         return None
 
-    full_prompt = f"{extra_context}\n\nActual Image Prompt: {prompt}" if extra_context else prompt
+    full_prompt = (
+        f"Scene description:\n{prompt}\n\n"
+        f"Section requirements (take precedence over conflicting scene details):\n{extra_context}"
+        if extra_context else prompt
+    )
 
     for attempt in range(max_retries):
         try:

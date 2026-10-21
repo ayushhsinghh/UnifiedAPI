@@ -3,8 +3,24 @@ import time
 from typing import List
 from configs.config import get_config
 from .constants import CATEGORY_HINTS, CLICHED_FACTS
+from .visual_prompts import build_visual_instructions
 
 cfg = get_config()
+
+_EVIDENCE_INSTRUCTIONS = """
+SOURCE LINKING:
+Keep sources_or_references as a list of readable reference strings for older clients.
+Also return sources as structured records with unique IDs (s1, s2, ...), title, and URL.
+Include author and published_date only when known. Use an empty URL when unknown.
+Never invent a URL, author, publication date, study, or source to fill a field.
+Return claim_citations for the central claim, key statistics, and other specific claims.
+Each item contains the exact claim, its response field name in section, and source_ids.
+Use only IDs present in sources. Attach source_ids to quotes, debunk_evidence, and
+common_misconceptions when a source supports that item. Use empty lists when unknown.
+References are model-supplied, not independently checked by this application.
+A source link alone does not establish that a quotation or claim is verified.
+"""
+
 
 def _build_prompt(category: str, blocklist: List[str]) -> str:
     """
@@ -108,11 +124,7 @@ def _build_prompt(category: str, blocklist: List[str]) -> str:
         "List specific, verifiable sources — books, research papers, government reports, "
         "historical records with authors and years.\n\n"
 
-        "'visual_suggestions':\n"
-        "This object must contain EXACTLY 3 highly detailed, rich, and cinematic image generation prompts. Each prompt should be a full descriptive paragraph detailing the subject, lighting, atmosphere, style, and composition:\n"
-        "1. 'cover': A stunning, expansive background image that captures the essence of the topic. IT MUST CONTAIN ABSOLUTELY NO TEXT OR WORDS. It should be composed with negative space in mind, and have the main visual elements of the image around the right side of the image leaving room for the UI to overlay the headline on the left side. Specify dramatic lighting and high-quality rendering (e.g., 'Unreal Engine 5 render, cinematic lighting, 8k resolution, wide angle lens').\n"
-        "2. 'overview': A highly detailed, photorealistic visual depiction that directly represents the fact. This image should vividly describe the visual essence of the central idea or primary subject. Provide extremely detailed suggestions on the lighting, mood, environment, colors, and specific elements that visually capture the core concept. Make it vibrant, cinematic, and captivating.\n"
-        "3. 'how_it_works': A visually striking, diagram-like or conceptual image that clearly illustrates the core mechanics, process, or scientific principle behind the fact. Include details about how to visually represent abstract concepts (e.g., 'glowing energy lines showing the flow of data', 'cross-section view with neon accents', 'intricate macro photography').\n\n"
+        f"{build_visual_instructions()}"
 
         "INDIA-FIRST RULE (CRITICAL):\n"
         "- Always prioritize facts related to India.\n"
@@ -173,7 +185,7 @@ def _build_prompt(category: str, blocklist: List[str]) -> str:
         "NO placeholders, NO short answers, NO summaries.\n"
         f"{blocklist_instruction}\n"
     )
-    return prompt
+    return prompt + _EVIDENCE_INSTRUCTIONS
 
 
 def _build_mythbuster_prompt(blocklist: List[str]) -> str:
@@ -301,16 +313,7 @@ def _build_mythbuster_prompt(blocklist: List[str]) -> str:
         "3-5 key lessons the reader should remember. "
         "Frame as critical thinking skills, not just 'this myth is false'.\n\n"
 
-        "'visual_suggestions':\n"
-        "This object must contain EXACTLY 3 highly detailed image generation prompts:\n"
-        "1. 'cover': A dramatic, investigative-themed background image. Think magnifying glass, "
-        "detective evidence board, forensic aesthetic. MUST CONTAIN NO TEXT OR WORDS. "
-        "Compose with negative space on the left for headline overlay. "
-        "Use dramatic lighting (e.g., 'noir lighting, dramatic shadows, 8k resolution').\n"
-        "2. 'myth_visual': A vivid, cinematic depiction of the myth AS IF IT WERE TRUE — "
-        "the dramatic, exaggerated version that people imagine. Make it visually striking.\n"
-        "3. 'truth_visual': A clear, scientific depiction of the actual reality — "
-        "what really happens, shown through an educational or documentary lens.\n\n"
+        f"{build_visual_instructions(mythbuster=True)}"
 
         "'sources_or_references':\n"
         "List specific, verifiable sources — research papers, meta-analyses, "
@@ -358,4 +361,4 @@ def _build_mythbuster_prompt(blocklist: List[str]) -> str:
         "- The 'difficulty_level' must be one of: beginner, intermediate, advanced.\n"
         f"{blocklist_instruction}\n"
     )
-    return prompt
+    return prompt + _EVIDENCE_INSTRUCTIONS

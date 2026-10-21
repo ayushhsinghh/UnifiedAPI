@@ -29,14 +29,19 @@ from src.database.facts_repository import (
     get_random_cached_fact,
     get_recent_topic_keys,
     store_fact,
-    update_fact_images,
     delete_fact,
     get_fact_by_hash,
+    _compute_content_hash,
+    start_fact_images,
+    set_fact_image_state,
+    finish_fact_images,
 )
 from src.facts.fact_generator import (
     SUPPORTED_CATEGORIES,
     generate_daily_fact,
 )
+from src.facts.lifecycle import expected_image_keys, image_generation_state
+from src.facts.visual_prompts import IMAGE_SECTION_BRIEFS, build_section_image_context
 from src.facts.image_generator import generate_and_save_image
 
 logger = logging.getLogger(__name__)
@@ -92,52 +97,68 @@ async def process_fact_generation_task(
     logger.info("Starting fact generation task for job %s", job_id)
     start_time = time.monotonic()
     
+    generation_metadata = {}
+    cached = None
     try:
-        fact = await generate_daily_fact(category, blocklist)
+        fact = await asyncio.wait_for(
+            generate_daily_fact(category, blocklist, generation_metadata=generation_metadata),
+            timeout=cfg.FACT_JOB_TIMEOUT_SECONDS - 5,
+        )
         if not fact:
-            raise RuntimeError("Generator returned None (all retries failed)")
-    except Exception as exc:
-        logger.error("Fact generation failed for job %s: %s", job_id, exc)
-        # Try fallback
+            raise RuntimeError("All generation attempts failed")
+    except Exception:
+        logger.exception("Fact generation failed for job %s", job_id)
         try:
-            fact = get_random_cached_fact(category)
-            if not fact:
+            cached = get_random_cached_fact(category, include_metadata=True)
+            if not cached or not cached.get("full_response"):
                 update_fact_job(job_id, "failed", error="Generation failed and no cached facts available.")
                 return
-            logger.info("Job %s using fallback cached fact", job_id)
-        except Exception as cache_exc:
-            update_fact_job(job_id, "failed", error=f"Generation failed: {exc}")
+            fact = dict(cached["full_response"])
+            fact["images"] = cached.get("images") or fact.get("images") or {}
+            generation_metadata = cached.get("generation_metadata") or {}
+        except Exception:
+            logger.exception("Cached fallback failed for job %s", job_id)
+            update_fact_job(job_id, "failed", error="Generation failed and cached facts are unavailable.")
             return
-    
-    generation_time_ms = int((time.monotonic() - start_time) * 1000)
-    
-    # Pack meta info
+
+    content_hash = cached.get("content_hash") if cached else None
+    stored = cached
+    if not cached:
+        try:
+            content_hash = store_fact(fact, category, generation_metadata=generation_metadata)
+            if content_hash:
+                keys = expected_image_keys(fact.get("visual_suggestions"))
+                if keys:
+                    start_fact_images(content_hash, keys)
+                    asyncio.create_task(_background_image_task(fact["visual_suggestions"], content_hash, article=fact))
+            else:
+                # Exact duplicates still reference their existing images and state.
+                content_hash = _compute_content_hash(fact["headline_fact"])
+            stored = get_fact_by_hash(content_hash)
+        except Exception:
+            logger.exception("Failed to store fact for job %s", job_id)
+    if stored and stored.get("images"):
+        fact["images"] = stored["images"]
+    image_state = image_generation_state(stored or {"full_response": fact}, cfg.FACT_IMAGE_TIMEOUT_SECONDS)
     fact_response = {
         "success": True,
         "fact": fact,
+        "content_hash": content_hash,
+        "image_generation": image_state,
         "meta": {
-            "source": "gemini",
-            "generation_time_ms": generation_time_ms,
+            "source": "cache" if cached else generation_metadata.get("provider", "unknown"),
+            "provider": generation_metadata.get("provider"),
+            "model": generation_metadata.get("model"),
+            "cached": cached is not None,
+            "generation_time_ms": int((time.monotonic() - start_time) * 1000),
             "category_requested": category,
         },
     }
+    if not update_fact_job(job_id, "completed", fact_data=fact_response):
+        logger.error("Job %s could not be marked completed", job_id)
 
-    # Store for dedup & caching
-    content_hash = None
-    try:
-        content_hash = store_fact(fact, category)
-        if content_hash and fact.get("visual_suggestions"):
-            logger.info("Visual suggestions found, dispatching background image generation for hash %s", content_hash)
-            asyncio.create_task(_background_image_task(fact["visual_suggestions"], content_hash))
-    except Exception as exc:
-        logger.warning("Failed to store fact for job %s: %s", job_id, exc)
 
-    # Update job — include content_hash so the status endpoint can look up images later
-    fact_response["content_hash"] = content_hash
-    update_fact_job(job_id, "completed", fact_data=fact_response)
-    logger.info("Task for job %s completed successfully", job_id)
-
-async def _background_image_task(visual_suggestions: dict, content_hash: str, existing_images: dict = None):
+async def _background_image_task(visual_suggestions: dict, content_hash: str, existing_images: dict = None, article: dict = None):
     if existing_images is None:
         existing_images = {}
     images = existing_images.copy()
@@ -145,53 +166,34 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
     async def process_image(key: str, filename: str, prompt: str, aspect_ratio: str, context: str):
         if key in existing_images:
             return
-        url = await generate_and_save_image(prompt, filename, aspect_ratio=aspect_ratio, extra_context=context)
-        if url:
-            images[key] = url
+        try:
+            url = await asyncio.wait_for(
+                generate_and_save_image(prompt, filename, aspect_ratio=aspect_ratio, extra_context=context),
+                timeout=cfg.FACT_IMAGE_TIMEOUT_SECONDS - 5,
+            )
+            if url:
+                images[key] = url
+            set_fact_image_state(content_hash, key, "ready" if url else "failed", url)
+        except Exception:
+            logger.exception("Image generation failed for %s/%s", content_hash, key)
+            set_fact_image_state(content_hash, key, "failed")
 
     tasks = []
-    
-    # 1. Cover (shared by both fact and mythbuster)
-    if cover_prompt := visual_suggestions.get("cover"):
-        tasks.append(process_image(
-            "cover", f"{content_hash}_cover.jpg", cover_prompt, "16:9",
-            "This image will be used as the main cover background at the top of the UI. It must leave a little negative left space for a headline overlay and MUST NOT contain any text, but make sure the negative left space is not full gradient colours."
-        ))
-
-    # 2. Overview (standard fact) — fallback to history for older structures
-    if overview_prompt := visual_suggestions.get("overview") or visual_suggestions.get("history"):
-        tasks.append(process_image(
-            "overview", f"{content_hash}_overview.jpg", overview_prompt, "4:3",
-            "This image is placed directly beneath 'The short version' summary of the topic in the UI. It should visually summarize the core idea."
-        ))
-            
-    # 3. How it works (standard fact)
-    if how_it_works_prompt := visual_suggestions.get("how_it_works"):
-        tasks.append(process_image(
-            "how_it_works", f"{content_hash}_how_it_works.jpg", how_it_works_prompt, "4:3",
-            "This image is placed inline in the 'How it works' section of the UI. It should visually illustrate the mechanics, processes, or technicalities. IN THE IMAGE, MAKE SURE THE SPELLING OF WORDS IS ABSOLUTELY CORRECT"
-        ))
-
-    # 4. Myth visual (mythbuster only)
-    if myth_visual_prompt := visual_suggestions.get("myth_visual"):
-        tasks.append(process_image(
-            "myth_visual", f"{content_hash}_myth_visual.jpg", myth_visual_prompt, "4:3",
-            "This image depicts the myth AS IF IT WERE TRUE — the dramatic, exaggerated version people imagine. It is shown in the 'The Myth' section of a myth-busting article."
-        ))
-
-    # 5. Truth visual (mythbuster only)
-    if truth_visual_prompt := visual_suggestions.get("truth_visual"):
-        tasks.append(process_image(
-            "truth_visual", f"{content_hash}_truth_visual.jpg", truth_visual_prompt, "4:3",
-            "This image depicts the scientific reality — what actually happens. It is shown in the 'The Truth' section of a myth-busting article, alongside the debunking explanation."
-        ))
+    for key, brief in IMAGE_SECTION_BRIEFS.items():
+        prompt = visual_suggestions.get(key)
+        if key == "overview":
+            prompt = prompt or visual_suggestions.get("history")
+        if prompt:
+            tasks.append(process_image(
+                key, f"{content_hash}_{key}.jpg", prompt, brief["ratio"],
+                build_section_image_context(key, article),
+            ))
 
     if tasks:
         await asyncio.gather(*tasks)
 
-    if images:
-        update_fact_images(content_hash, images)
-        logger.info("Background image generation complete, DB updated for %s with %d images", content_hash, len(images))
+    finish_fact_images(content_hash)
+    logger.info("Background image generation finished for %s with %d images", content_hash, len(images))
 
 
 
@@ -233,6 +235,8 @@ async def generate_fact_job(
         "success": True,
         "job_id": job_id,
         "status": "processing",
+        "timeout_seconds": cfg.FACT_JOB_TIMEOUT_SECONDS,
+        "poll_after_seconds": 4,
         "message": "Fact generation started. Poll /api/facts/status/{job_id} for completion."
     }
 
@@ -260,12 +264,11 @@ async def get_fact_job_status(job_id: str) -> dict:
         fact_data = job["fact_data"]
         # Merge images from the facts collection (they arrive after job completes)
         content_hash = fact_data.get("content_hash") if fact_data else None
-        if content_hash and (not fact_data.get("fact", {}).get("images")):
+        if content_hash:
             stored = get_fact_by_hash(content_hash)
-            if stored and stored.get("images"):
-                if "fact" not in fact_data:
-                    fact_data["fact"] = {}
-                fact_data["fact"]["images"] = stored["images"]
+            if stored:
+                fact_data["fact"]["images"] = stored.get("images") or {}
+                fact_data["image_generation"] = image_generation_state(stored, cfg.FACT_IMAGE_TIMEOUT_SECONDS)
         response["data"] = fact_data
     elif job["status"] == "failed":
         response["error"] = job.get("error", "Unknown error")
@@ -355,7 +358,8 @@ async def retry_image_generation(
         raise HTTPException(status_code=400, detail="Previous run was successful. All expected images are already generated.")
         
     logger.info("Retrying image generation for %s. Missing keys: %s", content_hash, missing_keys)
-    background_tasks.add_task(_background_image_task, visual_suggestions, content_hash, existing_images)
+    start_fact_images(content_hash, missing_keys)
+    background_tasks.add_task(_background_image_task, visual_suggestions, content_hash, existing_images, article=full_response)
     
     return {
         "success": True,
