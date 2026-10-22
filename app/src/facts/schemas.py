@@ -362,7 +362,7 @@ def _items(item):
 _TEXT = {"type": "STRING"}
 _NUMBER = {"type": "NUMBER", "nullable": True, "minimum": 0}
 _EXERCISE_SCHEMA = _object({
-    "name": _TEXT, "search_query": _TEXT, "sets": _TEXT, "reps": _TEXT,
+    "name": _TEXT, "sets": _TEXT, "reps": _TEXT,
     "rest_seconds": _NUMBER, "steps": _strings(), "easier_option": _TEXT,
     "progression": _TEXT, "source_ids": _strings(),
 })

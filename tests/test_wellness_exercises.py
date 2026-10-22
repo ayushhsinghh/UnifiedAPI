@@ -1,10 +1,8 @@
-"""Offline contract and HTTP regressions for wellness and MuscleWiki integration.
+"""Offline contract regressions for wellness and written exercise guides.
 
 Run with: python -m unittest discover -s tests
-Dependencies: fastapi, httpx, slowapi. No provider key, MongoDB or LLM required.
+No exercise provider key, MongoDB or live LLM required.
 """
-import copy
-import importlib
 import sys
 import types
 import unittest
@@ -43,6 +41,24 @@ class ContractTests(unittest.TestCase):
             self.assertFalse(validate_wellness_content({'headline_fact': 'No guide'}, category))
         self.assertNotIn('history', FITNESS_RESPONSE_SCHEMA['required'])
 
+    def test_written_exercises_do_not_require_a_catalog_search(self):
+        schema = FITNESS_RESPONSE_SCHEMA['properties']['training_guide']['properties']['exercises']['items']
+        self.assertNotIn('search_query', schema['properties'])
+        self.assertEqual(set(schema['required']), {
+            'name', 'sets', 'reps', 'rest_seconds', 'steps',
+            'easier_option', 'progression', 'source_ids',
+        })
+        fact = example(FITNESS_RESPONSE_SCHEMA)
+        exercise = example(schema)
+        fact['training_guide']['exercises'] = [exercise]
+        self.assertTrue(validate_wellness_content(fact, 'fitness'))
+        # Existing archived guides may retain the unused legacy field.
+        exercise['search_query'] = 'legacy query'
+        self.assertTrue(validate_wellness_content(fact, 'home_workouts'))
+        from src.facts import prompts
+        prompt = prompts._build_wellness_prompt('fitness', [])
+        self.assertIn('self-contained written instructions', prompt)
+
     def test_unknown_nutrients_stay_null_but_negative_and_string_values_fail(self):
         fact = example(INDIAN_DIET_RESPONSE_SCHEMA)
         food = example(INDIAN_DIET_RESPONSE_SCHEMA['properties']['nutrition_guide']['properties']['food_items']['items'])
@@ -70,7 +86,7 @@ class ContractTests(unittest.TestCase):
             self.assertIn('cooked/raw', diet)
             self.assertIn('Use null for unknown', diet)
             myth = prompts._build_wellness_prompt('nutrition_myths', [])
-            self.assertIn('without assuming', CATEGORY_HINTS['nutrition_myths'])
+            self.assertIn('Do not assume all food claims are false.', ' '.join(myth.split()))
             self.assertIn('CATEGORY: nutrition_myths', myth)
 
 
@@ -106,112 +122,6 @@ class WellnessGenerationTests(unittest.IsolatedAsyncioTestCase):
             result = await generator.generate_daily_fact('fitness')
         self.assertIn('training_guide', result)
         self.assertEqual(create.call_count, 2)
-
-
-try:
-    import httpx
-    from fastapi import FastAPI
-    from src.facts import exercises
-    from src.routes import exercise_routes
-except ImportError:
-    httpx = None
-
-
-@unittest.skipUnless(httpx, 'Install fastapi, httpx and slowapi for HTTP integration tests')
-class ExerciseRoutesTests(unittest.IsolatedAsyncioTestCase):
-    async def asyncSetUp(self):
-        exercises._CACHE.clear()
-        self.app = FastAPI()
-        self.app.include_router(exercise_routes.router)
-        from commons import limiter
-        limiter.enabled = False
-        self.app.state.limiter = limiter
-        self.client = httpx.AsyncClient(transport=httpx.ASGITransport(app=self.app), base_url='http://test')
-        self.key_patch = patch.object(exercises, 'get_config', return_value=types.SimpleNamespace(MUSCLEWIKI_API_KEY='test-secret'))
-        self.key_patch.start()
-        self.client_class = httpx.AsyncClient
-        self.calls = []
-        self.item = {'id': 1, 'name': 'Squat', 'primary_muscles': ['Quads'], 'category': 'Bodyweight',
-                     'difficulty': 'Beginner', 'steps': ['Stand.'],
-                     'videos': [{'angle': 'front', 'gender': 'male', 'url': 'https://api.musclewiki.com/stream/videos/branded/squat.mp4'},
-                                {'url': 'https://attacker.example/video.mp4'}, {'url': None}]}
-
-    async def asyncTearDown(self):
-        self.key_patch.stop()
-        await self.client.aclose()
-        from commons import limiter
-        limiter.enabled = True
-
-    def provider(self, handler):
-        return patch.object(httpx, 'AsyncClient', side_effect=lambda *a, **kw: self.client_class(*a, transport=httpx.MockTransport(handler), **kw))
-
-    async def test_search_normalizes_and_caches_without_exposing_credentials(self):
-        def handler(request):
-            self.calls.append(request)
-            self.assertEqual(request.headers['X-API-Key'], 'test-secret')
-            self.assertEqual(request.url.params['q'], 'squat')
-            return httpx.Response(200, json=[self.item])
-        with self.provider(handler):
-            first = await self.client.get('/api/exercises?q=squat')
-            second = await self.client.get('/api/exercises?q=squat')
-        self.assertEqual(first.status_code, 200)
-        self.assertEqual(first.json(), second.json())
-        self.assertEqual(len(self.calls), 1)
-        video = first.json()['results'][0]['videos']
-        self.assertEqual(len(video), 1)
-        self.assertEqual(video[0]['path'], '/api/exercises/1/videos/0')
-        self.assertNotIn('test-secret', first.text)
-        self.assertNotIn('attacker', first.text)
-
-    async def test_provider_failures_and_missing_key_are_readable(self):
-        for status, expected in [(401, 503), (403, 503), (429, 429), (500, 502), (404, 404), (302, 502)]:
-            exercises._CACHE.clear()
-            with self.provider(lambda request: httpx.Response(status, json={'detail': 'private provider detail'})):
-                response = await self.client.get('/api/exercises?q=squat')
-            self.assertEqual(response.status_code, expected)
-            self.assertNotIn('private provider detail', response.text)
-        with patch.object(exercises, 'get_config', return_value=types.SimpleNamespace(MUSCLEWIKI_API_KEY='')):
-            response = await self.client.get('/api/exercises?q=squat')
-        self.assertEqual(response.status_code, 503)
-
-    async def test_invalid_queries_ids_and_video_urls(self):
-        for url in ['/api/exercises?q=a', '/api/exercises?q=%20%20', '/api/exercises/-1', '/api/exercises/1/videos/-1']:
-            response = await self.client.get(url)
-            self.assertEqual(response.status_code, 422)
-        for url in ['https://api.musclewiki.com/stream/videos/branded/../secret.mp4', '//evil.example/a.mp4',
-                    'https://[', 'https://api.musclewiki.com/stream/videos/branded/a.mp4?token=secret',
-                    'http://api.musclewiki.com/stream/videos/branded/a.mp4']:
-            self.assertIsNone(exercises.video_path(url))
-        with self.provider(lambda request: httpx.Response(200, json=self.item)):
-            response = await self.client.get('/api/exercises/1/videos/1')
-        self.assertEqual(response.status_code, 404)
-
-    async def test_video_stream_preserves_range_and_no_store(self):
-        class Bytes(httpx.AsyncByteStream):
-            async def __aiter__(self):
-                yield b'test'
-        def handler(request):
-            if request.url.path.startswith('/exercises/'):
-                return httpx.Response(200, json=self.item)
-            self.assertEqual(request.headers['Range'], 'bytes=0-3')
-            self.assertEqual(request.headers['X-API-Key'], 'test-secret')
-            return httpx.Response(206, stream=Bytes(), headers={'Content-Type': 'video/mp4',
-                'Content-Range': 'bytes 0-3/4', 'Accept-Ranges': 'bytes', 'Cache-Control': 'no-store', 'Content-Length': '4'})
-        with self.provider(handler):
-            response = await self.client.get('/api/exercises/1/videos/0', headers={'Range': 'bytes=0-3'})
-        self.assertEqual(response.status_code, 206)
-        self.assertEqual(response.content, b'test')
-        self.assertEqual(response.headers['content-range'], 'bytes 0-3/4')
-        self.assertEqual(response.headers['cache-control'], 'no-store')
-        self.assertNotIn('x-api-key', response.headers)
-
-    async def test_timeout_is_sanitized(self):
-        def handler(request):
-            raise httpx.ReadTimeout('secret provider data')
-        with self.provider(handler):
-            response = await self.client.get('/api/exercises?q=squat')
-        self.assertEqual(response.status_code, 502)
-        self.assertNotIn('secret', response.text)
 
 
 if __name__ == '__main__':

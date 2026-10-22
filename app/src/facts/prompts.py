@@ -375,7 +375,7 @@ or recognized sports medicine guidance where known. Never invent citations or cl
 State uncertainty, population differences and relevant contraindications. Do not assume all food
 claims are false. Kidney disease and other medical conditions can change protein or exercise advice.
 Do not guarantee weight loss, muscle gain, disease prevention or spot fat reduction.
-References and exercise demonstrations do not establish medical endorsement.
+References do not establish medical endorsement.
 """
 
 
@@ -405,10 +405,9 @@ Return training_guide with goal, level, duration_minutes, equipment, frequency, 
 exercises, cool_down, recovery and safety_notes. Provide a modest, coherent beginner example
 with 3-5 movements only when relevant to the chosen topic. A cultural/historical topic can use
 an empty exercises list. Never force an unsafe advanced practice into a beginner routine.
-Each exercise contains name, search_query (a simple English exercise name for MuscleWiki),
-sets, reps (or duration with units), rest_seconds, ordered steps, easier_option, progression,
-and source_ids. Never invent a MuscleWiki ID, video URL, or claim the catalog contains a move.
-Use an exact movement search, not a substitute; traditional movements may have no catalog match.
+Each exercise contains name, sets, reps (or duration with units), rest_seconds, ordered steps,
+easier_option, progression, and source_ids. Provide self-contained written instructions;
+do not request an external exercise search, catalog ID, or demonstration video URL.
 Include warm-up and recovery. Explain safe breathing; do not prescribe breath holding or
 hyperventilation. State when supervision is needed and to stop for pain, dizziness or chest symptoms.
 """
