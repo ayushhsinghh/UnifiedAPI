@@ -288,7 +288,7 @@ def _build_mythbuster_prompt(blocklist: List[str], category: str = "mythbusters"
 
         "'myth_sub_category':\n"
         "Classify this myth into one of: health, science, history, nutrition, "
-        "psychology, society, technology, nature.\n\n"
+        "psychology, society, technology, nature, finance, environment.\n\n"
 
         "'prevalence':\n"
         "How widespread is this myth? Describe its geographic and demographic reach "
@@ -323,6 +323,8 @@ def _build_mythbuster_prompt(blocklist: List[str], category: str = "mythbusters"
         "A relevant quote from a scientist, researcher, or expert related to this myth. "
         "Set 'confidence' to 'verified' if absolutely certain, otherwise 'unverified'.\n\n"
 
+        f"CATEGORY: {category}\n"
+        "Stay within this category. Evaluate the claim fairly; do not assume it is false.\n"
         f"MYTH DOMAIN HINTS: {hints}\n"
         f"RANDOMNESS SEED: {random_seed}\n"
         f"TIMESTAMP: {int(time.time())}\n\n"

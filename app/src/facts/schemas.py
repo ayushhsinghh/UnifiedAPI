@@ -238,7 +238,7 @@ MYTHBUSTER_RESPONSE_SCHEMA = {
             "type": "STRING",
             "enum": [
                 "health", "science", "history", "nutrition",
-                "psychology", "society", "technology", "nature",
+                "psychology", "society", "technology", "nature", "finance", "environment",
             ],
         },
         "prevalence": {"type": "STRING"},
@@ -430,7 +430,7 @@ def validate_wellness_content(fact, category):
         return validate(fact.get("training_guide"), _TRAINING_GUIDE_SCHEMA)
     if category == "indian_diet":
         return validate(fact.get("nutrition_guide"), _NUTRITION_GUIDE_SCHEMA)
-    if category == "nutrition_myths":
+    if category in {"nutrition_myths", "digital_myths", "money_myths", "environment_myths", "science_myths"}:
         return all(validate(fact.get(key), MYTHBUSTER_RESPONSE_SCHEMA["properties"][key])
                    for key in ("myth_statement", "verdict", "verdict_confidence", "the_reality", "how_to_explain", "debunk_evidence"))
     return True

@@ -1,6 +1,35 @@
 from typing import Dict
 
 CATEGORY_HINTS: Dict[str, str] = {
+    "digital_myths": (
+        "Evaluate everyday digital claims without assuming the verdict: incognito browsing and anonymity, "
+        "HTTPS and website trust, VPN privacy limits, public Wi-Fi safety, password and OTP security, "
+        "UPI PINs and receiving payments, QR-code scams, smartphone battery and charging claims, "
+        "deleted files and data recovery, AI-generated content and deepfake detection; "
+        "prefer practical examples relevant to Indian internet users"
+    ),
+    "money_myths": (
+        "Evaluate common money claims with Indian context: credit-card minimum payments and interest, "
+        "credit scores, guaranteed investment returns, insurance versus investing, inflation and savings, "
+        "EMI and buy-now-pay-later costs, mutual fund and stock-market misconceptions, "
+        "gold and property assumptions, tax misconceptions and financial scams; "
+        "give general financial education, not personalized investment or tax advice; "
+        "state jurisdiction, date and uncertainty for changing rules, never invent current rates or guarantees"
+    ),
+    "environment_myths": (
+        "Evaluate environmental claims: biodegradable versus compostable materials, plastic recycling, "
+        "paper versus plastic tradeoffs, electric-vehicle lifecycle emissions, renewable-energy limits, "
+        "air purifiers and outdoor pollution, tree planting and biodiversity, water conservation, "
+        "carbon offsets and greenwashing; use Indian examples where relevant and distinguish "
+        "local conditions, lifecycle boundaries and scientific uncertainty"
+    ),
+    "science_myths": (
+        "Evaluate everyday science claims: microwave ovens and radiation, mobile phones during storms, "
+        "magnets near electronics, household electricity, pressure cookers and boiling water, "
+        "sound and light, gravity and falling objects, temperature and heat transfer, "
+        "common kitchen and household chemistry; explain mechanisms simply with safe examples, "
+        "without hazardous experiments or assuming every popular claim is false"
+    ),
     "fitness": (
         "Indian traditional fitness: strength yoga, Surya Namaskar, akhara and kushti training, "
         "mallakhamb, dand and baithak, Indian athletes' training and vegetarian protein, "

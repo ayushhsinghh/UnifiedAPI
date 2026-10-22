@@ -67,8 +67,8 @@ async def generate_daily_fact(
         response_schema = (MYTHBUSTER_RESPONSE_SCHEMA if category == "nutrition_myths"
                            else INDIAN_DIET_RESPONSE_SCHEMA if category == "indian_diet"
                            else FITNESS_RESPONSE_SCHEMA)
-    elif category == "mythbusters":
-        prompt = _build_mythbuster_prompt(blocklist)
+    elif category in {"mythbusters", "digital_myths", "money_myths", "environment_myths", "science_myths"}:
+        prompt = _build_mythbuster_prompt(blocklist, category)
         response_schema = MYTHBUSTER_RESPONSE_SCHEMA
     else:
         prompt = _build_prompt(category, blocklist)

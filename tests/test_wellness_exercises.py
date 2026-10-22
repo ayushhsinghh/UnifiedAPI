@@ -90,12 +90,28 @@ class ContractTests(unittest.TestCase):
             self.assertIn('CATEGORY: nutrition_myths', myth)
 
 
+class SpecializedMythTests(unittest.TestCase):
+    def test_categories_have_scoped_prompts_and_retain_dedup(self):
+        self.assertNotIn('everyday_science_myths', CATEGORY_HINTS)
+        for category in ('digital_myths', 'money_myths', 'environment_myths', 'science_myths'):
+            self.assertIn(category, CATEGORY_HINTS)
+            with patch.object(prompts, 'cfg', types.SimpleNamespace(FACTS_DEDUP_LIMIT=20)):
+                prompt = prompts._build_mythbuster_prompt(['Already covered claim'], category)
+            self.assertIn(f'CATEGORY: {category}', prompt)
+            self.assertIn(CATEGORY_HINTS[category], prompt)
+            self.assertIn('Already covered claim', prompt)
+            self.assertIn('do not assume it is false', prompt)
+            self.assertFalse(validate_wellness_content({'headline_fact': 'Missing verdict'}, category))
+
+
 class WellnessGenerationTests(unittest.IsolatedAsyncioTestCase):
     async def test_category_selects_the_matching_schema(self):
         from test_fact_evidence_lifecycle import generator_module
         from src.facts.schemas import MYTHBUSTER_RESPONSE_SCHEMA
         for category, schema in [('fitness', FITNESS_RESPONSE_SCHEMA), ('home_workouts', FITNESS_RESPONSE_SCHEMA),
-                                 ('indian_diet', INDIAN_DIET_RESPONSE_SCHEMA), ('nutrition_myths', MYTHBUSTER_RESPONSE_SCHEMA)]:
+                                 ('indian_diet', INDIAN_DIET_RESPONSE_SCHEMA), ('nutrition_myths', MYTHBUSTER_RESPONSE_SCHEMA),
+                                 *[(category, MYTHBUSTER_RESPONSE_SCHEMA) for category in
+                                   ('digital_myths', 'money_myths', 'environment_myths', 'science_myths')]]:
             generator = generator_module()
             generator.FITNESS_RESPONSE_SCHEMA = FITNESS_RESPONSE_SCHEMA
             generator.INDIAN_DIET_RESPONSE_SCHEMA = INDIAN_DIET_RESPONSE_SCHEMA
