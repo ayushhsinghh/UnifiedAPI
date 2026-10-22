@@ -188,14 +188,14 @@ def _build_prompt(category: str, blocklist: List[str]) -> str:
     return prompt + _EVIDENCE_INSTRUCTIONS
 
 
-def _build_mythbuster_prompt(blocklist: List[str]) -> str:
+def _build_mythbuster_prompt(blocklist: List[str], category: str = "mythbusters") -> str:
     """
     Build a generation prompt specifically for myth-busting content.
 
     Unlike the generic fact prompt, this asks the model to start from a
     misconception and structure the response as a debunking investigation.
     """
-    hints = CATEGORY_HINTS.get("mythbusters", "common misconceptions")
+    hints = CATEGORY_HINTS.get(category, "common misconceptions")
     random_seed = random.randint(1, 100000)
 
     blocklist_instruction = ""
@@ -362,3 +362,58 @@ def _build_mythbuster_prompt(blocklist: List[str]) -> str:
         f"{blocklist_instruction}\n"
     )
     return prompt + _EVIDENCE_INSTRUCTIONS
+
+
+_HEALTH_EVIDENCE_INSTRUCTIONS = """
+HEALTH CONTENT RULES (override generic depth or storytelling instructions):
+Use simple language, short paragraphs, and practical steps for a general adult audience.
+Give general education, not a personalized treatment, calorie target, or supplement prescription.
+Separate cultural practices from established evidence. Do not assume traditional means effective,
+that millets are universally superior, or that a food is a superfood. Discuss tradeoffs.
+Use ICMR-NIN Indian Food Composition Tables / Dietary Guidelines and relevant systematic reviews
+or recognized sports medicine guidance where known. Never invent citations or claim a live lookup.
+State uncertainty, population differences and relevant contraindications. Do not assume all food
+claims are false. Kidney disease and other medical conditions can change protein or exercise advice.
+Do not guarantee weight loss, muscle gain, disease prevention or spot fat reduction.
+References and exercise demonstrations do not establish medical endorsement.
+"""
+
+
+def _build_wellness_prompt(category: str, blocklist: List[str]) -> str:
+    if category == "nutrition_myths":
+        return (_build_mythbuster_prompt(blocklist, category) + _HEALTH_EVIDENCE_INSTRUCTIONS
+                + "\nCATEGORY: nutrition_myths. Evaluate ONE Indian nutrition or fitness claim from: "
+                + CATEGORY_HINTS[category]
+                + "\nUse the_reality for the nuanced answer and how_to_explain for a practical Indian-food example.")
+    # Reuse the topic avoidance and evidence rules, with the category schema supplied separately.
+    common = _build_prompt(category, blocklist)
+    if category == "indian_diet":
+        contract = """
+Return nutrition_guide with goal, food_items, meal_plan, swaps, practical_tips and limitations.
+Make this a focused guide to the chosen Indian food or meal topic, not a daily diet prescription.
+For each food_items entry include an explicit cooked/raw state, portion in grams/ml plus household
+measure, preparation and ingredients/oil assumptions. Nutrient values are approximate per THAT
+portion, never a mixture of per-100g and per-serving values. Use null for unknown values, not zero.
+Include energy_kcal, protein_g, carbs_g, fat_g, fiber_g, key_micronutrients and source_ids.
+Use 3-5 relevant foods, 2-4 illustrative meal combinations, and 2-3 realistic Indian food swaps.
+Explain variation from recipe, oil, brand and serving size in limitations. Avoid precise-looking
+unsupported estimates. Label example meals as illustrations, not a nutritionally complete day.
+"""
+    else:
+        contract = """
+Return training_guide with goal, level, duration_minutes, equipment, frequency, warm_up,
+exercises, cool_down, recovery and safety_notes. Provide a modest, coherent beginner example
+with 3-5 movements only when relevant to the chosen topic. A cultural/historical topic can use
+an empty exercises list. Never force an unsafe advanced practice into a beginner routine.
+Each exercise contains name, search_query (a simple English exercise name for MuscleWiki),
+sets, reps (or duration with units), rest_seconds, ordered steps, easier_option, progression,
+and source_ids. Never invent a MuscleWiki ID, video URL, or claim the catalog contains a move.
+Use an exact movement search, not a substitute; traditional movements may have no catalog match.
+Include warm-up and recovery. Explain safe breathing; do not prescribe breath holding or
+hyperventilation. State when supervision is needed and to stop for pain, dizziness or chest symptoms.
+"""
+    return common + _HEALTH_EVIDENCE_INSTRUCTIONS + contract + """
+The response schema takes priority: omit history, impact_on_india, cultural_significance,
+key_year, key_figure, key_stat, quote, global_comparison and timeline unless requested by the schema.
+Keep core_mechanics, why_it_matters and in_depth_breakdown focused on this practical topic.
+"""

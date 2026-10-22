@@ -103,6 +103,9 @@ SESSION_TTL_SECONDS = 21600       # 6 hours
 PLAYER_TTL_SECONDS = 3600         # 1 hour
 OLD_GAME_THRESHOLD_MINUTES = 30
 
+# MuscleWiki: server-only credential. Never expose this in frontend environment variables.
+MUSCLEWIKI_API_KEY = os.getenv("MUSCLEWIKI_API_KEY", "")
+
 # Daily Facts feature
 DAILY_FACTS_COLLECTION = "daily_facts"
 FACT_JOBS_COLLECTION = "fact_jobs"

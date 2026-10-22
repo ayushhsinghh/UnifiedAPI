@@ -42,9 +42,9 @@ def generator_module():
         'google': module('google', genai=types.SimpleNamespace(Client=Mock())),
         'fact_test': module('fact_test', __path__=[]),
         'fact_test.constants': module('fact_test.constants', CATEGORY_HINTS={}, SUPPORTED_CATEGORIES=[], CLICHED_FACTS=[]),
-        'fact_test.schemas': module('fact_test.schemas', FACT_RESPONSE_SCHEMA={}, MYTHBUSTER_RESPONSE_SCHEMA={}),
+        'fact_test.schemas': module('fact_test.schemas', FACT_RESPONSE_SCHEMA={}, MYTHBUSTER_RESPONSE_SCHEMA={}, FITNESS_RESPONSE_SCHEMA={}, INDIAN_DIET_RESPONSE_SCHEMA={}, validate_wellness_content=lambda *args: True),
         'fact_test.evidence': evidence,
-        'fact_test.prompts': module('fact_test.prompts', _build_prompt=lambda *args: 'prompt', _build_mythbuster_prompt=lambda *args: 'prompt'),
+        'fact_test.prompts': module('fact_test.prompts', _build_prompt=lambda *args: 'prompt', _build_mythbuster_prompt=lambda *args: 'prompt', _build_wellness_prompt=lambda *args: 'prompt'),
     })
 
     value.logger = Mock()

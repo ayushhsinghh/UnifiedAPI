@@ -1,6 +1,30 @@
 from typing import Dict
 
 CATEGORY_HINTS: Dict[str, str] = {
+    "fitness": (
+        "Indian traditional fitness: strength yoga, Surya Namaskar, akhara and kushti training, "
+        "mallakhamb, dand and baithak, Indian athletes' training and vegetarian protein, "
+        "breathing and performance evidence, Kalaripayattu conditioning, Indian Army fitness standards, "
+        "progressive overload, gym culture, recovery and sleep for Indian lifestyles"
+    ),
+    "indian_diet": (
+        "Nutrition of dal, roti, rice and sabzi; regional Gujarati, Rajasthani, South Indian and Bengali thalis; "
+        "paneer, chana, soybean, sattu and sprouted moong; meal timing and traditional food combining claims; "
+        "ragi, jowar and bajra compared fairly with other grains; fermented idli, dosa, kanji and dhokla; "
+        "mustard, coconut and groundnut oil and ghee; moringa, amla, turmeric and ashwagandha evidence; "
+        "portion-based calories and protein, Indian meal preparation, balanced meals for muscle gain or fat loss"
+    ),
+    "nutrition_myths": (
+        "Evaluate Indian food and fitness claims using evidence, without assuming the verdict: "
+        "ghee or rice and weight gain, egg yolks, roti versus rice, protein powder and kidney health, "
+        "late meals, fruit juice, coconut oil and heart health, curd at night, vegetarian muscle gain, "
+        "detox diets, spot fat reduction, sweating and fat loss, ghee and cardiovascular risk"
+    ),
+    "home_workouts": (
+        "No-equipment training in Indian homes, dand-baithak, strength yoga, "
+        "akhara-style circuits, quiet low-impact apartment workouts, resistance bands and minimal equipment; "
+        "beginner regressions, safe technique, progressive overload, warm-up and recovery"
+    ),
     "food": (
         "Indian spices & masalas, regional thali traditions, "
         "street food culture (chaat, vada pav), Mughlai cuisine origins, "

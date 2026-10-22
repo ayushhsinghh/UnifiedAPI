@@ -8,3 +8,4 @@ slowapi==0.1.9
 openai
 pydub
 google-genai
+httpx==0.28.1

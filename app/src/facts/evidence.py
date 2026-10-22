@@ -54,4 +54,10 @@ def normalize_evidence(fact):
         for item in fact.get(field, []) if isinstance(fact.get(field), list) else []:
             if isinstance(item, dict):
                 item["source_ids"] = valid_ids(item.get("source_ids"))
+    for field, nested in (("training_guide", "exercises"), ("nutrition_guide", "food_items")):
+        guide = fact.get(field)
+        if isinstance(guide, dict):
+            for item in guide.get(nested, []) if isinstance(guide.get(nested), list) else []:
+                if isinstance(item, dict):
+                    item["source_ids"] = valid_ids(item.get("source_ids"))
     return fact

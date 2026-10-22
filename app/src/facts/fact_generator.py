@@ -24,9 +24,10 @@ cfg = get_config()
 
 # ── Category sub-topic hints ────────────────────────────────────────────
 from .constants import CATEGORY_HINTS, SUPPORTED_CATEGORIES, CLICHED_FACTS
-from .schemas import FACT_RESPONSE_SCHEMA, MYTHBUSTER_RESPONSE_SCHEMA
+from .schemas import (FACT_RESPONSE_SCHEMA, MYTHBUSTER_RESPONSE_SCHEMA,
+                      FITNESS_RESPONSE_SCHEMA, INDIAN_DIET_RESPONSE_SCHEMA, validate_wellness_content)
 from .evidence import normalize_evidence
-from .prompts import _build_prompt, _build_mythbuster_prompt
+from .prompts import _build_prompt, _build_mythbuster_prompt, _build_wellness_prompt
 
 # ── Retry constants ──────────────────────────────────────────────────────
 
@@ -61,7 +62,12 @@ async def generate_daily_fact(
     if blocklist is None:
         blocklist = []
 
-    if category == "mythbusters":
+    if category in {"fitness", "home_workouts", "indian_diet", "nutrition_myths"}:
+        prompt = _build_wellness_prompt(category, blocklist)
+        response_schema = (MYTHBUSTER_RESPONSE_SCHEMA if category == "nutrition_myths"
+                           else INDIAN_DIET_RESPONSE_SCHEMA if category == "indian_diet"
+                           else FITNESS_RESPONSE_SCHEMA)
+    elif category == "mythbusters":
         prompt = _build_mythbuster_prompt(blocklist)
         response_schema = MYTHBUSTER_RESPONSE_SCHEMA
     else:
@@ -111,7 +117,7 @@ async def generate_daily_fact(
                 fact_str = response.choices[0].message.content
                 fact = json.loads(fact_str) if fact_str else None
 
-            if isinstance(fact, dict) and fact.get("headline_fact"):
+            if isinstance(fact, dict) and fact.get("headline_fact") and validate_wellness_content(fact, category):
                 normalize_evidence(fact)
                 fact["category"] = category
                 if generation_metadata is not None:
