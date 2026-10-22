@@ -264,7 +264,54 @@ CATEGORY_HINTS: Dict[str, str] = {
         "health & nutrition, science & physics, psychology & behavior, "
         "technology, food & cooking, nature & animals, medicine & body. "
         "Prefer myths that are actively harmful or that most educated adults still believe. "
-    )
+    ),
+    "fitness": (
+        "Indian traditional fitness systems (yoga for strength, Surya Namaskar as full-body workout), "
+        "akhara & kushti wrestling training regimens, mallakhamb pole gymnastics, "
+        "Indian bodyweight exercises (dand, baithak, Hindu push-ups, Hindu squats), "
+        "Indian athletes' training & diet routines, "
+        "science of pranayama & breathing for performance, "
+        "Indian Army physical training standards, martial arts fitness (Kalaripayattu conditioning), "
+        "desi gym culture evolution, muscle-building with Indian vegetarian diets, "
+        "progressive overload principles explained simply, "
+        "recovery & sleep science for Indian lifestyles"
+    ),
+    "indian_diet": (
+        "macro & micronutrient breakdown of Indian staples (dal, roti, rice, sabzi), "
+        "regional thali nutrition analysis (Gujarati, Rajasthani, South Indian, Bengali), "
+        "protein-rich Indian vegetarian foods (paneer, chana, soybean, sattu, sprouted moong), "
+        "Ayurvedic meal timing & food combining principles, "
+        "Indian millets revival (ragi, jowar, bajra) & their nutritional superiority, "
+        "fermented Indian foods for gut health (idli, dosa batter, kanji, dhokla), "
+        "healthy Indian cooking oils compared (mustard, coconut, groundnut, ghee), "
+        "Indian superfoods (moringa, amla, turmeric, ashwagandha), "
+        "calorie & protein content of popular Indian meals, "
+        "meal prep & portion control the Indian way, "
+        "how to build a balanced Indian diet for muscle gain or fat loss"
+    ),
+    "nutrition_myths": (
+        "debunking Indian food & fitness myths with scientific evidence: "
+        "'ghee makes you fat', 'rice causes weight gain', 'egg yolk is unhealthy', "
+        "'roti is always healthier than rice', 'protein powder damages kidneys', "
+        "'eating after 7 PM causes weight gain', 'fruit juice is healthy', "
+        "'coconut oil is bad for your heart', 'curd at night causes cold', "
+        "'you need meat to build muscle', 'detox diets & juice cleanses work', "
+        "'spot reduction of belly fat is possible', "
+        "'sweat equals fat loss', 'desi ghee clogs arteries'"
+    ),
+    "home_workouts": (
+        "effective no-equipment workout routines for Indian homes, "
+        "traditional Indian bodyweight exercises (dand-baithak system), "
+        "yoga asanas for strength & hypertrophy (not just flexibility), "
+        "Indian akhara-style training circuits, "
+        "apartment-friendly HIIT routines (no jumping, neighbor-safe), "
+        "resistance band & minimal equipment Indian home gym setup, "
+        "morning vs evening workout science for Indian schedules, "
+        "combining Indian diet with calisthenics for body recomposition, "
+        "progressive calisthenics roadmap (push-up to handstand push-up), "
+        "core strengthening with Indian wrestling conditioning exercises, "
+        "mobility & flexibility routines from Kalaripayattu & yoga"
+    ),
 }
 
 SUPPORTED_CATEGORIES = list(CATEGORY_HINTS.keys())
