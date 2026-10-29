@@ -131,8 +131,9 @@ async def generate_daily_fact(
                         'source_verification': 'not_performed',
                         'scientific_review': 'not_performed',
                     }
-                    # Scientific diagrams are rendered from lesson data, not generated pictures.
-                    fact['visual_suggestions'] = {}
+                    # Keep one cover and the single justified supporting slot, if present.
+                    fact['visual_suggestions'] = {key: value for key, value in fact['visual_suggestions'].items()
+                                                  if key in ('cover', 'overview', 'how_it_works') and value.strip()}
                 if generation_metadata is not None:
                     generation_metadata.update(provider="gemini" if model_name.startswith("gemini") else "openai", model=model_name)
                 logger.info(

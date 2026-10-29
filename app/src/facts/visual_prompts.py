@@ -131,6 +131,11 @@ def build_section_image_context(key, article=None):
             if value:
                 text = value if isinstance(value, str) else json.dumps(value, ensure_ascii=False)
                 excerpt[field] = text[:4000]
+        if article.get('article_type') == 'physics_lesson':
+            lesson = article.get('physics_lesson') or {}
+            excerpt['physics_context'] = {field: lesson.get(field) for field in ('question', 'intuition', 'explanation_steps', 'supporting_image')}
+            lines.append('Physics illustration only: do not invent measurements, draw quantitative diagrams, '
+                         'or add labels or equations. The webpage renders scientific diagrams separately.')
         if key in {"myth_visual", "truth_visual"}:
             suggestions = article.get("visual_suggestions") or {}
             if isinstance(suggestions, dict):

@@ -14,6 +14,8 @@ package.__path__ = [str(APP / 'src/facts')]
 sys.modules.setdefault('src.facts', package)
 from src.facts.physics import PHYSICS_RESPONSE_SCHEMA, build_physics_prompt, validate_physics_content, unit_dimensions
 from src.facts.evidence import normalize_evidence
+from src.facts.lifecycle import expected_image_keys
+from src.facts.visual_prompts import build_section_image_context
 
 
 def fixture():
@@ -89,12 +91,39 @@ class PhysicsContractTests(unittest.TestCase):
 
     def test_prompt_scope_dedup_static_diagrams_and_optional_maths(self):
         prompt = build_physics_prompt(['Already covered'])
-        for text in ('Already covered', 'curious beginner', 'Math is optional', 'empty strings', 'No HTML', 'only when useful'):
+        for text in ('Already covered', 'curious beginner', 'Math is optional', 'empty strings', 'No HTML', 'only when useful', 'ONE relevant editorial cover', 'AT MOST ONE supporting image'):
             self.assertIn(text, prompt)
+
+    def test_cover_and_supporting_image_budget(self):
+        fact = fixture()
+        self.assertEqual(expected_image_keys(fact['visual_suggestions']), ['cover'])
+        fact['visual_suggestions']['cover'] = ''
+        self.assertFalse(validate_physics_content(fact))
+        for slot in ('overview', 'how_it_works'):
+            fact = fixture()
+            fact['visual_suggestions'][slot] = 'A useful apparatus illustration.'
+            self.assertFalse(validate_physics_content(fact))
+            fact['physics_lesson']['supporting_image'] = {
+                'slot': slot, 'learning_purpose': 'Show the load and contact points.',
+                'caption': 'Generated illustration of the apparatus, not measured evidence.',
+                'alt': 'A loaded trolley with wheels touching the ground.',
+            }
+            self.assertTrue(validate_physics_content(fact))
+            self.assertEqual(expected_image_keys(fact['visual_suggestions']), ['cover', slot])
+            fact['physics_lesson']['supporting_image']['learning_purpose'] = ''
+            self.assertFalse(validate_physics_content(fact))
+            fact['physics_lesson']['supporting_image']['learning_purpose'] = 'Show the apparatus.'
+            fact['visual_suggestions']['how_it_works' if slot == 'overview' else 'overview'] = 'Another image.'
+            self.assertFalse(validate_physics_content(fact))
+
+    def test_image_context_preserves_physics_and_cover_layout(self):
+        context = build_section_image_context('cover', fixture())
+        for text in ('left third quiet', 'loaded trolley', 'scientific diagrams separately'):
+            self.assertIn(text, context)
 
 
 class PhysicsGenerationTests(unittest.IsolatedAsyncioTestCase):
-    async def test_physics_selects_schema_checks_content_and_disables_raster_jobs(self):
+    async def test_physics_selects_schema_checks_content_and_preserves_cover(self):
         from test_fact_evidence_lifecycle import generator_module
         generator = generator_module()
         generator.PHYSICS_RESPONSE_SCHEMA = PHYSICS_RESPONSE_SCHEMA
@@ -110,7 +139,7 @@ class PhysicsGenerationTests(unittest.IsolatedAsyncioTestCase):
         self.assertIs(create.call_args.kwargs['config']['response_schema'], PHYSICS_RESPONSE_SCHEMA)
         self.assertTrue(result['physics_validation']['arithmetic_checked'])
         self.assertEqual(result['physics_validation']['scientific_review'], 'not_performed')
-        self.assertEqual(result['visual_suggestions'], {})
+        self.assertEqual(result['visual_suggestions'], {'cover': valid['visual_suggestions']['cover']})
 
 
 if __name__ == '__main__':

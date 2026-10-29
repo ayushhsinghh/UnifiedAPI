@@ -52,6 +52,13 @@ PHYSICS_LESSON_SCHEMA = _object({
     })),
     'takeaways': _strings(), 'related_concepts': _strings(),
 })
+PHYSICS_LESSON_SCHEMA['properties']['supporting_image'] = {
+    **_object({
+        'slot': {'type': 'STRING', 'enum': ['overview', 'how_it_works']},
+        'learning_purpose': _TEXT, 'caption': _TEXT, 'alt': _TEXT,
+    }),
+    'nullable': True,
+}
 
 PHYSICS_RESPONSE_SCHEMA = deepcopy(FACT_RESPONSE_SCHEMA)
 # Old clients keep the summary, mechanics, takeaways, metadata and references.
@@ -169,6 +176,16 @@ def validate_physics_content(fact):
             return False
         if not all(_nonempty(lesson[k]) for k in ('question', 'learning_goal')):
             return False
+        visuals = fact['visual_suggestions']
+        if not _nonempty(visuals['cover']):
+            return False
+        supporting = lesson.get('supporting_image')
+        slots = [key for key in ('overview', 'how_it_works') if _nonempty(visuals[key])]
+        if supporting:
+            if not all(_nonempty(supporting[k]) for k in ('learning_purpose', 'caption', 'alt')) or slots != [supporting['slot']]:
+                return False
+        elif slots:
+            return False
         if not _nonempty(lesson['intuition']['explanation']):
             return False
         if lesson['intuition']['analogy'] and not _nonempty(lesson['intuition']['analogy_limit']):
@@ -236,7 +253,16 @@ Choose a focused question from: {CATEGORY_HINTS.get('physics', 'everyday physics
 Do not repeat these previous topics: {blocklist!r}.
 Return schema_version 2.0, article_type physics_lesson and the supplied structured schema.
 The plain-language route must make sense without opening mathematics. Define unfamiliar terms.
-Set visual_suggestions cover, overview and how_it_works to empty strings. Do not request raster images.
+Always provide ONE relevant editorial cover prompt in visual_suggestions.cover, grounded in the exact topic.
+Keep the left third quiet for the headline; keep the subject within the central 60% for phone crops.
+Use structured diagram data for scientific explanations, labels, axes, forces and numerical relationships.
+By default set visual_suggestions.overview and how_it_works to empty strings and supporting_image to null.
+Only when a distinct view of a real apparatus, material or phenomenon clearly helps explain the lesson,
+request AT MOST ONE supporting image. Set supporting_image with slot (overview or how_it_works),
+learning_purpose, caption and meaningful alt text; fill only that visual_suggestions slot.
+Do not repeat the cover or structured diagram. Do not invent experiments, measurements or evidence.
+Identify generated explanatory illustrations as illustrations in their captions. No labels, writing or formulas
+inside generated images. Use a concrete, standalone scene description; avoid decorative filler.
 Use 3-5 connected cause-and-effect explanation_steps, ONE worked example, 2-3 knowledge_checks
 and concise takeaways. Checks must be answerable from the lesson and related_step_ids must resolve.
 Explain each application's mechanism, not just its name. Pair misconceptions with reasoned corrections.
