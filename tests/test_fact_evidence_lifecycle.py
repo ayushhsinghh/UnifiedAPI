@@ -46,6 +46,7 @@ def generator_module():
         'fact_test.evidence': evidence,
         'fact_test.prompts': module('fact_test.prompts', _build_prompt=lambda *args: 'prompt', _build_mythbuster_prompt=lambda *args: 'prompt', _build_wellness_prompt=lambda *args: 'prompt'),
         'fact_test.physics': module('fact_test.physics', PHYSICS_RESPONSE_SCHEMA={}, build_physics_prompt=lambda *args: 'physics prompt', validate_physics_content=lambda *args: True),
+        'fact_test.biology': module('fact_test.biology', BIOLOGY_RESPONSE_SCHEMA={}, build_biology_prompt=lambda *args: 'biology prompt', validate_biology_content=lambda *args: True),
     })
 
     value.logger = Mock()

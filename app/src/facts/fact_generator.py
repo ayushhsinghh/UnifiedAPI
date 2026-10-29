@@ -29,6 +29,7 @@ from .schemas import (FACT_RESPONSE_SCHEMA, MYTHBUSTER_RESPONSE_SCHEMA,
 from .evidence import normalize_evidence
 from .prompts import _build_prompt, _build_mythbuster_prompt, _build_wellness_prompt
 from .physics import PHYSICS_RESPONSE_SCHEMA, build_physics_prompt, validate_physics_content
+from .biology import BIOLOGY_RESPONSE_SCHEMA, build_biology_prompt, validate_biology_content
 
 # ── Retry constants ──────────────────────────────────────────────────────
 
@@ -63,7 +64,10 @@ async def generate_daily_fact(
     if blocklist is None:
         blocklist = []
 
-    if category == 'physics':
+    if category == 'biology':
+        prompt = build_biology_prompt(blocklist)
+        response_schema = BIOLOGY_RESPONSE_SCHEMA
+    elif category == 'physics':
         prompt = build_physics_prompt(blocklist)
         response_schema = PHYSICS_RESPONSE_SCHEMA
     elif category in {"fitness", "home_workouts", "indian_diet", "nutrition_myths"}:
@@ -122,7 +126,8 @@ async def generate_daily_fact(
                 fact = json.loads(fact_str) if fact_str else None
 
             if (isinstance(fact, dict) and fact.get("headline_fact") and validate_wellness_content(fact, category)
-                    and (category != 'physics' or validate_physics_content(fact))):
+                    and (category != 'physics' or validate_physics_content(fact))
+                    and (category != 'biology' or validate_biology_content(fact))):
                 normalize_evidence(fact)
                 fact["category"] = category
                 if category == 'physics':
@@ -132,6 +137,10 @@ async def generate_daily_fact(
                         'scientific_review': 'not_performed',
                     }
                     # Keep one cover and the single justified supporting slot, if present.
+                    fact['visual_suggestions'] = {key: value for key, value in fact['visual_suggestions'].items()
+                                                  if key in ('cover', 'overview', 'how_it_works') and value.strip()}
+                if category == 'biology':
+                    fact['biology_validation'] = {'structure_checked': True, 'source_verification': 'not_performed', 'scientific_review': 'not_performed'}
                     fact['visual_suggestions'] = {key: value for key, value in fact['visual_suggestions'].items()
                                                   if key in ('cover', 'overview', 'how_it_works') and value.strip()}
                 if generation_metadata is not None:

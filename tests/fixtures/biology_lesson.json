@@ -1,0 +1,277 @@
+{
+  "category": "biology",
+  "topic": "Why yeast releases gas",
+  "schema_version": "2.0",
+  "article_type": "biology_lesson",
+  "headline_fact": "A microscopic process can produce a visible gas.",
+  "summary": "Yeast can release carbon dioxide during alcohol fermentation. Follow what changes inside the cell and what we can observe outside it.",
+  "did_you_know": "Different fermentation pathways produce different end products.",
+  "core_mechanics": "Alcohol fermentation releases carbon dioxide and regenerates NAD+ so glycolysis can continue.",
+  "why_it_matters": "The pathway connects cellular chemistry with observable gas production.",
+  "in_depth_breakdown": {
+    "detailed_processes": [],
+    "real_world_application": "Fermentation vessels release carbon dioxide.",
+    "fascinating_trivia": []
+  },
+  "common_misconceptions": [],
+  "learning_takeaways": [
+    "Identify the organism and pathway before predicting the products."
+  ],
+  "emoji_icon": "",
+  "difficulty_level": "Beginner",
+  "region": "Global",
+  "fun_rating": 7,
+  "read_time_seconds": 360,
+  "tags": [
+    "cells",
+    "fermentation"
+  ],
+  "related_categories": [
+    "science",
+    "food"
+  ],
+  "visual_suggestions": {
+    "cover": "An editorial illustration of a fermentation vessel with gas bubbles. Natural light, no words or measurements. Keep the left third quiet and the subject in the central 60 percent.",
+    "overview": "",
+    "how_it_works": ""
+  },
+  "share_text": "A visible gas can reveal activity inside microscopic cells.",
+  "content_freshness": "evergreen",
+  "sources": [
+    {
+      "id": "s1",
+      "title": "OpenStax Biology 2e: Metabolism without Oxygen",
+      "url": "https://openstax.org/books/biology-2e/pages/7-5-metabolism-without-oxygen"
+    }
+  ],
+  "claim_citations": [],
+  "sources_or_references": [],
+  "generated_at": "2026-10-30T10:00:00Z",
+  "biology_lesson": {
+    "lesson_type": "process",
+    "question": "How can a yeast cell produce a gas?",
+    "learning_goal": "Connect a cellular pathway with a visible outcome.",
+    "context": {
+      "organism": "Yeast",
+      "biological_scale": "Cell and molecule",
+      "location": "Inside yeast cells",
+      "conditions": [
+        "Alcohol fermentation; suitable substrate and viable cells."
+      ]
+    },
+    "big_idea": {
+      "explanation": "A sequence of chemical reactions changes molecules. One step releases carbon dioxide, which can leave the cell as gas.",
+      "analogy": "",
+      "analogy_limit": "",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "key_players": [
+      {
+        "id": "yeast",
+        "name": "Yeast cell",
+        "role": "Contains the pathway.",
+        "source_ids": [
+          "s1"
+        ]
+      },
+      {
+        "id": "pyruvate",
+        "name": "Pyruvate",
+        "role": "A molecule made during glycolysis.",
+        "source_ids": [
+          "s1"
+        ]
+      },
+      {
+        "id": "carbon-dioxide",
+        "name": "Carbon dioxide",
+        "role": "A gas released during the pathway.",
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "diagram": {
+      "type": "sequence",
+      "title": "From a cellular reaction to an observable gas",
+      "caption": "A conceptual pathway map. It omits intermediate reactions and does not show quantities.",
+      "description": "Follow nodes one to three. A molecule changes during alcohol fermentation, releasing carbon dioxide.",
+      "limitations": [
+        "Not an anatomical drawing or a complete reaction scheme."
+      ],
+      "nodes": [
+        {
+          "id": "a",
+          "label": "Pyruvate",
+          "detail": "Starting molecule for this simplified view."
+        },
+        {
+          "id": "b",
+          "label": "Conversion step",
+          "detail": "Part of alcohol fermentation."
+        },
+        {
+          "id": "c",
+          "label": "Carbon dioxide",
+          "detail": "The observable gas product."
+        }
+      ],
+      "edges": [
+        {
+          "from_id": "a",
+          "to_id": "b",
+          "relationship": "Enters the conversion step."
+        },
+        {
+          "from_id": "b",
+          "to_id": "c",
+          "relationship": "Releases gas."
+        }
+      ],
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "explanation_steps": [
+      {
+        "id": "substrate",
+        "title": "Start with the pathway",
+        "explanation": "Glycolysis produces pyruvate. This is the starting point for our simplified explanation.",
+        "player_ids": [
+          "yeast",
+          "pyruvate"
+        ],
+        "source_ids": [
+          "s1"
+        ]
+      },
+      {
+        "id": "release",
+        "title": "Identify the gas-producing step",
+        "explanation": "During alcohol fermentation, a reaction removes a carbon-containing group and releases carbon dioxide.",
+        "player_ids": [
+          "pyruvate",
+          "carbon-dioxide"
+        ],
+        "source_ids": [
+          "s1"
+        ]
+      },
+      {
+        "id": "continue",
+        "title": "Understand why the pathway continues",
+        "explanation": "A later step regenerates NAD+, a carrier needed for glycolysis to continue.",
+        "player_ids": [
+          "yeast"
+        ],
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "worked_example": {
+      "title": "An observable fermentation",
+      "situation": "Consider yeast carrying out alcohol fermentation in a vessel.",
+      "reasoning_steps": [
+        "Identify the pathway.",
+        "Identify its gas product.",
+        "Connect that product with gas leaving the vessel."
+      ],
+      "outcome": "Carbon dioxide can be released.",
+      "interpretation": "Gas alone does not identify every reaction occurring inside the vessel.",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "change_scenario": {
+      "question": "Does every fermentation process produce this gas?",
+      "changed_condition": "Replace alcohol fermentation with lactic acid fermentation.",
+      "expected_effect": "The same carbon dioxide outcome should not be assumed.",
+      "explanation": "The pathways have different reactions and end products.",
+      "limitations": "This compares pathway types; it does not predict all activity in a mixed microbial sample.",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "misconceptions": [
+      {
+        "belief": "Fermentation always means the same process.",
+        "correction": "There are different fermentation pathways.",
+        "explanation": "The organism and pathway matter when predicting products.",
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "evidence_and_limits": {
+      "evidence": [
+        {
+          "observation": "Alcohol fermentation releases carbon dioxide.",
+          "explanation": "The identified reaction connects the cellular pathway with a gas product.",
+          "evidence_type": "experimental",
+          "source_ids": [
+            "s1"
+          ]
+        }
+      ],
+      "scope_limits": [
+        "This lesson concerns alcohol fermentation in yeast."
+      ],
+      "uncertainties": [
+        "Actual activity depends on the organism and conditions; this map does not predict a production rate."
+      ]
+    },
+    "key_terms": [
+      {
+        "term": "Pathway",
+        "definition": "A connected sequence of chemical reactions."
+      },
+      {
+        "term": "NAD+",
+        "definition": "An electron carrier used in cellular reactions."
+      }
+    ],
+    "deeper_detail": [
+      {
+        "title": "Why regeneration matters",
+        "explanation": "Regenerating NAD+ allows glycolysis to continue. This supports energy transfer without making the two pathways identical.",
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "knowledge_checks": [
+      {
+        "id": "product",
+        "question": "Which gas does this pathway release?",
+        "answer": "Carbon dioxide.",
+        "explanation": "Return to the gas-producing step in the map.",
+        "related_step_ids": [
+          "release"
+        ]
+      },
+      {
+        "id": "scope",
+        "question": "Can we predict the same gas from every fermentation pathway?",
+        "answer": "No.",
+        "explanation": "Identify the pathway before predicting its products.",
+        "related_step_ids": [
+          "substrate",
+          "release"
+        ]
+      }
+    ],
+    "takeaways": [
+      "Name the pathway before predicting an outcome.",
+      "Connect the visible effect with a specific reaction.",
+      "Keep the limits of a simplified map in mind."
+    ],
+    "related_concepts": [
+      "Glycolysis",
+      "Cellular respiration"
+    ],
+    "supporting_image": null
+  }
+}

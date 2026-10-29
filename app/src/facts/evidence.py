@@ -71,4 +71,5 @@ def normalize_evidence(fact):
             for child in value:
                 normalize_lesson_links(child)
     normalize_lesson_links(fact.get('physics_lesson'))
+    normalize_lesson_links(fact.get('biology_lesson'))
     return fact

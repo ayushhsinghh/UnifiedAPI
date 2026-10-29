@@ -136,6 +136,12 @@ def build_section_image_context(key, article=None):
             excerpt['physics_context'] = {field: lesson.get(field) for field in ('question', 'intuition', 'explanation_steps', 'supporting_image')}
             lines.append('Physics illustration only: do not invent measurements, draw quantitative diagrams, '
                          'or add labels or equations. The webpage renders scientific diagrams separately.')
+        if article.get('article_type') == 'biology_lesson':
+            lesson = article.get('biology_lesson') or {}
+            excerpt['biology_context'] = {field: lesson.get(field) for field in ('question', 'context', 'big_idea', 'key_players', 'supporting_image')}
+            lines.append('Biology illustration: preserve the named organism, scale and conditions. '
+                         'Do not fabricate microscopy, measured data or experiments. '
+                         'Structured biological relationships are rendered separately on the webpage.')
         if key in {"myth_visual", "truth_visual"}:
             suggestions = article.get("visual_suggestions") or {}
             if isinstance(suggestions, dict):
