@@ -169,7 +169,7 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
         try:
             url = await asyncio.wait_for(
                 generate_and_save_image(prompt, filename, aspect_ratio=aspect_ratio, extra_context=context),
-                timeout=cfg.FACT_IMAGE_TIMEOUT_SECONDS - 5,
+                timeout=cfg.FACT_IMAGE_TIMEOUT_SECONDS,
             )
             if url:
                 images[key] = url

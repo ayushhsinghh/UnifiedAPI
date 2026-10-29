@@ -96,7 +96,7 @@ async def generate_and_save_image(prompt: str, image_filename: str, aspect_ratio
                         "prompt": full_prompt,
                         "aspect_ratio": aspect_ratio
                     },
-                    timeout=90.0
+                    timeout=cfg.FACT_IMAGE_TIMEOUT_SECONDS
                 )
                 response.raise_for_status()
                 result = response.json()
