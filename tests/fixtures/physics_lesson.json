@@ -1,0 +1,299 @@
+{
+  "category": "physics",
+  "topic": "Why a heavier trolley accelerates less",
+  "schema_version": "2.0",
+  "article_type": "physics_lesson",
+  "headline_fact": "The same net force produces less acceleration when it acts on more mass.",
+  "summary": "Imagine pushing an empty trolley and a loaded one. If the net force is the same, the loaded trolley changes its velocity more slowly. Mass measures inertia: how strongly an object resists a change in motion.",
+  "did_you_know": "An object can keep moving even when the net force is zero. Net force changes motion; it is not needed to maintain constant velocity.",
+  "core_mechanics": "For a constant-mass object in an inertial frame, net force equals mass times acceleration. At a fixed net force, a larger mass means a smaller acceleration.",
+  "why_it_matters": "This distinction helps explain starting, stopping, and turning, without confusing force with velocity.",
+  "in_depth_breakdown": {
+    "detailed_processes": [],
+    "real_world_application": "A trolley carrying more mass needs more net force to achieve the same acceleration.",
+    "fascinating_trivia": []
+  },
+  "common_misconceptions": [],
+  "learning_takeaways": [
+    "Force changes velocity; it does not simply create motion.",
+    "At a fixed net force, increasing mass reduces acceleration."
+  ],
+  "emoji_icon": "",
+  "difficulty_level": "Beginner",
+  "region": "Global",
+  "fun_rating": 8,
+  "read_time_seconds": 360,
+  "tags": [
+    "motion",
+    "forces",
+    "inertia"
+  ],
+  "related_categories": [
+    "science",
+    "mathematics"
+  ],
+  "visual_suggestions": {
+    "cover": "",
+    "overview": "",
+    "how_it_works": ""
+  },
+  "share_text": "More mass, same net force, less acceleration: the useful idea behind Newton’s second law.",
+  "content_freshness": "evergreen",
+  "sources": [
+    {
+      "id": "s1",
+      "title": "OpenStax: Newton’s Second Law of Motion",
+      "url": "https://openstax.org/books/college-physics-2e/pages/4-3-newtons-second-law-of-motion-concept-of-a-system"
+    }
+  ],
+  "claim_citations": [
+    {
+      "claim": "For fixed net force and constant mass, acceleration is inversely proportional to mass.",
+      "section": "physics_lesson.intuition",
+      "source_ids": [
+        "s1"
+      ]
+    }
+  ],
+  "sources_or_references": [],
+  "generated_at": "2026-10-30T10:00:00Z",
+  "physics_lesson": {
+    "question": "Why does a loaded trolley speed up less easily?",
+    "learning_goal": "Explain how net force and mass affect a change in motion—without needing a formula.",
+    "prerequisites": [
+      {
+        "term": "Velocity",
+        "explanation": "Velocity describes how fast something moves and in which direction."
+      }
+    ],
+    "key_terms": [
+      {
+        "term": "Acceleration",
+        "definition": "A change in velocity over time.",
+        "relevance": "It includes changes in speed or direction."
+      },
+      {
+        "term": "Net force",
+        "definition": "The vector sum of all external forces on the object.",
+        "relevance": "This is the force that determines its acceleration."
+      },
+      {
+        "term": "Inertia",
+        "definition": "Resistance to a change in velocity.",
+        "relevance": "Mass measures inertia in this model."
+      }
+    ],
+    "intuition": {
+      "explanation": "A push does not directly set an object’s speed. It changes the object’s velocity over time. More mass needs more net force for the same change in velocity per second.",
+      "analogy": "Compare pushing an empty trolley with pushing the same trolley after loading it.",
+      "analogy_limit": "Real trolleys have friction and rotating wheels. To isolate mass, compare the same net force, not just the same push.",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "diagram": {
+      "type": "force",
+      "title": "Look at the net force, not just the push",
+      "caption": "The arrow shows the horizontal net force on a trolley. This is a schematic, not a measurement or a scale drawing.",
+      "description": "A square represents the trolley. A right-pointing arrow is labeled horizontal net force. Only the horizontal motion is shown; the downward weight and upward support force balance.",
+      "assumptions": [
+        "Only horizontal motion is considered.",
+        "Vertical forces balance.",
+        "The object’s mass stays constant."
+      ],
+      "items": [],
+      "vectors": [
+        {
+          "label": "Horizontal net force",
+          "x": 0.75,
+          "y": 0
+        }
+      ],
+      "rays": [],
+      "x_label": "",
+      "x_unit": "",
+      "y_label": "",
+      "y_unit": "",
+      "points": [],
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "explanation_steps": [
+      {
+        "id": "motion",
+        "title": "Start with the change in motion",
+        "explanation": "Acceleration tells us how velocity changes. A trolley can already be moving while its acceleration is zero.",
+        "source_ids": [
+          "s1"
+        ]
+      },
+      {
+        "id": "net-force",
+        "title": "Combine all the external forces",
+        "explanation": "The push is not always the net force. An opposing force, such as friction, reduces the net force in the direction of the push.",
+        "source_ids": [
+          "s1"
+        ]
+      },
+      {
+        "id": "mass",
+        "title": "Compare the same net force on different masses",
+        "explanation": "If the net force stays the same, a heavier trolley has less acceleration. To give it the same acceleration, you need a larger net force.",
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "worked_example": {
+      "question": "What happens when a 12 N net force acts on a 3 kg trolley?",
+      "starting_conditions": [
+        "These are illustrative numbers, not measured data.",
+        "The mass is constant, and the motion is treated in an inertial frame.",
+        "The 12 N value is the net force, after combining opposing forces."
+      ],
+      "reasoning_steps": [
+        "Use net force, not the push alone.",
+        "Divide the net force by the mass to find acceleration.",
+        "Interpret the acceleration as a change in velocity each second."
+      ],
+      "givens": [
+        {
+          "id": "force",
+          "symbol": "F_net",
+          "meaning": "Net force",
+          "value": 12,
+          "unit": "N"
+        },
+        {
+          "id": "mass",
+          "symbol": "m",
+          "meaning": "Mass",
+          "value": 3,
+          "unit": "kg"
+        }
+      ],
+      "calculations": [
+        {
+          "id": "acceleration",
+          "explanation": "Divide 12 newtons by 3 kilograms.",
+          "operation": "divide",
+          "operand_ids": [
+            "force",
+            "mass"
+          ],
+          "result": 4,
+          "unit": "m/s^2"
+        }
+      ],
+      "result": "The acceleration is 4 metres per second squared.",
+      "interpretation": "While the net force stays constant, the trolley’s velocity changes by 4 metres per second each second in the force’s direction.",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "mathematics": [
+      {
+        "title": "Newton’s second law",
+        "formula_latex": "F_{\\mathrm{net}} = ma \\qquad a = \\frac{F_{\\mathrm{net}}}{m}",
+        "spoken_formula": "Net force equals mass times acceleration. Acceleration equals net force divided by mass.",
+        "meaning": "The equation relates the change in motion to the total external force and the object’s inertia.",
+        "symbols": [
+          {
+            "id": "F",
+            "symbol": "F_net",
+            "meaning": "Net external force",
+            "unit": "N"
+          },
+          {
+            "id": "m",
+            "symbol": "m",
+            "meaning": "Constant mass",
+            "unit": "kg"
+          },
+          {
+            "id": "a",
+            "symbol": "a",
+            "meaning": "Acceleration",
+            "unit": "m/s^2"
+          }
+        ],
+        "symbol_ids": [
+          "F",
+          "m",
+          "a"
+        ],
+        "assumptions": [
+          "Mass is constant.",
+          "Use an inertial reference frame.",
+          "This classical model is appropriate; relativistic effects are negligible."
+        ],
+        "derivation_steps": [
+          "Start with net force equals mass times acceleration.",
+          "Divide both sides by the nonzero mass.",
+          "The result is acceleration equals net force divided by mass."
+        ],
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "misconceptions": [
+      {
+        "belief": "“A moving object must have a net force keeping it moving.”",
+        "correction": "A net force is needed to change velocity, not to maintain a constant velocity.",
+        "explanation": "Friction often slows everyday objects. An engine or a push can balance friction, leaving zero net force even while the object moves.",
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "applications": [
+      {
+        "title": "Choosing how much force is needed",
+        "explanation": "To give two trolleys the same acceleration, the one with more mass needs a larger net force. This is why the load matters when starting and stopping.",
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "model_limits": [
+      "Do not substitute a single push for the net force when other forces matter.",
+      "This form assumes constant mass and an inertial reference frame.",
+      "Use a more appropriate model when relativistic effects or changing mass matter."
+    ],
+    "knowledge_checks": [
+      {
+        "id": "double-mass",
+        "question": "Keep the net force the same and double the trolley’s mass. What happens to its acceleration?",
+        "answer": "Its acceleration becomes half as large.",
+        "explanation": "At a fixed net force, acceleration is inversely proportional to mass.",
+        "misconception": "Do not confuse lower acceleration with being stationary.",
+        "related_step_ids": [
+          "mass"
+        ]
+      },
+      {
+        "id": "steady-motion",
+        "question": "A trolley moves at a constant velocity. Must its net force be forward?",
+        "answer": "No. Its net force is zero in this model.",
+        "explanation": "Constant velocity means zero acceleration. The forward and opposing forces may balance.",
+        "misconception": "Moving and accelerating are different.",
+        "related_step_ids": [
+          "motion",
+          "net-force"
+        ]
+      }
+    ],
+    "takeaways": [
+      "Ask what changes the velocity, not what keeps the object moving.",
+      "Find the net force before applying the relationship.",
+      "More mass means less acceleration only when net force stays the same."
+    ],
+    "related_concepts": [
+      "Inertia",
+      "Momentum",
+      "Friction"
+    ]
+  }
+}

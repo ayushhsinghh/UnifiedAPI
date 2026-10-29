@@ -28,6 +28,7 @@ from .schemas import (FACT_RESPONSE_SCHEMA, MYTHBUSTER_RESPONSE_SCHEMA,
                       FITNESS_RESPONSE_SCHEMA, INDIAN_DIET_RESPONSE_SCHEMA, validate_wellness_content)
 from .evidence import normalize_evidence
 from .prompts import _build_prompt, _build_mythbuster_prompt, _build_wellness_prompt
+from .physics import PHYSICS_RESPONSE_SCHEMA, build_physics_prompt, validate_physics_content
 
 # ── Retry constants ──────────────────────────────────────────────────────
 
@@ -62,7 +63,10 @@ async def generate_daily_fact(
     if blocklist is None:
         blocklist = []
 
-    if category in {"fitness", "home_workouts", "indian_diet", "nutrition_myths"}:
+    if category == 'physics':
+        prompt = build_physics_prompt(blocklist)
+        response_schema = PHYSICS_RESPONSE_SCHEMA
+    elif category in {"fitness", "home_workouts", "indian_diet", "nutrition_myths"}:
         prompt = _build_wellness_prompt(category, blocklist)
         response_schema = (MYTHBUSTER_RESPONSE_SCHEMA if category == "nutrition_myths"
                            else INDIAN_DIET_RESPONSE_SCHEMA if category == "indian_diet"
@@ -117,9 +121,18 @@ async def generate_daily_fact(
                 fact_str = response.choices[0].message.content
                 fact = json.loads(fact_str) if fact_str else None
 
-            if isinstance(fact, dict) and fact.get("headline_fact") and validate_wellness_content(fact, category):
+            if (isinstance(fact, dict) and fact.get("headline_fact") and validate_wellness_content(fact, category)
+                    and (category != 'physics' or validate_physics_content(fact))):
                 normalize_evidence(fact)
                 fact["category"] = category
+                if category == 'physics':
+                    fact['physics_validation'] = {
+                        'arithmetic_checked': bool(fact['physics_lesson']['worked_example']['calculations']),
+                        'source_verification': 'not_performed',
+                        'scientific_review': 'not_performed',
+                    }
+                    # Scientific diagrams are rendered from lesson data, not generated pictures.
+                    fact['visual_suggestions'] = {}
                 if generation_metadata is not None:
                     generation_metadata.update(provider="gemini" if model_name.startswith("gemini") else "openai", model=model_name)
                 logger.info(
@@ -151,4 +164,3 @@ async def generate_daily_fact(
         _MAX_RETRIES + 1, category, last_error,
     )
     return None
- 

@@ -60,4 +60,15 @@ def normalize_evidence(fact):
             for item in guide.get(nested, []) if isinstance(guide.get(nested), list) else []:
                 if isinstance(item, dict):
                     item["source_ids"] = valid_ids(item.get("source_ids"))
+    def normalize_lesson_links(value):
+        if isinstance(value, dict):
+            for key, child in value.items():
+                if key == 'source_ids':
+                    value[key] = valid_ids(child)
+                else:
+                    normalize_lesson_links(child)
+        elif isinstance(value, list):
+            for child in value:
+                normalize_lesson_links(child)
+    normalize_lesson_links(fact.get('physics_lesson'))
     return fact
