@@ -4,6 +4,7 @@ import types
 import unittest
 from unittest.mock import AsyncMock, Mock, patch
 from test_fact_evidence_lifecycle import generator_module, learning, load, module
+from image_fixtures import add_image_plan
 
 
 class AudienceTests(unittest.TestCase):
@@ -38,11 +39,12 @@ class AudienceTests(unittest.TestCase):
 
 class AudienceGenerationTests(unittest.IsolatedAsyncioTestCase):
     async def test_every_category_branch_receives_the_same_audience_rules(self):
-        for category in ('space', 'physics', 'biology', 'psychology', 'mythbusters', 'fitness', 'indian_diet'):
+        for category in ('space', 'physics', 'biology', 'psychology', 'indian_constitution', 'mythbusters', 'fitness', 'indian_diet'):
             generator = generator_module()
             fact = {'headline_fact': 'One useful idea', 'difficulty_level': 'Intermediate',
                     'physics_lesson': {'worked_example': {'calculations': []}},
                     'visual_suggestions': {'cover': 'A relevant illustration'}}
+            add_image_plan(fact, myth=category == 'mythbusters')
             create = AsyncMock(return_value=types.SimpleNamespace(parsed=fact))
             generator.genai.Client.return_value.aio.models.generate_content = create
             result = await generator.generate_daily_fact(category)
@@ -52,8 +54,8 @@ class AudienceGenerationTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_advanced_response_retries_and_openai_keeps_the_audience_rules(self):
         generator = generator_module()
-        responses = [types.SimpleNamespace(parsed={'headline_fact': 'Too technical', 'difficulty_level': 'advanced'}),
-                     types.SimpleNamespace(parsed={'headline_fact': 'Accessible', 'difficulty_level': 'beginner'})]
+        responses = [types.SimpleNamespace(parsed=add_image_plan({'headline_fact': 'Too technical', 'difficulty_level': 'advanced'})),
+                     types.SimpleNamespace(parsed=add_image_plan({'headline_fact': 'Accessible', 'difficulty_level': 'beginner'}))]
         create = AsyncMock(side_effect=responses)
         generator.genai.Client.return_value.aio.models.generate_content = create
         with patch.object(generator.asyncio, 'sleep', new=AsyncMock()):
@@ -63,7 +65,7 @@ class AudienceGenerationTests(unittest.IsolatedAsyncioTestCase):
 
         generator = generator_module()
         generator.cfg = types.SimpleNamespace(GEMINI_MODEL_NAME='openai-primary', OPENAI_MODEL_NAME='fallback', OPENAI_API_KEY='unused')
-        response = json.dumps({'headline_fact': 'Accessible', 'difficulty_level': 'beginner'})
+        response = json.dumps(add_image_plan({'headline_fact': 'Accessible', 'difficulty_level': 'beginner'}))
         create = AsyncMock(return_value=types.SimpleNamespace(choices=[types.SimpleNamespace(message=types.SimpleNamespace(content=response))]))
         generator.openai.AsyncOpenAI.return_value.chat.completions.create = create
         await generator.generate_daily_fact('space')

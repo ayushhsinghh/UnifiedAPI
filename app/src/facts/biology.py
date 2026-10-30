@@ -1,5 +1,6 @@
 """Beginner Biology lessons with bounded diagram and evidence contracts."""
 from copy import deepcopy
+from .image_policy import validate_image_plan
 from .schemas import _object, _items, _strings, _TEXT, _SOURCE_IDS_SCHEMA
 from .physics import PHYSICS_RESPONSE_SCHEMA, _shape, _nonempty, _unique_ids
 
@@ -115,14 +116,7 @@ def validate_biology_content(fact):
                         break
                 else:
                     return False  # Ancestry and successive generations cannot loop backwards.
-        visuals, supporting = fact['visual_suggestions'], lesson.get('supporting_image')
-        slots = [k for k in ('overview', 'how_it_works') if _nonempty(visuals[k])]
-        if not _nonempty(visuals['cover']):
-            return False
-        if supporting:
-            if not all(_nonempty(supporting[k]) for k in ('learning_purpose', 'caption', 'alt')) or slots != [supporting['slot']]:
-                return False
-        elif slots:
+        if not validate_image_plan(fact):
             return False
         # Empty optional collections are fine; empty items are not.
         string_lists = [lesson['context']['conditions'], example['reasoning_steps'], evidence['scope_limits'], evidence['uncertainties'], lesson['takeaways'], lesson['related_concepts'], diagram['limitations']]
@@ -154,12 +148,7 @@ relationship_map. Supply 2-6 nodes with stable IDs, labels and details, plus 1-1
 from_id/to_id and a named relationship. Every node must participate. Use none with a useful description
 if these schematic maps cannot explain the topic accurately. Never return SVG, HTML, script, coordinates
 or executable diagrams. These are conceptual maps, not anatomical drawings, timelines to scale or measured data.
-Always request one relevant cover in visual_suggestions.cover. Keep the left third quiet for the title and
-the subject inside the central 60% for phone crops. No words, labels, numbers or equations in generated images.
-Default overview/how_it_works to empty strings and supporting_image to null. Request at most ONE extra
-illustration only when a specific organism, structure or apparatus view adds clear learning value beyond
-the cover and structured map. Provide its slot, learning_purpose, caption and alt, and only its matching
-visual prompt. Identify generated illustrations as illustrations; never present them as experimental evidence.
+Follow the shared 3-5-image article plan. Keep structured diagrams separate from generated art.
 Keep common summary/core_mechanics/learning_takeaways and metadata useful to older readers.
 History, quotes and India connections are optional. Do not add cultural filler or personal medical advice.
 {_EVIDENCE_INSTRUCTIONS}

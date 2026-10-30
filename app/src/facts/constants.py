@@ -111,7 +111,7 @@ CATEGORY_HINTS: Dict[str, str] = {
         "Preamble & its amendments, fundamental rights (Part III), "
         "directive principles (Part IV), constitutional amendments (42nd, 44th, 73rd, 74th), "
         "Dr. B.R. Ambedkar's drafting, federal structure, emergency provisions, "
-        "Right to Education, abolition of Article 370, Schedule system (8th schedule languages)"
+        "Right to Education, Article 370 and constitutional change, Schedule system (8th schedule languages)"
     ),
     "indian_laws": (
         "RTI Act 2005, Consumer Protection Act, IPC to BNS transition, "

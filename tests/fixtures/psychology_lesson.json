@@ -32,8 +32,8 @@
   ],
   "visual_suggestions": {
     "cover": "An editorial illustration of printed color swatches on a desk, with one person considering a response. No words, letters, numbers, labels or brain imagery. Keep the left third quiet for a headline and the subject in the central 60 percent.",
-    "overview": "",
-    "how_it_works": ""
+    "overview": "A standalone overview illustration of When a word competes with a color, showing the central idea in one readable scene. Center the subject for discovery-card crops, use a different viewpoint from the cover, and include no text or labels.",
+    "how_it_works": "An explanatory illustration of one concrete situation or mechanism in When a word competes with a color. Use a clear arrangement and no text or invented measurements. Keep it distinct from the overview and structured diagram."
   },
   "share_text": "Start with the task. Then ask what the evidence actually supports.",
   "content_freshness": "evergreen",
@@ -278,5 +278,21 @@
       "Research design"
     ],
     "supporting_image": null
-  }
+  },
+  "image_details": [
+    {
+      "slot": "overview",
+      "placement": "overview",
+      "alt": "Overview illustration for When a word competes with a color",
+      "caption": "An illustrative overview of the central idea.",
+      "learning_purpose": "Summarize the whole article in a readable scene."
+    },
+    {
+      "slot": "how_it_works",
+      "placement": "explanation",
+      "alt": "Explanatory illustration for When a word competes with a color",
+      "caption": "An illustration of the example or mechanism described in this lesson.",
+      "learning_purpose": "Connect the explanation with one concrete situation or mechanism."
+    }
+  ]
 }

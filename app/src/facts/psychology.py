@@ -1,5 +1,6 @@
 """Experience-first Psychology lessons with explicit evidence and scope limits."""
 from copy import deepcopy
+from .image_policy import validate_image_plan
 from .schemas import _object, _items, _strings, _TEXT
 from .physics import PHYSICS_RESPONSE_SCHEMA, _shape, _nonempty, _unique_ids
 from .biology import sourced
@@ -121,14 +122,7 @@ def validate_psychology_content(fact):
                 return False
             if any(e['relationship_type'] == 'causal' for e in d['edges']) and not any(e['inference'] == 'causal' for e in evidence):
                 return False
-        visuals, supporting = fact['visual_suggestions'], lesson.get('supporting_image')
-        slots = [k for k in ('overview', 'how_it_works') if _nonempty(visuals[k])]
-        if not _nonempty(visuals['cover']):
-            return False
-        if supporting:
-            if not all(_nonempty(supporting[k]) for k in ('learning_purpose', 'caption', 'alt')) or slots != [supporting['slot']]:
-                return False
-        elif slots:
+        if not validate_image_plan(fact):
             return False
         strings = [lesson['takeaways'], lesson['related_concepts'], lesson['worked_example']['reasoning_steps'], d['limitations'], *boundary.values(),
                    *[item['study_notes']['limitations'] for item in evidence]]
@@ -166,10 +160,7 @@ causal/conceptual. Association uses an undirected dashed connection in the UI. D
 through arrows unless causal evidence and a justification support it. Every node participates.
 No SVG, HTML, coordinates, code, invented data or fabricated brain imagery. Use none and a useful text
 description if the fixed conceptual diagram cannot explain the topic. Include caption and limitations.
-Request one relevant editorial cover in visual_suggestions.cover, with a quiet left third for the title,
-subject inside the central 60%, and no text or labels. Default overview/how_it_works to empty strings,
-supporting_image to null. At most ONE extra illustration may explain a distinct concrete situation
-or study setup; provide slot, learning_purpose, caption and alt. Never depict generated art as research evidence.
+Follow the shared 3-5-image article plan. Keep structured diagrams separate from generated art.
 Keep common summary/core_mechanics/learning_takeaways useful to legacy readers; history and cultural filler optional.
 {_EVIDENCE_INSTRUCTIONS}
 """

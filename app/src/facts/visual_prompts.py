@@ -76,6 +76,15 @@ IMAGE_SECTION_BRIEFS = {
     },
 }
 
+for _slot in ('explanation_2', 'explanation_3'):
+    IMAGE_SECTION_BRIEFS[_slot] = {
+        'ratio': '4:3',
+        'objective': 'Explain the distinct learning purpose named in image_details for this slot. '
+                     'Use one concrete scene, apparatus, structure or comparison. Do not repeat the overview '
+                     'or another explanation image. The page supplies captions and structured diagrams.',
+        'fields': ('summary', 'core_mechanics'),
+    }
+
 _VISUAL_RULES = (
     "Prioritize a clear teaching purpose and accurate subject details over spectacle. "
     "Use a coherent palette, material treatment, and rendering style across this article's images. "
@@ -96,10 +105,11 @@ _VISUAL_RULES = (
 
 def build_visual_instructions(mythbuster=False):
     """Ask the article model to supply a complete, independent brief for each slot."""
-    keys = ("cover", "myth_visual", "truth_visual") if mythbuster else ("cover", "overview", "how_it_works")
+    keys = ("cover", "overview", "myth_visual", "truth_visual") if mythbuster else ("cover", "overview", "how_it_works")
+    optional = ('how_it_works',) if mythbuster else ('explanation_2', 'explanation_3')
     lines = [
         "'visual_suggestions':",
-        "Return exactly these three keys: " + ", ".join(keys) + ".",
+        "Required image prompts: " + ", ".join(keys) + ". Optional if useful: " + ", ".join(optional) + ". Maximum five images total.",
         "Write a standalone image prompt of about 100-180 words for each key. "
         "Derive each scene from that section's actual content, not merely the category name. "
         "First choose a coherent visual treatment, then restate its concrete palette, materials, "
@@ -110,7 +120,7 @@ def build_visual_instructions(mythbuster=False):
         "Style and lighting; Accuracy constraints. Describe visible relationships precisely.",
         _VISUAL_RULES,
     ]
-    for key in keys:
+    for key in (*keys, *optional):
         brief = IMAGE_SECTION_BRIEFS[key]
         lines.append(f"{key} ({brief['ratio']}): {brief['objective']}")
     return "\n".join(lines) + "\n\n"
@@ -126,6 +136,9 @@ def build_section_image_context(key, article=None):
     ]
     if article:
         excerpt = {}
+        details = article.get('image_details')
+        if isinstance(details, list):
+            excerpt['image_learning_purpose'] = next((item for item in details if isinstance(item, dict) and item.get('slot') == key), None)
         for field in ("topic", "headline_fact", *brief["fields"]):
             value = article.get(field)
             if value:
@@ -148,6 +161,12 @@ def build_section_image_context(key, article=None):
             lines.append('Psychology editorial illustration: show the described situation, not a diagnosis '
                          'or a claimed brain scan. Do not invent participants, data, experiments, labels '
                          'or visible proof of a mental process. Generated art is not research evidence.')
+        if article.get('article_type') == 'constitution_lesson':
+            lesson = article.get('constitution_lesson') or {}
+            excerpt['constitution_context'] = {field: lesson.get(field) for field in ('question', 'opening_scenario', 'big_idea', 'supporting_image')}
+            lines.append('Constitution editorial illustration: show a clearly illustrative setting, '
+                         'not an authentic document, judgment, historical event or guaranteed legal outcome. '
+                         'No rendered legal wording, seals, signatures or fake official papers.')
         if key in {"myth_visual", "truth_visual"}:
             suggestions = article.get("visual_suggestions") or {}
             if isinstance(suggestions, dict):

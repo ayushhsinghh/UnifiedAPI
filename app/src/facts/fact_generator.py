@@ -32,6 +32,9 @@ from .physics import PHYSICS_RESPONSE_SCHEMA, build_physics_prompt, validate_phy
 from .biology import BIOLOGY_RESPONSE_SCHEMA, build_biology_prompt, validate_biology_content
 from .psychology import PSYCHOLOGY_RESPONSE_SCHEMA, build_psychology_prompt, validate_psychology_content
 from .learning import LEARNER_INSTRUCTIONS, normalize_learning_level
+from .constitution import CONSTITUTION_RESPONSE_SCHEMA, build_constitution_prompt, validate_constitution_content
+from .constitution_sources import enrich_constitution_text
+from .image_policy import IMAGE_INSTRUCTIONS, IMAGE_KEYS, validate_image_plan
 
 # ── Retry constants ──────────────────────────────────────────────────────
 
@@ -66,7 +69,10 @@ async def generate_daily_fact(
     if blocklist is None:
         blocklist = []
 
-    if category == 'psychology':
+    if category == 'indian_constitution':
+        prompt = build_constitution_prompt(blocklist)
+        response_schema = CONSTITUTION_RESPONSE_SCHEMA
+    elif category == 'psychology':
         prompt = build_psychology_prompt(blocklist)
         response_schema = PSYCHOLOGY_RESPONSE_SCHEMA
     elif category == 'biology':
@@ -88,7 +94,7 @@ async def generate_daily_fact(
         response_schema = FACT_RESPONSE_SCHEMA
 
     # Every provider and fallback receives the same non-expert audience contract.
-    prompt += '\n\n' + LEARNER_INSTRUCTIONS
+    prompt += '\n\n' + LEARNER_INSTRUCTIONS + '\n\n' + IMAGE_INSTRUCTIONS
     last_error: Optional[Exception] = None
     
     fallback_models = [cfg.GEMINI_MODEL_NAME, "gemini-3.8-flash", "gemini-3.5-flash", cfg.OPENAI_MODEL_NAME]
@@ -132,10 +138,12 @@ async def generate_daily_fact(
                 fact_str = response.choices[0].message.content
                 fact = json.loads(fact_str) if fact_str else None
 
-            if (isinstance(fact, dict) and fact.get("headline_fact") and normalize_learning_level(fact) and validate_wellness_content(fact, category)
+            if (isinstance(fact, dict) and fact.get("headline_fact") and normalize_learning_level(fact)
+                    and validate_image_plan(fact, myth=category in {'mythbusters', 'digital_myths', 'money_myths', 'environment_myths', 'science_myths', 'nutrition_myths'}) and validate_wellness_content(fact, category)
                     and (category != 'physics' or validate_physics_content(fact))
                     and (category != 'biology' or validate_biology_content(fact))
-                    and (category != 'psychology' or validate_psychology_content(fact))):
+                    and (category != 'psychology' or validate_psychology_content(fact))
+                    and (category != 'indian_constitution' or validate_constitution_content(fact))):
                 normalize_evidence(fact)
                 fact["category"] = category
                 if category == 'physics':
@@ -144,17 +152,21 @@ async def generate_daily_fact(
                         'source_verification': 'not_performed',
                         'scientific_review': 'not_performed',
                     }
-                    # Keep one cover and the single justified supporting slot, if present.
+                    # Preserve the complete validated image plan, including optional explanatory slots.
                     fact['visual_suggestions'] = {key: value for key, value in fact['visual_suggestions'].items()
-                                                  if key in ('cover', 'overview', 'how_it_works') and value.strip()}
+                                                  if key in IMAGE_KEYS and value.strip()}
                 if category == 'biology':
                     fact['biology_validation'] = {'structure_checked': True, 'source_verification': 'not_performed', 'scientific_review': 'not_performed'}
                     fact['visual_suggestions'] = {key: value for key, value in fact['visual_suggestions'].items()
-                                                  if key in ('cover', 'overview', 'how_it_works') and value.strip()}
+                                                  if key in IMAGE_KEYS and value.strip()}
                 if category == 'psychology':
                     fact['psychology_validation'] = {'structure_checked': True, 'source_verification': 'not_performed', 'scientific_review': 'not_performed'}
                     fact['visual_suggestions'] = {key: value for key, value in fact['visual_suggestions'].items()
-                                                  if key in ('cover', 'overview', 'how_it_works') and value.strip()}
+                                                  if key in IMAGE_KEYS and value.strip()}
+                if category == 'indian_constitution':
+                    await enrich_constitution_text(fact)
+                    fact['visual_suggestions'] = {key: value for key, value in fact['visual_suggestions'].items()
+                                                  if key in IMAGE_KEYS and value.strip()}
                 if generation_metadata is not None:
                     generation_metadata.update(provider="gemini" if model_name.startswith("gemini") else "openai", model=model_name)
                 logger.info(

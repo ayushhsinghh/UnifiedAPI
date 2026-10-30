@@ -1,0 +1,241 @@
+{
+  "category": "indian_constitution",
+  "topic": "Who Article 14 protects",
+  "schema_version": "2.0",
+  "article_type": "constitution_lesson",
+  "headline_fact": "Article 14 uses the words “any person,” rather than “any citizen.”",
+  "summary": "One small wording difference helps explain who a constitutional provision concerns.",
+  "did_you_know": "The wording of each provision matters.",
+  "core_mechanics": "Article 14 addresses the State and refers to any person within the territory of India.",
+  "why_it_matters": "Do not assume every constitutional protection uses the same description of the people it concerns.",
+  "in_depth_breakdown": {
+    "detailed_processes": [],
+    "real_world_application": "Read the scope of a constitutional provision before drawing conclusions.",
+    "fascinating_trivia": []
+  },
+  "common_misconceptions": [],
+  "learning_takeaways": [
+    "Read who the provision concerns before applying it."
+  ],
+  "emoji_icon": "",
+  "difficulty_level": "Beginner",
+  "region": "Global",
+  "fun_rating": 7,
+  "read_time_seconds": 360,
+  "tags": [
+    "equality",
+    "Article 14"
+  ],
+  "related_categories": [
+    "indian_laws"
+  ],
+  "visual_suggestions": {
+    "cover": "An editorial illustration of two people at a public service counter in India. Restrained natural light, one clear scene. Keep the left third quiet and subjects inside the central 60 percent. No text, letters, flags, scales of justice or fake documents.",
+    "overview": "A standalone overview illustration of Who Article 14 protects, showing the central idea in one readable scene. Center the subject for discovery-card crops, use a different viewpoint from the cover, and include no text or labels.",
+    "how_it_works": "An explanatory illustration of one concrete situation or mechanism in Who Article 14 protects. Use a clear arrangement and no text or invented measurements. Keep it distinct from the overview and structured diagram."
+  },
+  "share_text": "Read the people, the public authority, and the limits named in a constitutional provision.",
+  "content_freshness": "evergreen",
+  "sources": [
+    {
+      "id": "s1",
+      "title": "Constitution of India: official 2024 edition",
+      "url": "https://lddashboard.legislative.gov.in/sites/default/files/coi/COI_2024.pdf"
+    }
+  ],
+  "claim_citations": [],
+  "sources_or_references": [],
+  "generated_at": "2026-10-30T10:00:00Z",
+  "constitution_lesson": {
+    "lesson_type": "right_or_principle",
+    "question": "Does Article 14 refer only to citizens?",
+    "learning_goal": "Identify who this provision concerns without assuming the same scope for every right.",
+    "opening_scenario": {
+      "title": "Consider a hypothetical public office",
+      "situation": "A visitor hears someone say that every constitutional protection is only for citizens. They open Article 14 to check the wording.",
+      "question": "What should they look for first?"
+    },
+    "big_idea": {
+      "explanation": "Start with the words that identify the people concerned. Article 14 refers to any person within the territory of India.",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "constitutional_basis": [
+      {
+        "id": "article14",
+        "reference": "Article 14",
+        "title": "Equality before law",
+        "part_or_schedule": "Part III",
+        "source_kind": "constitutional_text",
+        "provision_type": "fundamental_right",
+        "plain_meaning": "The State must not deny equality before the law or equal protection of the laws to any person within the territory of India.",
+        "legal_effect": "This is a fundamental-right provision directed at the State. Its wording does not restrict its protection to citizens.",
+        "quote_candidate": "",
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "explanation_steps": [
+      {
+        "id": "actor",
+        "title": "Identify who the provision addresses",
+        "explanation": "Article 14 addresses the State. That is the public authority named in this provision.",
+        "basis_ids": [
+          "article14"
+        ],
+        "source_ids": [
+          "s1"
+        ]
+      },
+      {
+        "id": "person",
+        "title": "Read who it concerns",
+        "explanation": "The text uses “any person.” Do not silently replace this with “any citizen.”",
+        "basis_ids": [
+          "article14"
+        ],
+        "source_ids": [
+          "s1"
+        ]
+      },
+      {
+        "id": "scope",
+        "title": "Keep the stated scope",
+        "explanation": "The text refers to the territory of India. Read that condition with the protection it describes.",
+        "basis_ids": [
+          "article14"
+        ],
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "worked_example": {
+      "title": "Check the claim before accepting it",
+      "situation": "In the hypothetical office, the visitor reads Article 14 rather than relying on the broad claim.",
+      "reasoning_steps": [
+        "Find the relevant provision.",
+        "Identify the people and public authority it names.",
+        "Keep the conclusion limited to that provision."
+      ],
+      "outcome": "The claim that Article 14 refers only to citizens does not match its wording.",
+      "limits": "This example does not decide a dispute or identify a legal remedy for any person.",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "scope_and_limits": {
+      "who_it_concerns": [
+        "Any person within the territory of India, as stated in Article 14."
+      ],
+      "conditions": [
+        "The provision addresses the State."
+      ],
+      "exceptions": [],
+      "limits": [
+        "This lesson explains the wording of one provision, not every equality dispute.",
+        "Other constitutional provisions can use different language about who they concern."
+      ],
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "common_confusions": [
+      {
+        "confusion": "Person and citizen mean the same thing here.",
+        "clarification": "Read the actual word used by the provision. Article 14 uses person; this lesson does not replace it with citizen.",
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "diagram": {
+      "type": "scope_map",
+      "title": "Read the authority and the people separately",
+      "caption": "A schematic reading guide for Article 14, not a decision about a legal dispute.",
+      "description": "The map connects the State addressed by the provision with the people described in its scope.",
+      "limitations": [
+        "This map omits legal interpretation and remedies."
+      ],
+      "nodes": [
+        {
+          "id": "state",
+          "label": "The State",
+          "detail": "The authority addressed by the provision."
+        },
+        {
+          "id": "person",
+          "label": "Any person",
+          "detail": "Read with the territorial condition in the text."
+        }
+      ],
+      "edges": [
+        {
+          "from_id": "state",
+          "to_id": "person",
+          "relationship": "Read the protection together with its stated scope."
+        }
+      ],
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "amendment_timeline": [],
+    "case_note": null,
+    "key_terms": [
+      {
+        "term": "Provision",
+        "definition": "A particular part of a legal document."
+      }
+    ],
+    "deeper_detail": [],
+    "knowledge_checks": [
+      {
+        "id": "word",
+        "question": "Which word does Article 14 use: person or citizen?",
+        "answer": "Person.",
+        "explanation": "Keep the wording of the relevant provision when explaining its scope.",
+        "related_step_ids": [
+          "person"
+        ]
+      },
+      {
+        "id": "universal",
+        "question": "Does this lesson establish the scope of every constitutional right?",
+        "answer": "No.",
+        "explanation": "It explains one provision. Other provisions need their own reading.",
+        "related_step_ids": [
+          "scope"
+        ]
+      }
+    ],
+    "takeaways": [
+      "Start with the wording of the relevant provision.",
+      "Identify the authority, people and conditions it names.",
+      "Keep an example’s conclusion within its limits."
+    ],
+    "related_concepts": [
+      "Fundamental rights",
+      "Constitutional interpretation"
+    ],
+    "supporting_image": null
+  },
+  "image_details": [
+    {
+      "slot": "overview",
+      "placement": "overview",
+      "alt": "Overview illustration for Who Article 14 protects",
+      "caption": "An illustrative overview of the central idea.",
+      "learning_purpose": "Summarize the whole article in a readable scene."
+    },
+    {
+      "slot": "how_it_works",
+      "placement": "explanation",
+      "alt": "Explanatory illustration for Who Article 14 protects",
+      "caption": "An illustration of the example or mechanism described in this lesson.",
+      "learning_purpose": "Connect the explanation with one concrete situation or mechanism."
+    }
+  ]
+}

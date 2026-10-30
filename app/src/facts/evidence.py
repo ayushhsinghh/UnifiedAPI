@@ -73,4 +73,5 @@ def normalize_evidence(fact):
     normalize_lesson_links(fact.get('physics_lesson'))
     normalize_lesson_links(fact.get('biology_lesson'))
     normalize_lesson_links(fact.get('psychology_lesson'))
+    normalize_lesson_links(fact.get('constitution_lesson'))
     return fact

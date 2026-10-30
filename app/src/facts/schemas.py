@@ -1,4 +1,9 @@
 # Additive evidence fields keep existing sources_or_references strings compatible.
+_IMAGE_DETAILS_SCHEMA = {'type': 'ARRAY', 'items': {'type': 'OBJECT', 'properties': {
+    'slot': {'type': 'STRING', 'enum': ['overview', 'how_it_works', 'explanation_2', 'explanation_3', 'myth_visual', 'truth_visual']},
+    'placement': {'type': 'STRING', 'enum': ['overview', 'explanation', 'example', 'limits']},
+    'alt': {'type': 'STRING'}, 'caption': {'type': 'STRING'}, 'learning_purpose': {'type': 'STRING'},
+}, 'required': ['slot', 'placement', 'alt', 'caption', 'learning_purpose']}}
 _SOURCE_IDS_SCHEMA = {"type": "ARRAY", "items": {"type": "STRING"}}
 _SOURCES_SCHEMA = {
     "type": "ARRAY",
@@ -168,10 +173,13 @@ FACT_RESPONSE_SCHEMA = {
                 "cover": {"type": "STRING"},
                 "overview": {"type": "STRING"},
                 "how_it_works": {"type": "STRING"},
+                "explanation_2": {"type": "STRING"},
+                "explanation_3": {"type": "STRING"},
             },
             "required": ["cover", "overview", "how_it_works"]
         },
         "share_text": {"type": "STRING"},
+        "image_details": _IMAGE_DETAILS_SCHEMA,
 
         # Sources
         "sources": _SOURCES_SCHEMA,
@@ -191,7 +199,7 @@ FACT_RESPONSE_SCHEMA = {
         "learning_takeaways",
         "emoji_icon", "difficulty_level", "region", "fun_rating",
         "read_time_seconds", "tags", "related_categories",
-        "visual_suggestions", "share_text", "content_freshness",
+        "visual_suggestions", "image_details", "share_text", "content_freshness",
         "sources_or_references", "sources", "claim_citations",
     ],
 }
@@ -316,10 +324,13 @@ MYTHBUSTER_RESPONSE_SCHEMA = {
                 "cover": {"type": "STRING"},
                 "myth_visual": {"type": "STRING"},
                 "truth_visual": {"type": "STRING"},
+                "overview": {"type": "STRING"},
+                "how_it_works": {"type": "STRING"},
             },
-            "required": ["cover", "myth_visual", "truth_visual"],
+            "required": ["cover", "overview", "myth_visual", "truth_visual"],
         },
         "share_text": {"type": "STRING"},
+        "image_details": _IMAGE_DETAILS_SCHEMA,
 
         # Sources
         "sources": _SOURCES_SCHEMA,
@@ -339,7 +350,7 @@ MYTHBUSTER_RESPONSE_SCHEMA = {
         "key_figure", "key_stat", "quote",
         "emoji_icon", "difficulty_level", "region", "fun_rating",
         "read_time_seconds", "tags", "related_categories",
-        "visual_suggestions", "share_text", "content_freshness",
+        "visual_suggestions", "image_details", "share_text", "content_freshness",
         "sources_or_references", "sources", "claim_citations",
     ],
 }

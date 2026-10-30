@@ -73,16 +73,12 @@ class BiologyContractTests(unittest.TestCase):
 
     def test_image_budget_and_biology_image_context(self):
         fact = fixture()
-        self.assertEqual(expected_image_keys(fact['visual_suggestions']), ['cover'])
-        fact['visual_suggestions']['overview'] = 'A useful yeast illustration.'
+        self.assertEqual(expected_image_keys(fact['visual_suggestions']), ['cover', 'overview', 'how_it_works'])
+        fact['visual_suggestions']['overview'] = ''
         self.assertFalse(validate_biology_content(fact))
-        fact['biology_lesson']['supporting_image'] = {'slot': 'overview', 'learning_purpose': 'Show the vessel.', 'caption': 'An illustration.', 'alt': 'A vessel.'}
-        self.assertTrue(validate_biology_content(fact))
-        fact['visual_suggestions']['how_it_works'] = 'Another image.'
-        self.assertFalse(validate_biology_content(fact))
-        self.assertIn('named organism, scale and conditions', build_section_image_context('cover', fact))
+        self.assertIn('named organism, scale and conditions', build_section_image_context('cover', fixture()))
         prompt = build_biology_prompt(['old topic'])
-        for text in ('old topic', 'ONE Biology lesson', 'population changes', 'personal medical advice', 'at most ONE extra'):
+        for text in ('old topic', 'ONE Biology lesson', 'population changes', 'personal medical advice', '3-5-image'):
             self.assertIn(text, prompt)
 
 
@@ -102,7 +98,7 @@ class BiologyGenerationTests(unittest.IsolatedAsyncioTestCase):
         self.assertIs(create.call_args.kwargs['config']['response_schema'], BIOLOGY_RESPONSE_SCHEMA)
         self.assertTrue(result['biology_validation']['structure_checked'])
         self.assertEqual(result['biology_validation']['scientific_review'], 'not_performed')
-        self.assertEqual(expected_image_keys(result['visual_suggestions']), ['cover'])
+        self.assertEqual(expected_image_keys(result['visual_suggestions']), ['cover', 'overview', 'how_it_works'])
 
 
 if __name__ == '__main__':

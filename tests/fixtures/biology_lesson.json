@@ -32,8 +32,8 @@
   ],
   "visual_suggestions": {
     "cover": "An editorial illustration of a fermentation vessel with gas bubbles. Natural light, no words or measurements. Keep the left third quiet and the subject in the central 60 percent.",
-    "overview": "",
-    "how_it_works": ""
+    "overview": "A standalone overview illustration of Why yeast releases gas, showing the central idea in one readable scene. Center the subject for discovery-card crops, use a different viewpoint from the cover, and include no text or labels.",
+    "how_it_works": "An explanatory illustration of one concrete situation or mechanism in Why yeast releases gas. Use a clear arrangement and no text or invented measurements. Keep it distinct from the overview and structured diagram."
   },
   "share_text": "A visible gas can reveal activity inside microscopic cells.",
   "content_freshness": "evergreen",
@@ -273,5 +273,21 @@
       "Cellular respiration"
     ],
     "supporting_image": null
-  }
+  },
+  "image_details": [
+    {
+      "slot": "overview",
+      "placement": "overview",
+      "alt": "Overview illustration for Why yeast releases gas",
+      "caption": "An illustrative overview of the central idea.",
+      "learning_purpose": "Summarize the whole article in a readable scene."
+    },
+    {
+      "slot": "how_it_works",
+      "placement": "explanation",
+      "alt": "Explanatory illustration for Why yeast releases gas",
+      "caption": "An illustration of the example or mechanism described in this lesson.",
+      "learning_purpose": "Connect the explanation with one concrete situation or mechanism."
+    }
+  ]
 }

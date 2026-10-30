@@ -2,6 +2,7 @@
 import math
 import re
 from copy import deepcopy
+from .image_policy import validate_image_plan
 
 from .schemas import FACT_RESPONSE_SCHEMA, _object, _items, _strings, _TEXT, _SOURCE_IDS_SCHEMA
 
@@ -176,15 +177,7 @@ def validate_physics_content(fact):
             return False
         if not all(_nonempty(lesson[k]) for k in ('question', 'learning_goal')):
             return False
-        visuals = fact['visual_suggestions']
-        if not _nonempty(visuals['cover']):
-            return False
-        supporting = lesson.get('supporting_image')
-        slots = [key for key in ('overview', 'how_it_works') if _nonempty(visuals[key])]
-        if supporting:
-            if not all(_nonempty(supporting[k]) for k in ('learning_purpose', 'caption', 'alt')) or slots != [supporting['slot']]:
-                return False
-        elif slots:
+        if not validate_image_plan(fact):
             return False
         if not _nonempty(lesson['intuition']['explanation']):
             return False
@@ -253,16 +246,7 @@ Choose a focused question from: {CATEGORY_HINTS.get('physics', 'everyday physics
 Do not repeat these previous topics: {blocklist!r}.
 Return schema_version 2.0, article_type physics_lesson and the supplied structured schema.
 The plain-language route must make sense without opening mathematics. Define unfamiliar terms.
-Always provide ONE relevant editorial cover prompt in visual_suggestions.cover, grounded in the exact topic.
-Keep the left third quiet for the headline; keep the subject within the central 60% for phone crops.
-Use structured diagram data for scientific explanations, labels, axes, forces and numerical relationships.
-By default set visual_suggestions.overview and how_it_works to empty strings and supporting_image to null.
-Only when a distinct view of a real apparatus, material or phenomenon clearly helps explain the lesson,
-request AT MOST ONE supporting image. Set supporting_image with slot (overview or how_it_works),
-learning_purpose, caption and meaningful alt text; fill only that visual_suggestions slot.
-Do not repeat the cover or structured diagram. Do not invent experiments, measurements or evidence.
-Identify generated explanatory illustrations as illustrations in their captions. No labels, writing or formulas
-inside generated images. Use a concrete, standalone scene description; avoid decorative filler.
+Follow the shared 3-5-image article plan. Keep structured diagrams separate from generated art.
 Use 3-5 connected cause-and-effect explanation_steps, ONE worked example, 2-3 knowledge_checks
 and concise takeaways. Checks must be answerable from the lesson and related_step_ids must resolve.
 Explain each application's mechanism, not just its name. Pair misconceptions with reasoned corrections.

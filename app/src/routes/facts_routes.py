@@ -338,18 +338,7 @@ async def retry_image_generation(
         
     existing_images = fact_doc.get("images", {})
     
-    # Calculate expected images
-    expected_keys = []
-    if visual_suggestions.get("cover"): 
-        expected_keys.append("cover")
-    if visual_suggestions.get("overview") or visual_suggestions.get("history"): 
-        expected_keys.append("overview")
-    if visual_suggestions.get("how_it_works"): 
-        expected_keys.append("how_it_works")
-    if visual_suggestions.get("myth_visual"):
-        expected_keys.append("myth_visual")
-    if visual_suggestions.get("truth_visual"):
-        expected_keys.append("truth_visual")
+    expected_keys = expected_image_keys(visual_suggestions)
         
     # Check if we have all expected keys
     missing_keys = [k for k in expected_keys if k not in existing_images]

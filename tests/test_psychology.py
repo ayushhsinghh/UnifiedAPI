@@ -70,16 +70,12 @@ class PsychologyContractTests(unittest.TestCase):
         fact['psychology_lesson']['big_idea']['source_ids'] = ['s1', 'missing', 's1']
         normalize_evidence(fact)
         self.assertEqual(fact['psychology_lesson']['big_idea']['source_ids'], ['s1'])
-        self.assertEqual(expected_image_keys(fact['visual_suggestions']), ['cover'])
-        fact['visual_suggestions']['overview'] = 'A useful task setup illustration.'
+        self.assertEqual(expected_image_keys(fact['visual_suggestions']), ['cover', 'overview', 'how_it_works'])
+        fact['visual_suggestions']['how_it_works'] = ''
         self.assertFalse(validate_psychology_content(fact))
-        fact['psychology_lesson']['supporting_image'] = {'slot':'overview', 'learning_purpose':'Show the setup.', 'caption':'An illustration.', 'alt':'Task materials on a desk.'}
-        self.assertTrue(validate_psychology_content(fact))
-        fact['visual_suggestions']['how_it_works'] = 'An unnecessary second image.'
-        self.assertFalse(validate_psychology_content(fact))
-        self.assertIn('not research evidence', build_section_image_context('cover', fact))
+        self.assertIn('not research evidence', build_section_image_context('cover', fixture()))
         prompt = build_psychology_prompt(['prior topic'])
-        for text in ('prior topic', 'experience-first', 'not_assessed', 'Use null', 'never a diagnostic', 'At most ONE extra'):
+        for text in ('prior topic', 'experience-first', 'not_assessed', 'Use null', 'never a diagnostic', '3-5-image'):
             self.assertIn(text, prompt)
 
 
@@ -98,7 +94,7 @@ class PsychologyGenerationTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(create.call_count, 2)
         self.assertIs(create.call_args.kwargs['config']['response_schema'], PSYCHOLOGY_RESPONSE_SCHEMA)
         self.assertEqual(result['psychology_validation']['scientific_review'], 'not_performed')
-        self.assertEqual(expected_image_keys(result['visual_suggestions']), ['cover'])
+        self.assertEqual(expected_image_keys(result['visual_suggestions']), ['cover', 'overview', 'how_it_works'])
 
 
 if __name__ == '__main__':

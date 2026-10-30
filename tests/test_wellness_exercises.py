@@ -19,6 +19,7 @@ from src.facts import prompts
 from src.facts.schemas import FITNESS_RESPONSE_SCHEMA, INDIAN_DIET_RESPONSE_SCHEMA, validate_wellness_content
 from src.facts.constants import CATEGORY_HINTS
 from src.facts.evidence import normalize_evidence
+from image_fixtures import add_image_plan
 
 
 def example(schema):
@@ -120,6 +121,7 @@ class WellnessGenerationTests(unittest.IsolatedAsyncioTestCase):
             response = example(schema)
             response['headline_fact'] = 'A structured guide'
             response['difficulty_level'] = 'beginner'
+            add_image_plan(response, myth=schema is MYTHBUSTER_RESPONSE_SCHEMA)
             create = AsyncMock(return_value=types.SimpleNamespace(parsed=response))
             generator.genai.Client.return_value.aio.models.generate_content = create
             result = await generator.generate_daily_fact(category)
@@ -134,6 +136,7 @@ class WellnessGenerationTests(unittest.IsolatedAsyncioTestCase):
         valid = example(FITNESS_RESPONSE_SCHEMA)
         valid['headline_fact'] = 'A complete workout'
         valid['difficulty_level'] = 'beginner'
+        add_image_plan(valid)
         create = AsyncMock(side_effect=[types.SimpleNamespace(parsed=invalid), types.SimpleNamespace(parsed=valid)])
         generator.genai.Client.return_value.aio.models.generate_content = create
         with patch.object(generator.asyncio, 'sleep', new=AsyncMock()):

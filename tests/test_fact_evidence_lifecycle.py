@@ -33,6 +33,7 @@ evidence = load('evidence_test', 'src/facts/evidence.py')
 lifecycle = load('lifecycle_test', 'src/facts/lifecycle.py')
 visual_prompts = load('visual_prompts_test', 'src/facts/visual_prompts.py')
 learning = load('learning_test', 'src/facts/learning.py')
+image_policy = load('image_policy_test', 'src/facts/image_policy.py')
 config_import = {'configs.config': module('configs.config', get_config=lambda: CFG)}
 
 
@@ -50,6 +51,9 @@ def generator_module():
         'fact_test.biology': module('fact_test.biology', BIOLOGY_RESPONSE_SCHEMA={}, build_biology_prompt=lambda *args: 'biology prompt', validate_biology_content=lambda *args: True),
         'fact_test.psychology': module('fact_test.psychology', PSYCHOLOGY_RESPONSE_SCHEMA={}, build_psychology_prompt=lambda *args: 'psychology prompt', validate_psychology_content=lambda *args: True),
         'fact_test.learning': learning,
+        'fact_test.image_policy': image_policy,
+        'fact_test.constitution': module('fact_test.constitution', CONSTITUTION_RESPONSE_SCHEMA={}, build_constitution_prompt=lambda *args: 'constitution prompt', validate_constitution_content=lambda *args: True),
+        'fact_test.constitution_sources': module('fact_test.constitution_sources', enrich_constitution_text=AsyncMock(side_effect=lambda fact: fact)),
     })
 
     value.logger = Mock()
@@ -129,7 +133,9 @@ class GenerationTests(unittest.IsolatedAsyncioTestCase):
         gen = generator_module()
         async def hang(**kwargs): await asyncio.Event().wait()
         gen.genai.Client.return_value = types.SimpleNamespace(aio=types.SimpleNamespace(models=types.SimpleNamespace(generate_content=hang)))
-        create = AsyncMock(return_value=types.SimpleNamespace(choices=[types.SimpleNamespace(message=types.SimpleNamespace(content='{"headline_fact":"Headline","difficulty_level":"beginner"}'))]))
+        from image_fixtures import add_image_plan
+        import json
+        create = AsyncMock(return_value=types.SimpleNamespace(choices=[types.SimpleNamespace(message=types.SimpleNamespace(content=json.dumps(add_image_plan({'headline_fact':'Headline','difficulty_level':'beginner'}))))]))
         gen.openai.AsyncOpenAI.return_value = types.SimpleNamespace(chat=types.SimpleNamespace(completions=types.SimpleNamespace(create=create)))
         gen._BACKOFF_SECONDS = [0,0,0]
         metadata = {}

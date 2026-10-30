@@ -34,8 +34,8 @@
   ],
   "visual_suggestions": {
     "cover": "An editorial illustration of a loaded trolley in a real workshop, viewed from a low side angle. Keep the left third quiet for the title; show the trolley within the central 60 percent. Soft natural light, no labels or text, no invented measurements.",
-    "overview": "",
-    "how_it_works": ""
+    "overview": "A standalone overview illustration of Why a heavier trolley accelerates less, showing the central idea in one readable scene. Center the subject for discovery-card crops, use a different viewpoint from the cover, and include no text or labels.",
+    "how_it_works": "An explanatory illustration of one concrete situation or mechanism in Why a heavier trolley accelerates less. Use a clear arrangement and no text or invented measurements. Keep it distinct from the overview and structured diagram."
   },
   "share_text": "More mass, same net force, less acceleration: the useful idea behind Newton’s second law.",
   "content_freshness": "evergreen",
@@ -294,6 +294,23 @@
       "Inertia",
       "Momentum",
       "Friction"
-    ]
-  }
+    ],
+    "supporting_image": null
+  },
+  "image_details": [
+    {
+      "slot": "overview",
+      "placement": "overview",
+      "alt": "Overview illustration for Why a heavier trolley accelerates less",
+      "caption": "An illustrative overview of the central idea.",
+      "learning_purpose": "Summarize the whole article in a readable scene."
+    },
+    {
+      "slot": "how_it_works",
+      "placement": "explanation",
+      "alt": "Explanatory illustration for Why a heavier trolley accelerates less",
+      "caption": "An illustration of the example or mechanism described in this lesson.",
+      "learning_purpose": "Connect the explanation with one concrete situation or mechanism."
+    }
+  ]
 }
