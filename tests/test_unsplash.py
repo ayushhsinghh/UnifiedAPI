@@ -102,7 +102,7 @@ class ProviderRoutingTests(unittest.IsolatedAsyncioTestCase):
         from test_fact_evidence_lifecycle import routes_module
         from test_country import candidate,photo_candidates
         routes=routes_module();f=fixture();f['country_media']={'version':2,'photo_layout':'contextual_v1'}
-        routes.find_subject_photo=AsyncMock(side_effect=lambda country,subject,kind:[{
+        routes.find_subject_photo=AsyncMock(side_effect=lambda country,subject,kind,**kwargs:[{
             **photo_candidates(candidate())[0], 'source_url':f'https://commons.wikimedia.org/wiki/File:{kind}-{subject}',
             'provider':'wikimedia','subject':subject,'subject_kind':kind}])
         routes.generate_and_save_image=AsyncMock(return_value='https://example.org/generated.jpg')

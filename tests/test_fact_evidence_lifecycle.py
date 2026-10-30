@@ -71,7 +71,7 @@ def routes_module():
         def __init__(self, status_code, detail): self.status_code, self.detail = status_code, detail
     repo_names = ['get_facts_list', 'get_random_cached_fact', 'get_recent_topic_keys', 'store_fact',
         'update_fact_images', 'delete_fact', 'get_fact_by_hash', '_compute_content_hash',
-        'start_fact_images', 'set_fact_image_state', 'finish_fact_images']
+        'start_fact_images', 'set_fact_image_state', 'finish_fact_images', 'claim_country_photo_enrichment', 'finish_country_photo_enrichment']
     value = load('routes_test', 'src/routes/facts_routes.py', {
         **config_import,
         'fastapi': module('fastapi', APIRouter=Router, BackgroundTasks=object, Header=lambda *a, **k: None,

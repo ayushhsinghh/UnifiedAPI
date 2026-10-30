@@ -13,9 +13,11 @@ PHOTO_KEYS = ('cover', 'overview', 'how_it_works', 'explanation_2', 'explanation
 GENERATED_KEYS = PHOTO_KEYS[:4]
 COMMONS_KEYS = PHOTO_KEYS[4:]
 PLACEMENTS = ('overview', 'geography', 'everyday', 'contributions', 'places', 'people', 'curiosity')
-STORY = sourced({'title': _TEXT, 'explanation': _TEXT, 'why_it_matters': _TEXT})
+SHORT_STORY = sourced({'title': _TEXT, 'explanation': _TEXT, 'why_it_matters': _TEXT})
+STORY = sourced({'title': _TEXT, 'explanation': _TEXT, 'why_it_matters': _TEXT,
+    'details': _strings(), 'example': _TEXT, 'photo_subject': _TEXT, 'photo_queries': _strings()})
 CULTURE_STORY = deepcopy(STORY)
-# Optional for archived responses; new generations should name an identifiable visual subject.
+# New generations name a concrete visual subject and alternative search terms.
 CULTURE_STORY['properties']['photo_subject'] = _TEXT
 STAT = sourced({'value': {'type': 'NUMBER', 'nullable': True}, 'year': {'type': 'INTEGER', 'nullable': True}, 'unit': _TEXT, 'scope': _TEXT})
 PROFILE_SCHEMA = _object({
@@ -29,9 +31,11 @@ PROFILE_SCHEMA = _object({
     'everyday_life': _items(CULTURE_STORY),
     'history_milestones': _items(sourced({'date_label': _TEXT, 'event': _TEXT, 'significance': _TEXT})),
     'global_contributions': _items(STORY), 'products_and_industries': _items(STORY),
-    'notable_places': _items(sourced({'name': _TEXT, 'kind': {'type': 'STRING', 'enum': ['natural', 'cultural', 'city', 'everyday', 'other']}, 'location': _TEXT, 'explanation': _TEXT, 'why_it_matters': _TEXT})),
-    'notable_people': _items(sourced({'name': _TEXT, 'field': _TEXT, 'connection': _TEXT, 'contribution': _TEXT, 'context': _TEXT})),
-    'surprising_facts': _items(STORY),
+    'notable_places': _items(sourced({'name': _TEXT, 'kind': {'type': 'STRING', 'enum': ['natural', 'cultural', 'city', 'everyday', 'other']}, 'location': _TEXT, 'explanation': _TEXT, 'why_it_matters': _TEXT,
+        'details': _strings(), 'example': _TEXT, 'photo_subject': _TEXT, 'photo_queries': _strings()})),
+    'notable_people': _items(sourced({'name': _TEXT, 'field': _TEXT, 'connection': _TEXT, 'contribution': _TEXT, 'context': _TEXT,
+        'details': _strings(), 'example': _TEXT, 'photo_subject': _TEXT, 'photo_queries': _strings()})),
+    'surprising_facts': _items(SHORT_STORY),
     'common_misunderstandings': _items(sourced({'misunderstanding': _TEXT, 'explanation': _TEXT})),
     'knowledge_checks': _items(_object({'question': _TEXT, 'answer': _TEXT, 'explanation': _TEXT})),
     'takeaways': _strings(), 'curiosity_questions': _strings(), 'related_topics': _strings(),
@@ -97,6 +101,9 @@ def validate_country_content(fact):
         if not 1 <= len(p['geography']['major_cities']) <= 6 or not 1 <= len(p['introduction']['learning_goals']) <= 4: return False
         if len(p['essentials']['spoken_languages']) > 8: return False
         if len({x['name'].casefold() for x in p['notable_people']}) != len(p['notable_people']): return False
+        for field in ('everyday_life','global_contributions','products_and_industries','notable_places','notable_people'):
+            for item in p[field]:
+                if not 2 <= len(item['details']) <= 4 or not 1 <= len(item['photo_queries']) <= 3: return False
         if not any(x['kind'] in ('natural', 'everyday') for x in p['notable_places']): return False
         return valid(p)
     except (KeyError, TypeError, ValueError, AttributeError):
@@ -114,7 +121,8 @@ def enrich_country_identity(fact):
     # Replace any model-authored assets/credits. Photos are resolved independently by the worker.
     fact['visual_suggestions'] = {key:value.strip() for key,value in fact['visual_suggestions'].items() if key in PHOTO_KEYS and value.strip()}
     fact['images'] = {}; fact['image_credits'] = {}; fact['country_photo_galleries'] = {}
-    fact['country_media'] = {'version': 2, 'photo_layout': 'contextual_v1', 'generated_limit': 4,
+    fact.pop('country_photo_enrichment',None)
+    fact['country_media'] = {'version': 2, 'photo_layout': 'contextual_v2', 'generated_limit': 4,
         'generated_slots': [k for k in GENERATED_KEYS if fact['visual_suggestions'].get(k)],
         'commons_slots': [k for k in COMMONS_KEYS if fact['visual_suggestions'].get(k)]}
     fact['country_validation'] = {'structure_checked': True, 'identity_source': 'country_registry_snapshot',
@@ -162,6 +170,18 @@ Explain why each entry matters. Include natural/everyday places, food and region
 Do not reduce a culture to stereotypes, tourist rankings or claims that everyone behaves alike.
 Separate products, exports, industries and brands; origin, headquarters and manufacture are different.
 Explain each person's connection to the country without assuming birthplace equals nationality.
+Shape the learning sequence for a curious beginner: one short introduction, essentials and location,
+then everyday life, history, contributions, places and people, followed by a clear recap.
+headline_fact is one interesting hook. summary gives a different, broad introduction to the country
+in 2-3 plain sentences; do not repeat the hook. central_idea is one short sentence to remember at
+the end, not a second copy of the summary. learning_goals use simple, concrete language.
+Use plain text in structured profile prose, with actual paragraph breaks where useful.
+City significance explains what the city is known for and its role in 2-3 complete sentences.
+History significance explains the background, what changed and the consequence in 2-3 short sentences.
+Time-zone explanations define the UTC offset in simple language. Describe flag colours and layout
+before discussing meanings, and distinguish documented meanings from popular interpretations.
+Keep city detail secondary; usually select 2-3 useful cities. Explain any necessary specialist term
+where it first appears. Avoid advanced economic, political or geographic vocabulary without a plain explanation.
 Geography describes neighbours, seas, landscapes and 1-6 major cities. The server supplies country map data.
 The server supplies snapshot names, capitals, currencies, listed languages, area and coordinates.
 Explain language roles (official/national/widely_spoken/regional/minority) with supporting sources.
@@ -174,5 +194,19 @@ Every explanatory entry carries resolving source_ids; prefer national statistics
 institutions and reliable museums/history references. Do not invent sources or exact quotations.
 Keep common summary/core_mechanics/learning_takeaways for older readers. No source lists inside prose.
 Flag description and symbolism need sources; say evidence is limited instead of inventing meanings.
+COMPLETE TOPIC EXPLANATIONS: everyday_life, global_contributions, products_and_industries,
+notable_places and notable_people each need 2-4 useful details and a concrete example, not filler.
+For each topic, explain what it is, how it works or developed, and why it matters. Use 40-90 plain
+words for its main explanation, split into short paragraphs when useful, plus concise details and
+a 20-40 word example. People need a clear contribution and context; places need what the reader
+would actually see and why it matters. History significance must connect cause and consequence.
+Do not substitute long lists, repeated praise or generic claims for an explanation. Keep all text
+simple enough for a curious beginner. Explain necessary terms immediately. Source the details and
+examples with the entry's source_ids; omit unsupported details instead of inventing them.
+For each core entry, photo_subject names a concrete depicted subject and photo_queries contains
+1-3 concise Commons searches using proper/local names and useful aliases. Gallo Pinto is a useful
+subject; 'Gallo Pinto and Daily Cuisine' is a headline, not a search. For an abstract concept choose
+a concrete object, institution or setting actually discussed, and clearly describe its connection.
+Never use generic portraits for named people or claim a context photo documents a historical event.
 {_EVIDENCE_INSTRUCTIONS}
 """

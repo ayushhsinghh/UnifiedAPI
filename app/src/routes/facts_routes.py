@@ -35,6 +35,8 @@ from src.database.facts_repository import (
     start_fact_images,
     set_fact_image_state,
     finish_fact_images,
+    claim_country_photo_enrichment,
+    finish_country_photo_enrichment,
 )
 from src.facts.fact_generator import (
     SUPPORTED_CATEGORIES,
@@ -43,6 +45,7 @@ from src.facts.fact_generator import (
 from src.facts.lifecycle import expected_image_keys, fact_image_keys, image_generation_state
 from src.facts.visual_prompts import IMAGE_SECTION_BRIEFS, build_section_image_context
 from src.facts.country_photos import find_country_photos, find_subject_photo, country_scene_queries
+from src.facts.country_media_plan import country_photo_entries
 from src.facts.unsplash_photos import track_selection
 from src.facts.image_generator import generate_and_save_image
 
@@ -162,14 +165,15 @@ async def process_fact_generation_task(
         logger.error("Job %s could not be marked completed", job_id)
 
 
-async def _background_image_task(visual_suggestions: dict, content_hash: str, existing_images: dict = None, article: dict = None):
+async def _background_image_task(visual_suggestions: dict, content_hash: str, existing_images: dict = None, article: dict = None, photos_only: bool = False):
     if existing_images is None:
         existing_images = {}
     images = existing_images.copy()
     is_country = (article or {}).get('article_type') == 'country_profile'
     country = (article or {}).get('country_profile') if is_country else None
     hybrid = is_country and (article or {}).get('country_media',{}).get('version') == 2
-    contextual = hybrid and (article or {}).get('country_media',{}).get('photo_layout') == 'contextual_v1'
+    contextual = hybrid and (article or {}).get('country_media',{}).get('photo_layout') in ('contextual_v1','contextual_v2')
+    extended = (article or {}).get('country_media',{}).get('photo_layout') == 'contextual_v2'
     generated_keys = {'cover','overview','how_it_works','explanation_2'}
     claimed = set(images.values())
     previous_photos=[photo for group in (article or {}).get('country_photo_galleries',{}).values() if isinstance(group,list) for photo in group if isinstance(photo,dict)]
@@ -227,14 +231,17 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
             logger.exception("Image generation failed for %s/%s", content_hash, key)
             set_fact_image_state(content_hash, key, "failed")
 
-    async def process_subject(kind, index, subject):
+    async def process_subject(kind, index, subject, title, queries):
         key=f'country_{kind}_{index}'
-        if key in existing_images:return
+        prior=next((p for p in previous_photos if p.get('entry_title')==title and p.get('subject_kind')==kind and p.get('photo_search_version')==2),None)
+        if key in existing_images and (not photos_only or prior):return
         try:
             async with subject_semaphore:
-                matches=await asyncio.wait_for(find_subject_photo(country['identity']['name'],subject,kind),timeout=25)
-            photo=next((p for p in matches if p['source_url'] not in claimed_sources),None)
+                matches=await asyncio.wait_for(find_subject_photo(country['identity']['name'],subject,kind,queries=queries),timeout=25)
+            own_sources={p.get('source_url') for p in (article or {}).get('country_photo_galleries',{}).get(key,[]) if isinstance(p,dict)}
+            photo=next((p for p in matches if p['source_url'] not in claimed_sources or p['source_url'] in own_sources),None)
             if photo:
+                photo={**photo,'entry_title':title,'photo_search_version':2}
                 claimed_sources.add(photo['source_url']);images[key]=photo['url']
             set_fact_image_state(content_hash,key,'ready' if photo else 'failed',photo['url'] if photo else None,
                 credit=photo,gallery=[photo] if photo else [])
@@ -244,6 +251,7 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
 
     tasks = []
     for key, brief in IMAGE_SECTION_BRIEFS.items():
+        if photos_only:continue
         if is_country and key not in {'cover','overview','how_it_works','explanation_2','explanation_3','explanation_4','explanation_5','explanation_6'}:
             continue
         prompt = scenes.get(key) or visual_suggestions.get(key)
@@ -256,17 +264,59 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
             ))
 
     if contextual:
-        for kind,items in [('people',country.get('notable_people',[])),('places',country.get('notable_places',[])),('culture',country.get('everyday_life',[]))]:
-            for index,item in enumerate(items[:5]):
-                subject=item.get('photo_subject') or item.get('name') or item.get('title')
-                if subject:tasks.append(process_subject(kind,index,subject))
+        for item in country_photo_entries(country,extended=extended):
+            tasks.append(process_subject(item['kind'],item['index'],item['subject'],item['title'],item['queries']))
     if tasks:
         await asyncio.gather(*tasks)
 
-    finish_fact_images(content_hash)
+    if contextual and extended:finish_country_photo_enrichment(content_hash)
+    if not photos_only:finish_fact_images(content_hash)
     logger.info("Background image generation finished for %s with %d images", content_hash, len(images))
 
 
+
+def _country_photo_payload(document):
+    fact=document.get('full_response',{})
+    state=document.get('country_photo_enrichment') or {}
+    status=state.get('status','not_started')
+    if state.get('version',0)<2:status='not_started'
+    if status=='processing' and state.get('started_at'):
+        from datetime import datetime,timezone
+        started=state['started_at']
+        if started.tzinfo is None:started=started.replace(tzinfo=timezone.utc)
+        if (datetime.now(timezone.utc)-started).total_seconds()>300:status='failed'
+    if not state and fact.get('country_media',{}).get('photo_layout')=='contextual_v2' and image_generation_state(document,cfg.FACT_IMAGE_TIMEOUT_SECONDS)['status']=='processing':
+        status='processing'
+    return {'status':status,'country_photo_enrichment':{'version':state.get('version',2),'status':status},
+        'images':document.get('images') or fact.get('images') or {},
+        'image_credits':document.get('image_credits') or fact.get('image_credits') or {},
+        'country_photo_galleries':document.get('country_photo_galleries') or fact.get('country_photo_galleries') or {}}
+
+def _country_photo_document(content_hash):
+    document=get_fact_by_hash(content_hash)
+    fact=(document or {}).get('full_response',{})
+    if not document or fact.get('article_type')!='country_profile' or not fact.get('country_profile',{}).get('identity',{}).get('name'):
+        raise HTTPException(status_code=404,detail='Country article not found')
+    return document
+
+@router.get('/facts/{content_hash}/country-photos')
+@limiter.limit('60/minute')
+async def country_photo_status(request: Request,content_hash: str):
+    return _country_photo_payload(_country_photo_document(content_hash))
+
+@router.post('/facts/{content_hash}/country-photos')
+@limiter.limit('30/hour')
+async def ensure_country_photos(request: Request,content_hash: str,background_tasks: BackgroundTasks):
+    document=_country_photo_document(content_hash)
+    payload=_country_photo_payload(document)
+    if payload['status'] in ('completed','processing'):return payload
+    if claim_country_photo_enrichment(content_hash):
+        article={**document['full_response'],'country_media':{'version':2,'photo_layout':'contextual_v2'},
+            'country_photo_galleries':document.get('country_photo_galleries') or {}}
+        background_tasks.add_task(_background_image_task,{},content_hash,document.get('images') or {},article=article,photos_only=True)
+        payload['status']='processing';payload['country_photo_enrichment']={'version':2,'status':'processing'}
+    else:payload=_country_photo_payload(_country_photo_document(content_hash))
+    return payload
 
 @router.post("/facts/generate", dependencies=[Depends(require_facts_api_key)])
 @limiter.limit("10/day")
@@ -422,7 +472,7 @@ async def retry_image_generation(
     logger.info("Retrying image generation for %s. Missing keys: %s", content_hash, missing_keys)
     start_fact_images(content_hash, missing_keys)
     retry_article=full_response
-    if full_response.get('country_media',{}).get('photo_layout')=='contextual_v1':
+    if full_response.get('country_media',{}).get('photo_layout') in ('contextual_v1','contextual_v2'):
         retry_article={**full_response,'country_photo_galleries':fact_doc.get('country_photo_galleries') or full_response.get('country_photo_galleries',{})}
     background_tasks.add_task(_background_image_task, visual_suggestions, content_hash, existing_images,article=retry_article)
     

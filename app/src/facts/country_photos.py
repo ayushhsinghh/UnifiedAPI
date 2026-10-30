@@ -109,15 +109,17 @@ def normalized(value):
         unicodedata.normalize('NFKD', value).casefold() if not unicodedata.combining(c))))
 
 
-def _lookup_subject(country, subject, kind):
+def _lookup_subject(country, subject, kind, deadline=None):
     """Exact subject lookup with no generic country fallback."""
     import requests
+    deadline=deadline or time.monotonic()+20
     clean = ' '.join(re.findall(r'[^\W_]+', subject))[:160]
     if not clean:
         return []
     portrait = ' portrait' if kind=='people' else ''
-    searches = [f'"{clean}"{portrait} {country}', f'"{clean}"{portrait}']
+    searches = [f'intitle:"{clean}"{portrait} {country}', f'"{clean}"{portrait} {country}', f'intitle:"{clean}"{portrait}']
     for query in dict.fromkeys(searches):
+        if time.monotonic()>deadline:break
         try:
             with requests.get('https://commons.wikimedia.org/w/api.php', params={
                 'action':'query', 'format':'json', 'generator':'search', 'gsrnamespace':6,
@@ -130,23 +132,55 @@ def _lookup_subject(country, subject, kind):
                 data=bytearray()
                 for chunk in response.iter_content(16384):
                     data.extend(chunk)
-                    if len(data)>1_500_000: break
+                    if len(data)>1_500_000 or time.monotonic()>deadline: break
                 else:
                     matches=[]
                     for photo in photo_candidates(__import__('json').loads(data), allow_art=kind=='people'):
-                        evidence=normalized(photo['title']+' '+photo['description'])
+                        title=normalized(photo['title']);desc=normalized(photo['description'])
+                        evidence=title+' '+desc
                         if ' '+normalized(subject)+' ' not in ' '+evidence+' ': continue
-                        if kind!='people' and ' '+normalized(country)+' ' not in ' '+evidence+' ': continue
+                        country_match=' '+normalized(country)+' ' in ' '+evidence+' '
+                        if kind in ('places','cities','culture','contributions') and not country_match: continue
                         if kind=='people' and re.search(r'\b(statue|bust|grave|tomb|monument|signature)\b',evidence): continue
-                        photo.update(provider='wikimedia', subject=subject, subject_kind=kind)
+                        title_match=' '+normalized(subject)+' ' in ' '+title+' '
+                        if not title_match and desc.find(normalized(subject))>160:continue
+                        if kind=='products' and title_match and title.find(normalized(subject))>40:continue
+                        if kind=='products' and re.search(r'\b(patient|wound|blood|genital|penis|vagina|surgery|radiograph|radiography|radiology|xray|x ray|x rays|jugular|tomography|ct|mri|scan|lobectomy|adenocarcinoma)\b',evidence):continue
+                        # A mention on a book cover, stamp or microscope slide is not a topic photo.
+                        if kind not in ('people','places','cities') and any(re.search(r'\b'+word+r'\b',title) and word not in normalized(subject).split()
+                            for word in ('book','books','stamp','postage','logo','epidermis','microscope','diagram','poster','corridor','park','chart','graph','output')):continue
+                        photo.update(provider='wikimedia', subject=subject, subject_kind=kind,
+                            country_context=country_match, image_caption=subject if country_match or kind=='people' else f'Example: {subject}',
+                            _rank=(100 if title_match else 0)+(20 if country_match else 0)-max(0,title.find(normalized(subject))))
+                        if kind=='products' and not country_match:
+                            name=re.sub(r'\.(?:jpe?g|png|webp)$','',photo['title'],flags=re.I).replace('_',' ').strip()
+                            name=re.sub(r'\s*\(\d+\)$','',name)
+                            if len(name)<=90:photo['image_caption']=f'Example: {name}'
                         matches.append(photo)
-                    if matches: return matches
+                    if matches:
+                        matches.sort(key=lambda p:p['_rank'],reverse=True)
+                        for photo in matches:photo.pop('_rank',None)
+                        return matches
         except (requests.RequestException,ValueError,TypeError): continue
     return []
 
 
-async def find_subject_photo(country, subject, kind):
-    return await asyncio.to_thread(_lookup_subject, country, subject, kind)
+def _lookup_subject_queries(country,subject,kind,queries):
+    deadline=time.monotonic()+20
+    for query in list(dict.fromkeys([*(queries or []),subject]))[:3]:
+        if time.monotonic()>deadline:break
+        photos=_lookup_subject(country,query,kind,deadline=deadline)
+        if kind=='people':
+            photos=[p for p in photos if ' '+normalized(subject)+' ' in ' '+normalized(p['title']+' '+p['description'])+' ']
+        if photos:
+            for photo in photos:
+                photo['matched_query']=query
+                if normalized(query)!=normalized(subject) and photo.get('country_context'):photo['image_caption']=f'Context: {query}'
+            return photos
+    return []
+
+async def find_subject_photo(country, subject, kind, queries=None):
+    return await asyncio.to_thread(_lookup_subject_queries,country,subject,kind,queries)
 
 
 def country_scene_queries(profile):

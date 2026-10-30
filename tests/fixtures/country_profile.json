@@ -196,6 +196,15 @@
         "why_it_matters": "Looking beyond one familiar dish reveals regional differences.",
         "source_ids": [
           "s1"
+        ],
+        "details": [
+          "Rice is an important part of many meals, but local ingredients and traditions vary.",
+          "Looking beyond one familiar dish reveals regional differences."
+        ],
+        "example": "Looking beyond one familiar dish reveals regional differences.",
+        "photo_subject": "Food has regional roots",
+        "photo_queries": [
+          "Food has regional roots"
         ]
       },
       {
@@ -204,6 +213,15 @@
         "why_it_matters": "A country is not a single unchanging tradition.",
         "source_ids": [
           "s1"
+        ],
+        "details": [
+          "Seasonal celebrations sit alongside modern working and family lives.",
+          "A country is not a single unchanging tradition."
+        ],
+        "example": "A country is not a single unchanging tradition.",
+        "photo_subject": "Tradition and daily routines coexist",
+        "photo_queries": [
+          "Tradition and daily routines coexist"
         ]
       }
     ],
@@ -240,6 +258,15 @@
         "why_it_matters": "Cultural influence travels through translation and adaptation.",
         "source_ids": [
           "s1"
+        ],
+        "details": [
+          "Japanese literature and visual storytelling reach audiences in many countries.",
+          "Cultural influence travels through translation and adaptation."
+        ],
+        "example": "Cultural influence travels through translation and adaptation.",
+        "photo_subject": "Stories cross borders",
+        "photo_queries": [
+          "Stories cross borders"
         ]
       },
       {
@@ -248,6 +275,15 @@
         "why_it_matters": "Transport connects technology with everyday experience.",
         "source_ids": [
           "s1"
+        ],
+        "details": [
+          "Railway development offers one way to explore engineering and public life.",
+          "Transport connects technology with everyday experience."
+        ],
+        "example": "Transport connects technology with everyday experience.",
+        "photo_subject": "Transport becomes a shared idea",
+        "photo_queries": [
+          "Transport becomes a shared idea"
         ]
       }
     ],
@@ -258,6 +294,15 @@
         "why_it_matters": "An industry includes design, manufacturing and international supply chains.",
         "source_ids": [
           "s1"
+        ],
+        "details": [
+          "Motor vehicles are one important part of Japan’s industrial story.",
+          "An industry includes design, manufacturing and international supply chains."
+        ],
+        "example": "An industry includes design, manufacturing and international supply chains.",
+        "photo_subject": "Vehicles and engineering",
+        "photo_queries": [
+          "Vehicles and engineering"
         ]
       },
       {
@@ -266,6 +311,15 @@
         "why_it_matters": "A famous brand alone does not explain where every product is made.",
         "source_ids": [
           "s1"
+        ],
+        "details": [
+          "Local crafts and large-scale manufacturing represent different kinds of production.",
+          "A famous brand alone does not explain where every product is made."
+        ],
+        "example": "A famous brand alone does not explain where every product is made.",
+        "photo_subject": "Craft and manufactured goods",
+        "photo_queries": [
+          "Craft and manufactured goods"
         ]
       }
     ],
@@ -278,6 +332,15 @@
         "why_it_matters": "A natural landmark can also carry cultural meaning.",
         "source_ids": [
           "s1"
+        ],
+        "details": [
+          "A mountain with a strong presence in Japanese art and cultural life.",
+          "A natural landmark can also carry cultural meaning."
+        ],
+        "example": "A natural landmark can also carry cultural meaning.",
+        "photo_subject": "Mount Fuji",
+        "photo_queries": [
+          "Mount Fuji"
         ]
       },
       {
@@ -288,6 +351,15 @@
         "why_it_matters": "Places help connect history with the present.",
         "source_ids": [
           "s1"
+        ],
+        "details": [
+          "A city that offers ways to explore historical cultural traditions.",
+          "Places help connect history with the present."
+        ],
+        "example": "Places help connect history with the present.",
+        "photo_subject": "Kyoto",
+        "photo_queries": [
+          "Kyoto"
         ]
       },
       {
@@ -298,6 +370,15 @@
         "why_it_matters": "Ordinary places are part of understanding a country too.",
         "source_ids": [
           "s1"
+        ],
+        "details": [
+          "Everyday streets offer a different view from famous monuments.",
+          "Ordinary places are part of understanding a country too."
+        ],
+        "example": "Ordinary places are part of understanding a country too.",
+        "photo_subject": "Local shopping streets",
+        "photo_queries": [
+          "Local shopping streets"
         ]
       }
     ],
@@ -310,6 +391,15 @@
         "context": "One artist’s work is a starting point, not a complete account of Japanese art.",
         "source_ids": [
           "s2"
+        ],
+        "details": [
+          "A Japanese artist active during the Edo period.",
+          "His prints include the widely recognised image often called The Great Wave."
+        ],
+        "example": "One artist’s work is a starting point, not a complete account of Japanese art.",
+        "photo_subject": "Katsushika Hokusai",
+        "photo_queries": [
+          "Katsushika Hokusai"
         ]
       },
       {
@@ -320,6 +410,15 @@
         "context": "Literature gives another route into a country’s cultural history.",
         "source_ids": [
           "s3"
+        ],
+        "details": [
+          "A Japanese writer.",
+          "He received the Nobel Prize in Literature in 1968."
+        ],
+        "example": "Literature gives another route into a country’s cultural history.",
+        "photo_subject": "Yasunari Kawabata",
+        "photo_queries": [
+          "Yasunari Kawabata"
         ]
       },
       {
@@ -330,6 +429,15 @@
         "context": "An individual’s life can cross countries and cultural backgrounds.",
         "source_ids": [
           "s4"
+        ],
+        "details": [
+          "A tennis player born in Osaka who represents Japan.",
+          "Her international tennis career connects Japan with a wider sporting audience."
+        ],
+        "example": "An individual’s life can cross countries and cultural backgrounds.",
+        "photo_subject": "Naomi Osaka",
+        "photo_queries": [
+          "Naomi Osaka"
         ]
       }
     ],
