@@ -142,6 +142,12 @@ def build_section_image_context(key, article=None):
             lines.append('Biology illustration: preserve the named organism, scale and conditions. '
                          'Do not fabricate microscopy, measured data or experiments. '
                          'Structured biological relationships are rendered separately on the webpage.')
+        if article.get('article_type') == 'psychology_lesson':
+            lesson = article.get('psychology_lesson') or {}
+            excerpt['psychology_context'] = {field: lesson.get(field) for field in ('question', 'opening_scenario', 'big_idea', 'supporting_image')}
+            lines.append('Psychology editorial illustration: show the described situation, not a diagnosis '
+                         'or a claimed brain scan. Do not invent participants, data, experiments, labels '
+                         'or visible proof of a mental process. Generated art is not research evidence.')
         if key in {"myth_visual", "truth_visual"}:
             suggestions = article.get("visual_suggestions") or {}
             if isinstance(suggestions, dict):

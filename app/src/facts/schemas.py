@@ -150,7 +150,7 @@ FACT_RESPONSE_SCHEMA = {
             "enum": ["evergreen", "time-sensitive"]
         },
         "emoji_icon": {"type": "STRING"},
-        "difficulty_level": {"type": "STRING"},
+        "difficulty_level": {"type": "STRING", "enum": ["beginner", "intermediate", "Beginner", "Intermediate"]},
         "region": {"type": "STRING"},
         "fun_rating": {"type": "NUMBER"},
         "read_time_seconds": {"type": "NUMBER"},
@@ -298,7 +298,7 @@ MYTHBUSTER_RESPONSE_SCHEMA = {
             "enum": ["evergreen", "time-sensitive"],
         },
         "emoji_icon": {"type": "STRING"},
-        "difficulty_level": {"type": "STRING"},
+        "difficulty_level": {"type": "STRING", "enum": ["beginner", "intermediate", "Beginner", "Intermediate"]},
         "region": {"type": "STRING"},
         "fun_rating": {"type": "NUMBER"},
         "read_time_seconds": {"type": "NUMBER"},

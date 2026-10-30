@@ -97,13 +97,14 @@ def store_fact(fact_response: dict, category: str, generation_metadata: Optional
 
 def get_random_cached_fact(category: str, include_metadata: bool = False) -> Optional[dict]:
     """
-    Retrieve a random previously-generated fact for emergency fallback.
+    Retrieve a beginner/intermediate fact for emergency fallback.
 
     Uses MongoDB's $sample aggregation to pick a random document.
     """
     db = get_db()
     pipeline = [
-        {"$match": {"category": category}},
+        {"$match": {"category": category, "full_response.difficulty_level": {
+            "$in": ["beginner", "intermediate", "Beginner", "Intermediate"]}}},
         {"$sample": {"size": 1}},
         {"$project": {"full_response": 1, "content_hash": 1, "images": 1, "image_status": 1, "image_started_at": 1, "generation_metadata": 1, "_id": 0}},
     ]

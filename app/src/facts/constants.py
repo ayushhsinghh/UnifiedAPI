@@ -165,11 +165,11 @@ CATEGORY_HINTS: Dict[str, str] = {
         "D.R. Kaprekar's number theory"
     ),
     "psychology": (
-        "mind-bending psychological phenomena, cognitive biases and heuristics, "
-        "placebo and nocebo effects, classical and operant conditioning quirks, "
-        "neuroplasticity and brain rewiring, social psychology experiments, "
+        "psychological phenomena, cognitive biases and heuristics, "
+        "placebo and nocebo effects, classical and operant conditioning, "
+        "evidence on neuroplasticity, social psychology experiments, "
         "memory distortion and false memories, the psychology of perception, "
-        "split-brain studies, proven theories of human behavior and decision making"
+        "split-brain studies, evidence and limits of theories of behavior and decision making"
     ),
     "biology": (
         "fascinating cellular mechanisms, human body oddities, "

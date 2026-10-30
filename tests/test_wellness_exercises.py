@@ -119,6 +119,7 @@ class WellnessGenerationTests(unittest.IsolatedAsyncioTestCase):
             generator.validate_wellness_content = validate_wellness_content
             response = example(schema)
             response['headline_fact'] = 'A structured guide'
+            response['difficulty_level'] = 'beginner'
             create = AsyncMock(return_value=types.SimpleNamespace(parsed=response))
             generator.genai.Client.return_value.aio.models.generate_content = create
             result = await generator.generate_daily_fact(category)
@@ -132,6 +133,7 @@ class WellnessGenerationTests(unittest.IsolatedAsyncioTestCase):
         invalid = {'headline_fact': 'An incomplete workout'}
         valid = example(FITNESS_RESPONSE_SCHEMA)
         valid['headline_fact'] = 'A complete workout'
+        valid['difficulty_level'] = 'beginner'
         create = AsyncMock(side_effect=[types.SimpleNamespace(parsed=invalid), types.SimpleNamespace(parsed=valid)])
         generator.genai.Client.return_value.aio.models.generate_content = create
         with patch.object(generator.asyncio, 'sleep', new=AsyncMock()):

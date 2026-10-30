@@ -1,0 +1,282 @@
+{
+  "category": "psychology",
+  "topic": "When a word competes with a color",
+  "schema_version": "2.0",
+  "article_type": "psychology_lesson",
+  "headline_fact": "Naming an ink color and reading a word are different tasks.",
+  "summary": "This lesson separates an illustrative experience, a proposed explanation, and a reported finding.",
+  "did_you_know": "The task instruction matters when interpreting a response.",
+  "core_mechanics": "An instructed response can compete with another available response.",
+  "why_it_matters": "A measured task difference does not establish a personal trait.",
+  "in_depth_breakdown": {
+    "detailed_processes": [],
+    "real_world_application": "Assess what a task actually measures before interpreting its outcome.",
+    "fascinating_trivia": []
+  },
+  "common_misconceptions": [],
+  "learning_takeaways": [
+    "Separate the task, the finding, and the interpretation."
+  ],
+  "emoji_icon": "",
+  "difficulty_level": "Beginner",
+  "region": "Global",
+  "fun_rating": 7,
+  "read_time_seconds": 360,
+  "tags": [
+    "attention",
+    "reading",
+    "research methods"
+  ],
+  "related_categories": [
+    "science"
+  ],
+  "visual_suggestions": {
+    "cover": "An editorial illustration of printed color swatches on a desk, with one person considering a response. No words, letters, numbers, labels or brain imagery. Keep the left third quiet for a headline and the subject in the central 60 percent.",
+    "overview": "",
+    "how_it_works": ""
+  },
+  "share_text": "Start with the task. Then ask what the evidence actually supports.",
+  "content_freshness": "evergreen",
+  "sources": [
+    {
+      "id": "s1",
+      "title": "J. Ridley Stroop (1935): Studies of interference in serial verbal reactions",
+      "url": "https://psychclassics.yorku.ca/Stroop/"
+    }
+  ],
+  "claim_citations": [],
+  "sources_or_references": [],
+  "generated_at": "2026-10-30T10:00:00Z",
+  "psychology_lesson": {
+    "lesson_type": "cognitive_process",
+    "question": "What happens when a word and its ink color disagree?",
+    "learning_goal": "Distinguish an everyday illustration from a measured research finding.",
+    "opening_scenario": {
+      "title": "Imagine this small conflict",
+      "situation": "In this illustrative scene, a card says “red” but its letters are blue. The instruction is to name the ink color.",
+      "question": "Which feature should guide the response?",
+      "prediction": {
+        "prompt": "Consider the instruction before opening the explanation.",
+        "reveal": "The instructed answer is the ink color.",
+        "explanation": "This is a thought exercise, not a timed assessment or a personality score."
+      }
+    },
+    "big_idea": {
+      "name": "Competing responses",
+      "explanation": "One stimulus offers more than one possible response. The instruction identifies which response is relevant.",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "explanation_steps": [
+      {
+        "id": "task",
+        "title": "Identify the task",
+        "explanation": "Name the ink color rather than the written word.",
+        "source_ids": [
+          "s1"
+        ]
+      },
+      {
+        "id": "responses",
+        "title": "Separate the available responses",
+        "explanation": "The written color name and the ink provide different information.",
+        "source_ids": [
+          "s1"
+        ]
+      },
+      {
+        "id": "measure",
+        "title": "Ask what was measured",
+        "explanation": "A timing comparison concerns performance on a defined task, not a complete account of a person.",
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "diagram": {
+      "type": "process_map",
+      "title": "Keep the task and interpretation separate",
+      "caption": "A conceptual map of the example. It contains no measured values.",
+      "description": "Read the stimulus, task instruction, and response as separate parts of the situation.",
+      "limitations": [
+        "This map does not measure a mental process or show a brain pathway."
+      ],
+      "nodes": [
+        {
+          "id": "stimulus",
+          "label": "Stimulus",
+          "detail": "A written word and its ink color."
+        },
+        {
+          "id": "instruction",
+          "label": "Instruction",
+          "detail": "Name the ink color."
+        },
+        {
+          "id": "response",
+          "label": "Response",
+          "detail": "The answer given for this task."
+        }
+      ],
+      "edges": [
+        {
+          "from_id": "stimulus",
+          "to_id": "instruction",
+          "relationship": "Consider the instruction when interpreting the stimulus.",
+          "relationship_type": "procedure"
+        },
+        {
+          "from_id": "instruction",
+          "to_id": "response",
+          "relationship": "Assess the response against the stated task.",
+          "relationship_type": "procedure"
+        }
+      ],
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "worked_example": {
+      "title": "Interpret a hesitation",
+      "situation": "Imagine a person pausing before answering. This is an illustrative case, not a reported participant.",
+      "reasoning_steps": [
+        "Check the instruction.",
+        "Identify the response options.",
+        "Avoid inferring a stable trait from one answer."
+      ],
+      "outcome": "The pause alone does not identify its explanation.",
+      "interpretation": "A useful next question concerns how the task was designed and measured.",
+      "source_ids": []
+    },
+    "alternative_explanations": [
+      {
+        "title": "An unclear instruction",
+        "explanation": "In the illustrative case, misunderstanding the instruction is another possibility.",
+        "how_to_distinguish": "Check that the person understands the task before interpreting the response.",
+        "source_ids": []
+      }
+    ],
+    "evidence": [
+      {
+        "title": "The original color-naming comparison",
+        "finding": "In Experiment 2, color naming took longer for conflicting color words than for color squares.",
+        "interpretation": "This supports a task-specific interference finding. It does not identify an individual’s personality.",
+        "research_design": "nonrandomized_experiment",
+        "inference": "descriptive",
+        "causal_justification": "",
+        "study_notes": {
+          "authors": "J. Ridley Stroop",
+          "year": 1935,
+          "sample_size": 100,
+          "participants": "College and graduate students.",
+          "setting": "Individual timed testing.",
+          "method": "Participants named ink colors in two conditions, with task order balanced.",
+          "limitations": [
+            "The participant group and task constrain the conclusions."
+          ]
+        },
+        "statistics": [
+          {
+            "label": "Color-square condition: reported mean",
+            "value": 63.3,
+            "unit": "seconds per 100 responses",
+            "interpretation": "A group result for the reported task, not a predicted time for this reader.",
+            "source_ids": [
+              "s1"
+            ]
+          },
+          {
+            "label": "Conflicting-word condition: reported mean",
+            "value": 110.3,
+            "unit": "seconds per 100 responses",
+            "interpretation": "Compare within the reported design; do not treat this as a personal benchmark.",
+            "source_ids": [
+              "s1"
+            ]
+          }
+        ],
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "replication": {
+      "status": "not_assessed",
+      "summary": "This sample lesson cites the original report and does not assess repeat-study evidence.",
+      "source_ids": []
+    },
+    "boundary_conditions": {
+      "populations": [
+        "The cited report concerns its student participants."
+      ],
+      "contexts": [
+        "The reported conditions use timed color naming."
+      ],
+      "limitations": [
+        "Do not generalize a brief demonstration to every reading situation.",
+        "Do not use this activity to label a person."
+      ],
+      "uncertainties": [
+        "The illustration does not determine the cause of any individual response."
+      ]
+    },
+    "practical_application": [
+      {
+        "suggestion": "Ask what a task actually measures",
+        "reasoning": "Separate the instruction, the measured result, and the interpretation before drawing a conclusion.",
+        "limitations": "This is a reasoning habit, not a promise of improved performance.",
+        "source_ids": []
+      }
+    ],
+    "key_terms": [
+      {
+        "term": "Interference",
+        "definition": "Competition that affects performance on a task."
+      },
+      {
+        "term": "Descriptive finding",
+        "definition": "A statement about what was observed, without settling every causal explanation."
+      }
+    ],
+    "deeper_detail": [
+      {
+        "title": "A finding is not a complete explanation",
+        "explanation": "The measured difference and an explanation of that difference answer separate questions. Compare the design with the claim.",
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "knowledge_checks": [
+      {
+        "id": "instructed",
+        "question": "Which feature does the illustrative task ask the person to name?",
+        "answer": "The ink color.",
+        "explanation": "The instruction defines the task.",
+        "related_step_ids": [
+          "task"
+        ]
+      },
+      {
+        "id": "trait",
+        "question": "Does one hesitation establish a personality trait?",
+        "answer": "No.",
+        "explanation": "The reported task and the interpretation must stay separate.",
+        "related_step_ids": [
+          "measure"
+        ]
+      }
+    ],
+    "takeaways": [
+      "Start with the instruction.",
+      "Keep a reported result separate from its interpretation.",
+      "Apply conclusions within their stated limits."
+    ],
+    "related_concepts": [
+      "Attention",
+      "Research design"
+    ],
+    "supporting_image": null
+  }
+}
