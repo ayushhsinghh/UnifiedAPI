@@ -152,6 +152,8 @@ def get_facts_list(
             fact_data["images"] = doc["images"]
         if 'image_credits' in doc:
             fact_data['image_credits'] = doc['image_credits']
+        if 'country_photo_galleries' in doc:
+            fact_data['country_photo_galleries'] = doc['country_photo_galleries']
             
         results.append(fact_data)
         
@@ -195,13 +197,15 @@ def start_fact_images(content_hash: str, keys: list) -> None:
         {"content_hash": content_hash}, {"$set": updates})
 
 
-def set_fact_image_state(content_hash: str, key: str, status: str, url=None, credit=None) -> None:
+def set_fact_image_state(content_hash: str, key: str, status: str, url=None, credit=None, gallery=None) -> None:
     """Save each result separately so partial results are immediately visible."""
     updates = {f"image_status.{key}": status}
     if url:
         updates[f"images.{key}"] = url
     if credit:
         updates[f"image_credits.{key}"] = credit
+    if gallery is not None:
+        updates[f'country_photo_galleries.{key}'] = gallery
     get_db()[cfg.DAILY_FACTS_COLLECTION].update_one(
         {"content_hash": content_hash}, {"$set": updates})
 

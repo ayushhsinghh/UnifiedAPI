@@ -1,4 +1,4 @@
-"""A sourced country portrait with a ten-visual ceiling, not ten generated pictures."""
+"""A country portrait with at most four generated illustrations plus licensed photo galleries."""
 import json
 import re
 from copy import deepcopy
@@ -10,8 +10,13 @@ from .biology import sourced
 
 REGISTRY = json.loads(Path(__file__).with_name('country_registry.json').read_text())
 PHOTO_KEYS = ('cover', 'overview', 'how_it_works', 'explanation_2', 'explanation_3', 'explanation_4', 'explanation_5', 'explanation_6')
+GENERATED_KEYS = PHOTO_KEYS[:4]
+COMMONS_KEYS = PHOTO_KEYS[4:]
 PLACEMENTS = ('overview', 'geography', 'everyday', 'contributions', 'places', 'people', 'curiosity')
 STORY = sourced({'title': _TEXT, 'explanation': _TEXT, 'why_it_matters': _TEXT})
+CULTURE_STORY = deepcopy(STORY)
+# Optional for archived responses; new generations should name an identifiable visual subject.
+CULTURE_STORY['properties']['photo_subject'] = _TEXT
 STAT = sourced({'value': {'type': 'NUMBER', 'nullable': True}, 'year': {'type': 'INTEGER', 'nullable': True}, 'unit': _TEXT, 'scope': _TEXT})
 PROFILE_SCHEMA = _object({
     'identity': _object({'iso2': _TEXT, 'name': _TEXT}),
@@ -21,7 +26,7 @@ PROFILE_SCHEMA = _object({
     'essentials': _object({'population': STAT, 'time_zones': sourced({'explanation': _TEXT}),
         'spoken_languages': _items(sourced({'name': _TEXT, 'role': {'type': 'STRING', 'enum': ['official', 'national', 'widely_spoken', 'regional', 'minority', 'other']}, 'explanation': _TEXT}))}),
     'flag': sourced({'description': _TEXT, 'symbolism': _TEXT}),
-    'everyday_life': _items(STORY),
+    'everyday_life': _items(CULTURE_STORY),
     'history_milestones': _items(sourced({'date_label': _TEXT, 'event': _TEXT, 'significance': _TEXT})),
     'global_contributions': _items(STORY), 'products_and_industries': _items(STORY),
     'notable_places': _items(sourced({'name': _TEXT, 'kind': {'type': 'STRING', 'enum': ['natural', 'cultural', 'city', 'everyday', 'other']}, 'location': _TEXT, 'explanation': _TEXT, 'why_it_matters': _TEXT})),
@@ -46,7 +51,7 @@ def validate_country_images(fact):
     if not isinstance(visuals, dict) or not isinstance(details, list) or any(not isinstance(v, str) for v in visuals.values()):
         return False
     active = {k for k, v in visuals.items() if v.strip()}
-    if not {'cover', 'overview', 'how_it_works', 'explanation_2'} <= active or not active <= set(PHOTO_KEYS) or not 4 <= len(active) <= 8:
+    if not {'cover', 'overview'} <= active or not active <= set(PHOTO_KEYS) or not active.intersection(COMMONS_KEYS):
         return False
     if len(details) != len(active) - 1 or any(not isinstance(d, dict) for d in details):
         return False
@@ -55,7 +60,7 @@ def validate_country_images(fact):
         return False
     if sum(d.get('placement') == 'people' for d in details) > 1:
         return False
-    if any(len(visuals[k]) > 300 for k in active):
+    if any(len(visuals[k]) > (5000 if k in GENERATED_KEYS else 300) for k in active):
         return False
     return all(d.get('placement') in PLACEMENTS and (d['slot'] != 'overview' or d['placement'] == 'overview')
         and (d['slot'] == 'overview' or d['placement'] != 'overview')
@@ -107,26 +112,40 @@ def enrich_country_identity(fact):
         'source_url': 'https://github.com/mledoze/countries', 'license': 'ODbL 1.0',
         'currency_check': 'not_performed', 'population_verification': 'not_performed'}
     # Replace any model-authored assets/credits. Photos are resolved independently by the worker.
-    fact['images'] = {}; fact['image_credits'] = {}
+    fact['visual_suggestions'] = {key:value.strip() for key,value in fact['visual_suggestions'].items() if key in PHOTO_KEYS and value.strip()}
+    fact['images'] = {}; fact['image_credits'] = {}; fact['country_photo_galleries'] = {}
+    fact['country_media'] = {'version': 2, 'photo_layout': 'contextual_v1', 'generated_limit': 4,
+        'generated_slots': [k for k in GENERATED_KEYS if fact['visual_suggestions'].get(k)],
+        'commons_slots': [k for k in COMMONS_KEYS if fact['visual_suggestions'].get(k)]}
     fact['country_validation'] = {'structure_checked': True, 'identity_source': 'country_registry_snapshot',
-        'source_verification': 'not_performed', 'checked_at': None, 'visual_budget': 10}
+        'source_verification': 'not_performed', 'checked_at': None, 'generated_image_limit': 4}
     return fact
 
 
 COUNTRY_IMAGE_INSTRUCTIONS = """
 COUNTRY VISUAL PLAN (replaces the ordinary 3-5 generated-image policy):
-Maximum TEN visual assets total: one real flag, one data map and 4-8 licensed photos.
+Generate at most FOUR images. There is no total visual limit for licensed Wikimedia photographs.
 The server supplies the flag and map from country codes; never generate them or invent asset URLs.
-visual_suggestions contains SHORT Wikimedia Commons photograph search terms, NOT image-generation prompts.
-Required cover, overview, how_it_works, explanation_2; optional explanation_3 through explanation_6.
-Default 4-6 photos, more only if they teach distinct aspects. Leave unused slots empty.
-Every query includes the country name and a specific place, landscape, food, product or person.
-The cover is a landscape/place, overview a different representative scene used on archive cards.
-Use only one portrait if needed; never fabricate faces, banknotes, flags or landmarks.
+visual_suggestions.cover and overview are REQUIRED image-generation prompts (about 100-180 words).
+The cover is a beautiful editorial country landscape illustration with quiet space for title overlays.
+The overview is a different visual summary composition, also used on discovery cards.
+how_it_works and explanation_2 are OPTIONAL generation prompts; leave empty unless they teach something useful.
+These four keys are the ONLY slots that use image generation. Never fabricate portraits, flags or banknotes.
+Generated scenes are clearly labelled illustrations, not documentary photographs or authentic evidence.
+explanation_3 through explanation_6 are SHORT Wikimedia Commons photograph search queries, NOT generation prompts.
+Provide at least one, preferably 3-4 distinct photo searches for landscapes, everyday life, places or products.
+Use a short specific subject and country name; omit stacks of adjectives. The worker has simpler search fallbacks.
+Unused slots are empty strings. The worker can collect multiple licensed photos for a browsable carousel.
 image_details describes every non-cover active slot exactly once, with alt, caption, learning_purpose
 and placement overview/geography/everyday/contributions/places/people/curiosity.
 Only overview uses overview placement. Photos need actual author, source and licence metadata from the worker.
-Unavailable or unlicensed images remain missing, never replaced with fake photos or paid generation.
+Do not generate extra images when a Commons search fails. Cover/overview generation and local UI fallbacks
+are separate from Commons lookup. Retain real licence metadata for all photographs.
+The server independently searches four distinct Unsplash scene themes for the country carousel.
+People and notable places receive exact-subject Commons searches beside their own entries.
+For each everyday_life entry, include photo_subject: a short identifiable local dish, festival,
+craft or cultural practice actually explained by that entry. Use its proper name, not a generic
+stock-photo description or a long headline. Never invent a subject merely to obtain an image.
 """
 
 def build_country_prompt(blocklist):

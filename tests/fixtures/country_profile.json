@@ -35,14 +35,14 @@
     "culture"
   ],
   "visual_suggestions": {
-    "cover": "Mount Fuji landscape Japan",
-    "overview": "Kyoto street Japan",
-    "how_it_works": "Japan rice meal",
-    "explanation_2": "Japan railway train",
-    "explanation_3": "",
-    "explanation_4": "",
-    "explanation_5": "",
-    "explanation_6": ""
+    "cover": "Editorial illustration of Japan, mountains and a quiet village, broad landscape, room for a title, clearly illustrated rather than documentary photography.",
+    "overview": "A visual summary illustration of Japan with landscape and everyday life, coherent scene, no text or fake photographs.",
+    "how_it_works": "An explanatory landscape illustration of Japan, showing mountain and coastline context without labels.",
+    "explanation_2": "Illustrate a Japanese market scene as a conceptual editorial illustration, not a documentary photo.",
+    "explanation_3": "Japan Kyoto streets",
+    "explanation_4": "Japan rice food",
+    "explanation_5": "Japan Mount Fuji forest",
+    "explanation_6": "Japan railway train"
   },
   "share_text": "Meet Japan through its islands, everyday life and global connections.",
   "content_freshness": "evergreen",
@@ -75,23 +75,51 @@
     {
       "slot": "overview",
       "placement": "overview",
-      "alt": "A street scene in Japan.",
-      "caption": "A street scene in Japan.",
-      "learning_purpose": "Connect a real scene to this part of the country profile."
+      "alt": "An illustrated overview of Japan.",
+      "caption": "An illustrated overview of Japan.",
+      "learning_purpose": "Connect the scene to this country profile."
     },
     {
       "slot": "how_it_works",
-      "placement": "everyday",
-      "alt": "An example of food in Japan.",
-      "caption": "An example of food in Japan.",
-      "learning_purpose": "Connect a real scene to this part of the country profile."
+      "placement": "geography",
+      "alt": "An illustration of Japan’s landscape.",
+      "caption": "An illustration of Japan’s landscape.",
+      "learning_purpose": "Connect the scene to this country profile."
     },
     {
       "slot": "explanation_2",
+      "placement": "everyday",
+      "alt": "An illustration of everyday market life.",
+      "caption": "An illustration of everyday market life.",
+      "learning_purpose": "Connect the scene to this country profile."
+    },
+    {
+      "slot": "explanation_3",
+      "placement": "places",
+      "alt": "Real streets in Japan.",
+      "caption": "Real streets in Japan.",
+      "learning_purpose": "Connect the scene to this country profile."
+    },
+    {
+      "slot": "explanation_4",
+      "placement": "everyday",
+      "alt": "Food in Japan.",
+      "caption": "Food in Japan.",
+      "learning_purpose": "Connect the scene to this country profile."
+    },
+    {
+      "slot": "explanation_5",
+      "placement": "geography",
+      "alt": "A landscape in Japan.",
+      "caption": "A landscape in Japan.",
+      "learning_purpose": "Connect the scene to this country profile."
+    },
+    {
+      "slot": "explanation_6",
       "placement": "contributions",
-      "alt": "Rail transport in Japan.",
-      "caption": "Rail transport in Japan.",
-      "learning_purpose": "Connect a real scene to this part of the country profile."
+      "alt": "Railways in Japan.",
+      "caption": "Railways in Japan.",
+      "learning_purpose": "Connect the scene to this country profile."
     }
   ],
   "country_profile": {
