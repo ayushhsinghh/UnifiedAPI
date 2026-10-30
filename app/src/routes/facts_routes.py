@@ -44,7 +44,7 @@ from src.facts.fact_generator import (
 )
 from src.facts.lifecycle import expected_image_keys, fact_image_keys, image_generation_state
 from src.facts.visual_prompts import IMAGE_SECTION_BRIEFS, build_section_image_context
-from src.facts.country_photos import find_country_photos, find_subject_photo, country_scene_queries
+from src.facts.country_photos import find_country_photos, find_subject_photo, country_scene_queries, country_scene_plan
 from src.facts.country_media_plan import country_photo_entries
 from src.facts.unsplash_photos import track_selection
 from src.facts.image_generator import generate_and_save_image
@@ -182,6 +182,32 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
     claimed_descriptions = [set(p.get('description','').casefold().split()) for p in previous_photos if p.get('provider')=='unsplash']
     subject_semaphore = asyncio.Semaphore(3)
     scenes = dict(zip(('explanation_3','explanation_4','explanation_5','explanation_6'), country_scene_queries(country))) if contextual else {}
+    expanded_scenes = country_scene_plan(country, extended=True) if extended else {}
+    scene_semaphore = asyncio.Semaphore(3)
+
+    async def process_scene(key, query):
+        """Documentary photo search only. This function never calls image generation."""
+        gallery=list((article or {}).get('country_photo_galleries',{}).get(key,[]))
+        if len(gallery)>=2:return
+        try:
+            async with scene_semaphore:
+                candidates=await asyncio.wait_for(find_country_photos(country['identity']['name'],query,scene_only=True,scene_fallback=True),timeout=50)
+                for item in candidates:
+                    if len(gallery)>=2:break
+                    if item['url'] in claimed or item['source_url'] in claimed_sources:continue
+                    words=set(item.get('description','').casefold().split())
+                    if any(len(words & other)/max(1,len(words | other))>.55 for other in claimed_descriptions):continue
+                    # Reserve before yielding so concurrent topics cannot select the same photo.
+                    claimed.add(item['url']);claimed_sources.add(item['source_url']);claimed_descriptions.append(words)
+                    if item.get('provider')=='unsplash' and not await track_selection(item):continue
+                    gallery.append({**{k:v for k,v in item.items() if k!='download_location'},'scene_query':query})
+            photo=gallery[0] if gallery else None
+            if photo:images[key]=photo['url']
+            logger.info('Country scene %s/%s (%s): %d selected',content_hash,key,query,len(gallery))
+            set_fact_image_state(content_hash,key,'ready' if photo else 'failed',photo['url'] if photo else None,credit=photo,gallery=gallery)
+        except Exception:
+            logger.exception('Country scene search failed for %s/%s',content_hash,key)
+            if not gallery:set_fact_image_state(content_hash,key,'failed',gallery=[])
     
     async def process_image(key: str, filename: str, prompt: str, aspect_ratio: str, context: str):
         if key in existing_images:
@@ -252,6 +278,7 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
     tasks = []
     for key, brief in IMAGE_SECTION_BRIEFS.items():
         if photos_only:continue
+        if key in expanded_scenes:continue
         if is_country and key not in {'cover','overview','how_it_works','explanation_2','explanation_3','explanation_4','explanation_5','explanation_6'}:
             continue
         prompt = scenes.get(key) or visual_suggestions.get(key)
@@ -263,6 +290,8 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
                 build_section_image_context(key, article),
             ))
 
+    # Scene slots have a separate photo-only path; the GenAI key set stays unchanged.
+    tasks.extend(process_scene(key,query) for key,query in expanded_scenes.items())
     if contextual:
         for item in country_photo_entries(country,extended=extended):
             tasks.append(process_subject(item['kind'],item['index'],item['subject'],item['title'],item['queries']))
@@ -279,7 +308,7 @@ def _country_photo_payload(document):
     fact=document.get('full_response',{})
     state=document.get('country_photo_enrichment') or {}
     status=state.get('status','not_started')
-    if state.get('version',0)<2:status='not_started'
+    if state.get('version',0)<3:status='not_started'
     if status=='processing' and state.get('started_at'):
         from datetime import datetime,timezone
         started=state['started_at']
@@ -287,7 +316,7 @@ def _country_photo_payload(document):
         if (datetime.now(timezone.utc)-started).total_seconds()>300:status='failed'
     if not state and fact.get('country_media',{}).get('photo_layout')=='contextual_v2' and image_generation_state(document,cfg.FACT_IMAGE_TIMEOUT_SECONDS)['status']=='processing':
         status='processing'
-    return {'status':status,'country_photo_enrichment':{'version':state.get('version',2),'status':status},
+    return {'status':status,'country_photo_enrichment':{'version':state.get('version',3),'status':status},
         'images':document.get('images') or fact.get('images') or {},
         'image_credits':document.get('image_credits') or fact.get('image_credits') or {},
         'country_photo_galleries':document.get('country_photo_galleries') or fact.get('country_photo_galleries') or {}}
@@ -314,7 +343,7 @@ async def ensure_country_photos(request: Request,content_hash: str,background_ta
         article={**document['full_response'],'country_media':{'version':2,'photo_layout':'contextual_v2'},
             'country_photo_galleries':document.get('country_photo_galleries') or {}}
         background_tasks.add_task(_background_image_task,{},content_hash,document.get('images') or {},article=article,photos_only=True)
-        payload['status']='processing';payload['country_photo_enrichment']={'version':2,'status':'processing'}
+        payload['status']='processing';payload['country_photo_enrichment']={'version':3,'status':'processing'}
     else:payload=_country_photo_payload(_country_photo_document(content_hash))
     return payload
 

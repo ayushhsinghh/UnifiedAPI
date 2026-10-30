@@ -77,18 +77,31 @@ def _lookup(country, query):
         if len(results)>=6:break
     return results
 
-async def find_country_photos(country, query, protected_names=(), scene_only=False):
+async def find_country_photos(country, query, protected_names=(), scene_only=False, scene_fallback=False):
     if scene_only:
         from .unsplash_photos import search
         themes = {'landscape nature':r'forest|mountain|beach|coast|lake|river|landscape|volcano|valley|desert|nature',
             'local market daily life':r'market|vendor|food|shop|people|festival|daily',
-            'traditional architecture countryside':r'architect|building|temple|house|village|rural|countryside'}
-        pattern=themes.get(query,r'city|street|town|urban|road|alley')
+            'traditional architecture countryside':r'architect|building|temple|house|village|rural|countryside',
+            'beach coast':r'beach|coast|shore|sea|ocean',
+            'mountains hiking':r'mountain|hill|hike|hiking|trail|peak|rock',
+            'wildlife birds':r'wildlife|bird|animal|flamingo|iguana|fish|turtle',
+            'local food cuisine':r'\b(?:food|dish|cuisine|meal|restaurant|bread)\b',
+            'harbor boats':r'harbo[u]?r|boat|ship|port|marina',
+            'historic buildings':r'histor|building|church|fort|ruin|architecture',
+            'festival music culture':r'festival|music|carnival|dance|culture|celebration',
+            'rural agriculture':r'rural|farm|agricultur|field|crop|countryside'}
+        pattern=themes.get(query,r'city|street|town|urban|road|alley' if 'city streets' in query else re.escape(query))
         matches=[p for p in await search(country, query) if re.search(pattern,p['description'],re.I)]
-        if matches:return matches
+        if len(matches)>=2 or (matches and not scene_fallback):return matches
         simpler={'landscape nature':'landscape','local market daily life':'market',
-            'traditional architecture countryside':'architecture'}.get(query,'city streets')
-        return [p for p in await search(country,simpler) if re.search(pattern,p['description'],re.I)]
+            'traditional architecture countryside':'architecture'}.get(query,query.split()[0] if query in themes else 'city streets' if 'city streets' in query else query)
+        matches += [p for p in await search(country,simpler) if re.search(pattern,p['description'],re.I)]
+        matches=list({p['source_url']:p for p in matches}.values())
+        if scene_fallback and len(matches)<2:
+            commons=await asyncio.to_thread(_lookup,country,query)
+            matches += [{**p,'provider':'wikimedia'} for p in commons if re.search(pattern,p['title']+' '+p['description'],re.I)]
+        return matches
     # Named people stay with the documentary source. Never substitute stock portraits.
     if any(name and name.casefold() in query.casefold() for name in protected_names):
         photos = await asyncio.to_thread(_lookup, country, query)
@@ -183,7 +196,18 @@ async def find_subject_photo(country, subject, kind, queries=None):
     return await asyncio.to_thread(_lookup_subject_queries,country,subject,kind,queries)
 
 
-def country_scene_queries(profile):
+def country_scene_queries(profile, extended=False):
     cities=profile.get('geography',{}).get('major_cities',[])
     city=cities[0].get('name','') if cities else ''
-    return ['landscape nature', f'{city} city streets', 'local market daily life', 'traditional architecture countryside']
+    queries=['landscape nature', f'{city} city streets', 'local market daily life', 'traditional architecture countryside']
+    if not extended:return queries
+    # Named destinations provide country-specific topics instead of assuming every country has mountains or farms.
+    places=[p.get('name','') for p in profile.get('notable_places',[]) if p.get('name')
+        and p['name']!=city and not re.search(r'beach|coast',p['name'],re.I)]
+    return queries + ['beach coast',places[0] if places else 'mountains hiking','wildlife birds','local food cuisine',
+        'harbor boats','historic buildings','festival music culture',places[1] if len(places)>1 else 'rural agriculture']
+
+def country_scene_plan(profile, extended=False):
+    keys=['explanation_3','explanation_4','explanation_5','explanation_6']
+    if extended:keys += [f'country_scene_{n}' for n in range(4,12)]
+    return dict(zip(keys,country_scene_queries(profile,extended)))

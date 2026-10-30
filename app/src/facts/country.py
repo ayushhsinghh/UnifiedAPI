@@ -149,7 +149,7 @@ and placement overview/geography/everyday/contributions/places/people/curiosity.
 Only overview uses overview placement. Photos need actual author, source and licence metadata from the worker.
 Do not generate extra images when a Commons search fails. Cover/overview generation and local UI fallbacks
 are separate from Commons lookup. Retain real licence metadata for all photographs.
-The server independently searches four distinct Unsplash scene themes for the country carousel.
+The server independently searches twelve distinct Unsplash scene themes for the country carousel.
 People and notable places receive exact-subject Commons searches beside their own entries.
 For each everyday_life entry, include photo_subject: a short identifiable local dish, festival,
 craft or cultural practice actually explained by that entry. Use its proper name, not a generic

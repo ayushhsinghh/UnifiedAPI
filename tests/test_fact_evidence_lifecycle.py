@@ -63,6 +63,7 @@ def generator_module():
 
 
 def routes_module():
+    photo_plan = load('photo_plan_test', 'src/facts/country_photos.py', {})
     class Router:
         def __init__(self, **kwargs): pass
         def get(self, *args, **kwargs): return lambda fn: fn
@@ -85,7 +86,8 @@ def routes_module():
         'src.facts.lifecycle': lifecycle,
         'src.facts.visual_prompts': visual_prompts,
         'src.facts.country_photos': module('src.facts.country_photos', find_country_photos=AsyncMock(return_value=[]),
-            find_subject_photo=AsyncMock(return_value=[]), country_scene_queries=lambda p:['landscape nature','city streets','local market daily life','traditional architecture countryside']),
+            find_subject_photo=AsyncMock(return_value=[]), country_scene_queries=photo_plan.country_scene_queries,
+            country_scene_plan=photo_plan.country_scene_plan),
         'src.facts.image_generator': module('src.facts.image_generator', generate_and_save_image=AsyncMock()),
     })
     value.logger = Mock()

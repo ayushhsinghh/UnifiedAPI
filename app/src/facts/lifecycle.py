@@ -14,7 +14,8 @@ def expected_image_keys(visual_suggestions):
 def fact_image_keys(fact):
     keys=expected_image_keys(fact.get('visual_suggestions',{}))
     if fact.get('article_type')=='country_profile' and fact.get('country_media',{}).get('photo_layout') in ('contextual_v1','contextual_v2'):
-        keys=list(dict.fromkeys(keys+['explanation_3','explanation_4','explanation_5','explanation_6']))
+        from src.facts.country_photos import country_scene_plan
+        keys=list(dict.fromkeys(keys+list(country_scene_plan(fact.get('country_profile',{}),extended=fact['country_media']['photo_layout']=='contextual_v2'))))
         from src.facts.country_media_plan import country_photo_entries
         keys.extend(item['key'] for item in country_photo_entries(fact.get('country_profile',{}),extended=fact['country_media']['photo_layout']=='contextual_v2'))
     return keys

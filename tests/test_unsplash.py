@@ -28,6 +28,10 @@ class UnsplashTests(unittest.TestCase):
         queries=country_scene_queries(fixture()['country_profile'])
         self.assertEqual(len(set(queries)),4)
         self.assertIn('local market daily life',queries)
+        expanded=country_scene_queries(fixture()['country_profile'],extended=True)
+        self.assertEqual(len(set(expanded)),12)
+        self.assertIn('local food cuisine',expanded)
+        self.assertIn('wildlife birds',expanded)
 
     def test_exact_subject_lookup_rejects_unrelated_country_fallback_and_statues(self):
         from test_country import candidate
@@ -97,6 +101,13 @@ class ProviderRoutingTests(unittest.IsolatedAsyncioTestCase):
         with patch.object(u,'search',new=AsyncMock(side_effect=[[],[photo]])) as search:
             self.assertEqual(await find_country_photos('Japan','landscape nature',scene_only=True),[photo])
             self.assertEqual(search.await_args_list[1].args,('Japan','landscape'))
+
+    async def test_food_scene_fallback_rejects_a_live_fish(self):
+        fish={'title':'French Angelfish in Aruba','description':'Fish on a reef in Aruba','source_url':'fish'}
+        meal={'title':'Local food in Aruba','description':'A restaurant meal in Aruba','source_url':'meal'}
+        with patch.object(u,'search',new=AsyncMock(return_value=[])), patch('src.facts.country_photos._lookup',return_value=[fish,meal]):
+            photos=await find_country_photos('Aruba','local food cuisine',scene_only=True,scene_fallback=True)
+            self.assertEqual([p['source_url'] for p in photos],['meal'])
 
     async def test_contextual_worker_attaches_subjects_and_preserves_generation_budget(self):
         from test_fact_evidence_lifecycle import routes_module

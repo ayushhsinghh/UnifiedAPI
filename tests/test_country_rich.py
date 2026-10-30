@@ -46,10 +46,29 @@ class CountryDepthTests(unittest.TestCase):
         self.assertEqual(kinds,{'culture','people','places','cities','products','contributions'})
 
 class CountryPhotoBackfillTests(unittest.IsolatedAsyncioTestCase):
+    async def test_twelve_scene_topics_keep_two_unique_photos_and_never_generate(self):
+        r=routes_module();f=fixture();f['country_media']={'version':2,'photo_layout':'contextual_v2'}
+        async def scenes(country,query,**kwargs):
+            return [dict(provider='unsplash',url=f'https://images.unsplash.com/{query}-{n}',
+                source_url=f'https://unsplash.com/photos/{query}-{n}',author='Same photographer',
+                description=f'{query.replace(" ", "_")}_image{n}') for n in range(2)]
+        r.find_country_photos=AsyncMock(side_effect=scenes)
+        r.find_subject_photo=AsyncMock(return_value=[]);r.track_selection=AsyncMock(return_value=True)
+        await r._background_image_task({},'hash',article=f,photos_only=True)
+        scenes=[c for c in r.set_fact_image_state.call_args_list if c.args[1].startswith('explanation_') or c.args[1].startswith('country_scene_')]
+        self.assertEqual(len(scenes),12)
+        self.assertEqual(sum(len(c.kwargs['gallery']) for c in scenes),24)
+        r.generate_and_save_image.assert_not_awaited()
+
+    def test_previous_photo_cache_requires_the_expanded_scene_upgrade(self):
+        r=routes_module()
+        self.assertEqual(r._country_photo_payload({'full_response':fixture(),
+            'country_photo_enrichment':{'version':2,'status':'completed'}})['status'],'not_started')
+
     async def test_another_worker_claim_prevents_duplicate_photo_jobs(self):
         r=routes_module();f=fixture();f.pop('country_media',None)
         initial={'full_response':f}
-        busy={'full_response':f,'country_photo_enrichment':{'version':2,'status':'processing','started_at':datetime.now(timezone.utc)}}
+        busy={'full_response':f,'country_photo_enrichment':{'version':3,'status':'processing','started_at':datetime.now(timezone.utc)}}
         r.get_fact_by_hash.side_effect=[initial,busy];r.claim_country_photo_enrichment.return_value=False
         background=types.SimpleNamespace(add_task=Mock())
         self.assertEqual((await r.ensure_country_photos(None,'hash',background))['status'],'processing')
@@ -63,22 +82,23 @@ class CountryPhotoBackfillTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result['status'],'processing')
         self.assertTrue(background.add_task.call_args.kwargs['photos_only'])
         self.assertEqual(background.add_task.call_args.args[1],{})
-        doc['country_photo_enrichment']={'version':2,'status':'completed'}
+        doc['country_photo_enrichment']={'version':3,'status':'completed'}
         background.add_task.reset_mock()
         result=await r.ensure_country_photos(None,'hash',background)
         background.add_task.assert_not_called();self.assertEqual(result['status'],'completed')
 
-    async def test_photo_only_worker_never_calls_image_generation_or_unsplash(self):
+    async def test_photo_only_worker_searches_twelve_scenes_without_image_generation(self):
         r=routes_module();f=fixture();f['country_media']={'version':2,'photo_layout':'contextual_v2'}
         r.find_subject_photo=AsyncMock(return_value=[])
         await r._background_image_task(f['visual_suggestions'],'hash',article=f,photos_only=True)
-        r.generate_and_save_image.assert_not_awaited();r.find_country_photos.assert_not_awaited()
+        r.generate_and_save_image.assert_not_awaited()
+        self.assertEqual(r.find_country_photos.await_count,12)
         self.assertEqual(r.find_subject_photo.await_count,len(country_photo_entries(f['country_profile'])))
         r.finish_country_photo_enrichment.assert_called_once_with('hash')
 
     def test_stale_photo_worker_can_recover_without_stalling_the_reader(self):
         r=routes_module();doc={'full_response':fixture(),'country_photo_enrichment':{
-            'version':2,'status':'processing','started_at':datetime.now(timezone.utc)-timedelta(minutes=6)}}
+            'version':3,'status':'processing','started_at':datetime.now(timezone.utc)-timedelta(minutes=6)}}
         self.assertEqual(r._country_photo_payload(doc)['status'],'failed')
 
 if __name__=='__main__':unittest.main()

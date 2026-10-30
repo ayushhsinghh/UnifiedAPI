@@ -115,7 +115,7 @@ class CountryGenerationTests(unittest.IsolatedAsyncioTestCase):
         f=enrich_country_identity(fixture())
         await routes._background_image_task({**f['visual_suggestions'],'myth_visual':'Never generate this fifth image'},'hash',article=f)
         self.assertEqual(routes.generate_and_save_image.await_count,4)
-        self.assertEqual(routes.find_country_photos.await_count,4)
+        self.assertEqual(routes.find_country_photos.await_count,12)
         credits=[c.kwargs.get('credit') for c in routes.set_fact_image_state.call_args_list]
         self.assertEqual(sum(bool(c and c.get('kind')=='generated') for c in credits),4)
         galleries=[c.kwargs.get('gallery') for c in routes.set_fact_image_state.call_args_list if c.kwargs.get('gallery')]
