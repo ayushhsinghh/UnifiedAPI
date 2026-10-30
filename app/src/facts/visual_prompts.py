@@ -103,6 +103,9 @@ _VISUAL_RULES = (
 )
 
 
+for _key in ('explanation_4', 'explanation_5', 'explanation_6'):
+    IMAGE_SECTION_BRIEFS[_key] = {'ratio': '4:3', 'objective': 'Country profile photograph, resolved from licensed source metadata.', 'fields': ('summary',)}
+
 def build_visual_instructions(mythbuster=False):
     """Ask the article model to supply a complete, independent brief for each slot."""
     keys = ("cover", "overview", "myth_visual", "truth_visual") if mythbuster else ("cover", "overview", "how_it_works")
@@ -161,6 +164,12 @@ def build_section_image_context(key, article=None):
             lines.append('Psychology editorial illustration: show the described situation, not a diagnosis '
                          'or a claimed brain scan. Do not invent participants, data, experiments, labels '
                          'or visible proof of a mental process. Generated art is not research evidence.')
+        if article.get('article_type') == 'indian_law_lesson':
+            lesson = article.get('indian_law_lesson') or {}
+            excerpt['indian_law_context'] = {field: lesson.get(field) for field in ('question', 'opening_scenario', 'plain_rule', 'explanation_steps', 'worked_example')}
+            lines.append('Indian law conceptual illustration: show a hypothetical situation, not authentic legal '
+                         'documents, court orders, legal evidence, identifiable real parties or government endorsements. '
+                         'No text, stamps, section labels or invented legal diagrams.')
         if article.get('article_type') == 'constitution_lesson':
             lesson = article.get('constitution_lesson') or {}
             excerpt['constitution_context'] = {field: lesson.get(field) for field in ('question', 'opening_scenario', 'big_idea', 'supporting_image')}

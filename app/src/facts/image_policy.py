@@ -1,5 +1,5 @@
 """Article image contract: cover, overview/card image and explanatory images."""
-IMAGE_KEYS = ('cover', 'overview', 'how_it_works', 'explanation_2', 'explanation_3', 'myth_visual', 'truth_visual')
+IMAGE_KEYS = ('cover', 'overview', 'how_it_works', 'explanation_2', 'explanation_3', 'explanation_4', 'explanation_5', 'explanation_6', 'myth_visual', 'truth_visual')
 IMAGE_INSTRUCTIONS = """
 ARTICLE IMAGE PLAN (overrides older cover-only or single-supporting-image instructions):
 Every article requires 3-5 generated images: cover, overview, and at least one explanatory image.
@@ -24,6 +24,9 @@ Set legacy supporting_image to null in category lessons. Use image_details for t
 
 
 def validate_image_plan(fact, myth=None):
+    if fact.get('article_type') == 'country_profile':
+        from .country import validate_country_images
+        return validate_country_images(fact)
     if myth is None:
         myth = 'myth_statement' in fact
     visuals, details = fact.get('visual_suggestions'), fact.get('image_details')

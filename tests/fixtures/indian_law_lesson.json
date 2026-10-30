@@ -1,0 +1,238 @@
+{
+  "category": "indian_laws",
+  "topic": "Why an agreement is not always a contract",
+  "schema_version": "2.0",
+  "article_type": "indian_law_lesson",
+  "headline_fact": "An agreement must meet legal conditions before it becomes an enforceable contract.",
+  "summary": "An agreement and an enforceable contract are different ideas. This lesson introduces the distinction through a familiar purchase.",
+  "did_you_know": "Some transactions also need writing, witnesses or registration.",
+  "core_mechanics": "The law considers the agreement, the parties, consent, consideration, purpose and other applicable requirements.",
+  "why_it_matters": "Recognizing the conditions helps explain why agreement alone does not settle enforceability.",
+  "in_depth_breakdown": {
+    "detailed_processes": [],
+    "real_world_application": "Consider the full context before assuming a promise is enforceable.",
+    "fascinating_trivia": []
+  },
+  "common_misconceptions": [],
+  "learning_takeaways": [
+    "Start with the agreement.",
+    "Check the legal conditions.",
+    "Consider other applicable laws."
+  ],
+  "emoji_icon": "",
+  "difficulty_level": "Beginner",
+  "region": "Global",
+  "fun_rating": 7,
+  "read_time_seconds": 360,
+  "tags": [
+    "contracts",
+    "agreements",
+    "consent"
+  ],
+  "related_categories": [
+    "economics"
+  ],
+  "visual_suggestions": {
+    "cover": "A quiet editorial scene of two adults discussing a used bicycle in a courtyard, subject central-right, empty space on left, no text or documents.",
+    "overview": "A conceptual illustration of two adults considering a bicycle purchase with clear visible exchange, not evidence of a real contract, no text.",
+    "how_it_works": "An illustrative close scene of a bicycle inspection and discussion, emphasizing the practical situation, not official documents or legal advice."
+  },
+  "share_text": "An agreement and a legally enforceable contract are different ideas.",
+  "content_freshness": "evergreen",
+  "sources": [
+    {
+      "id": "s1",
+      "title": "Indian Contract Act, 1872 — sections 2, 10 and 11",
+      "url": "https://www.indiacode.nic.in/handle/123456789/2187"
+    }
+  ],
+  "claim_citations": [
+    {
+      "claim": "Section 10 sets conditions for agreements to become contracts.",
+      "section": "plain_rule",
+      "source_ids": [
+        "s1"
+      ]
+    }
+  ],
+  "sources_or_references": [],
+  "generated_at": "2026-10-30T10:00:00Z",
+  "image_details": [
+    {
+      "slot": "overview",
+      "placement": "overview",
+      "alt": "An illustrative bicycle purchase between two adults.",
+      "caption": "A hypothetical purchase introduces the difference between agreement and legal enforceability.",
+      "learning_purpose": "Connect the central rule to a familiar situation."
+    },
+    {
+      "slot": "how_it_works",
+      "placement": "explanation",
+      "alt": "Two adults inspecting a bicycle before a purchase.",
+      "caption": "An illustration of the situation, not proof that a contract exists.",
+      "learning_purpose": "Show why the facts of an agreement matter."
+    }
+  ],
+  "indian_law_lesson": {
+    "lesson_type": "concept",
+    "legal_area": "Contracts and everyday agreements",
+    "question": "Does every agreement become an enforceable contract?",
+    "learning_goal": "Understand why an agreement needs legal conditions before a court can enforce it.",
+    "opening_scenario": {
+      "title": "An everyday purchase",
+      "situation": "Imagine two adults agree on a price for a used bicycle. One promises to pay, and the other promises to deliver it.",
+      "question": "Is agreement alone enough to settle every legal question?"
+    },
+    "plain_rule": {
+      "explanation": "A contract is an agreement that the law can enforce. An agreement alone does not establish every condition. The parties, their consent, what they exchange and the purpose also matter.",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "legal_basis": [
+      {
+        "id": "b1",
+        "instrument": "Indian Contract Act",
+        "year": 1872,
+        "reference": "Sections 2(h), 10 and 11",
+        "title": "Agreement and enforceability",
+        "source_kind": "statute",
+        "plain_meaning": "The Act distinguishes agreements from enforceable contracts and sets conditions for enforceability.",
+        "legal_effect": "An agreement must satisfy the applicable legal conditions. Other laws can also require particular formalities.",
+        "status": "uncertain",
+        "commencement_date": null,
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "applicability": {
+      "jurisdiction": "An introductory explanation of the Indian Contract Act. Particular transactions can involve other applicable laws.",
+      "who_it_concerns": [
+        "People entering agreements that may have legal effect."
+      ],
+      "relevant_dates": "The Act dates from 1872. This lesson does not independently check later changes or the law applicable to a particular transaction.",
+      "conditions": [
+        "The parties must have legal capacity to contract.",
+        "Consent must be free.",
+        "The exchange and purpose must meet legal requirements.",
+        "The agreement must not be expressly declared void."
+      ],
+      "exceptions": [
+        "Some transactions also require writing, witnesses or registration under other laws."
+      ],
+      "limits": [
+        "This is an introduction, not a decision about a real dispute.",
+        "The actual facts and applicable law can change the analysis."
+      ],
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "key_terms": [
+      {
+        "term": "Enforceable",
+        "definition": "A legal obligation that a court can require a party to meet."
+      },
+      {
+        "term": "Consideration",
+        "definition": "Something exchanged for a promise, as understood under the Act."
+      }
+    ],
+    "explanation_steps": [
+      {
+        "id": "step1",
+        "title": "Identify what the parties agreed",
+        "explanation": "Start with the promises. The example involves a bicycle and an agreed payment.",
+        "basis_ids": [
+          "b1"
+        ],
+        "source_ids": [
+          "s1"
+        ]
+      },
+      {
+        "id": "step2",
+        "title": "Check the legal conditions",
+        "explanation": "Ask whether the parties can contract and whether consent, the exchange and the purpose satisfy the law.",
+        "basis_ids": [
+          "b1"
+        ],
+        "source_ids": [
+          "s1"
+        ]
+      },
+      {
+        "id": "step3",
+        "title": "Check other requirements",
+        "explanation": "Do not assume that an agreement alone satisfies every law. The type of transaction may introduce further requirements.",
+        "basis_ids": [
+          "b1"
+        ],
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "worked_example": {
+      "title": "Look beyond the agreed price",
+      "situation": "In the hypothetical bicycle purchase, both parties are adults. The example gives only a few facts.",
+      "reasoning_steps": [
+        "Identify each promise.",
+        "Check capacity and free consent.",
+        "Consider the exchange, purpose and other legal requirements."
+      ],
+      "implications": "The agreed price is part of the analysis. It does not answer every legal question.",
+      "limits": "The example does not establish the outcome of a real dispute.",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "contrast_example": {
+      "title": "Change the transaction",
+      "situation": "Now imagine an agreement about property that may require registration.",
+      "reasoning_steps": [
+        "Identify the different kind of transaction.",
+        "Check the additional law and its formal requirements."
+      ],
+      "implications": "The required formalities may change even though both parties agree.",
+      "limits": "The property and transaction details determine which requirements apply.",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "common_confusions": [
+      {
+        "confusion": "Both people agreed, so the law must enforce it.",
+        "clarification": "Agreement is the starting point. The law also sets conditions and may impose further requirements.",
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "case_note": null,
+    "law_changes": [],
+    "commentary": [],
+    "deeper_detail": [],
+    "knowledge_checks": [
+      {
+        "id": "q1",
+        "question": "Does an agreed price prove every condition for a contract?",
+        "answer": "No.",
+        "explanation": "It does not establish capacity, free consent or every other applicable condition.",
+        "related_step_ids": [
+          "step2"
+        ]
+      }
+    ],
+    "takeaways": [
+      "An agreement and an enforceable contract are different ideas.",
+      "Check the legal conditions, not just the promises.",
+      "Some transactions need additional formalities."
+    ],
+    "related_concepts": [
+      "Free consent",
+      "Capacity to contract"
+    ]
+  }
+}

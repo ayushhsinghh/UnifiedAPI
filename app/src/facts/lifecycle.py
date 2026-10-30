@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 def expected_image_keys(visual_suggestions):
     if not isinstance(visual_suggestions, dict):
         return []
-    keys = [key for key in ("cover", "overview", "how_it_works", "explanation_2", "explanation_3", "myth_visual", "truth_visual") if visual_suggestions.get(key)]
+    keys = [key for key in ("cover", "overview", "how_it_works", "explanation_2", "explanation_3", "explanation_4", "explanation_5", "explanation_6", "myth_visual", "truth_visual") if visual_suggestions.get(key)]
     if visual_suggestions.get("history") and "overview" not in keys:
         keys.append("overview")
     return keys

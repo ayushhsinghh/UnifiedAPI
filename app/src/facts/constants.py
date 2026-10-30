@@ -114,10 +114,12 @@ CATEGORY_HINTS: Dict[str, str] = {
         "Right to Education, Article 370 and constitutional change, Schedule system (8th schedule languages)"
     ),
     "indian_laws": (
-        "RTI Act 2005, Consumer Protection Act, IPC to BNS transition, "
-        "landmark Supreme Court judgments (Kesavananda Bharati, Vishakha), "
-        "GST implementation, POCSO Act, IT Act 2000 & cyber laws, "
-        "environmental protection laws, land acquisition laws, anti-corruption laws (Lokpal)"
+        "contracts and consent, sale of goods, partnerships and negotiable instruments, "
+        "consumer protection, criminal responsibility and IPC/BNS transition, "
+        "civil and criminal procedure, evidence, property transfers and tenancy, "
+        "family law and succession with personal-law differences, work and wages, "
+        "IT Act and cyber law, RTI, environment, road transport and business law. "
+        "Teach ordinary Acts and codes, not constitutional articles; use genuine commentary only for context"
     ),
     "nature": (
         "Indian tiger conservation (Project Tiger), Western Ghats biodiversity hotspot, "

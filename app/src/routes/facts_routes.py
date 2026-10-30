@@ -42,6 +42,7 @@ from src.facts.fact_generator import (
 )
 from src.facts.lifecycle import expected_image_keys, image_generation_state
 from src.facts.visual_prompts import IMAGE_SECTION_BRIEFS, build_section_image_context
+from src.facts.country_photos import find_country_photos
 from src.facts.image_generator import generate_and_save_image
 
 logger = logging.getLogger(__name__)
@@ -139,6 +140,7 @@ async def process_fact_generation_task(
             logger.exception("Failed to store fact for job %s", job_id)
     if stored and stored.get("images"):
         fact["images"] = stored["images"]
+        fact['image_credits'] = stored.get('image_credits') or {}
     image_state = image_generation_state(stored or {"full_response": fact}, cfg.FACT_IMAGE_TIMEOUT_SECONDS)
     fact_response = {
         "success": True,
@@ -162,11 +164,21 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
     if existing_images is None:
         existing_images = {}
     images = existing_images.copy()
+    is_country = (article or {}).get('article_type') == 'country_profile'
+    country = (article or {}).get('country_profile') if is_country else None
+    claimed = set(images.values())
     
     async def process_image(key: str, filename: str, prompt: str, aspect_ratio: str, context: str):
         if key in existing_images:
             return
         try:
+            if is_country:
+                candidates = await asyncio.wait_for(find_country_photos(country['identity']['name'], prompt), timeout=25)
+                photo = next((item for item in candidates if item['url'] not in claimed), None)
+                if photo:
+                    claimed.add(photo['url']); images[key] = photo['url']
+                set_fact_image_state(content_hash, key, 'ready' if photo else 'failed', photo['url'] if photo else None, credit=photo)
+                return
             url = await asyncio.wait_for(
                 generate_and_save_image(prompt, filename, aspect_ratio=aspect_ratio, extra_context=context),
                 timeout=cfg.FACT_IMAGE_TIMEOUT_SECONDS,
@@ -268,6 +280,7 @@ async def get_fact_job_status(job_id: str) -> dict:
             stored = get_fact_by_hash(content_hash)
             if stored:
                 fact_data["fact"]["images"] = stored.get("images") or {}
+                fact_data['fact']['image_credits'] = stored.get('image_credits') or {}
                 fact_data["image_generation"] = image_generation_state(stored, cfg.FACT_IMAGE_TIMEOUT_SECONDS)
         response["data"] = fact_data
     elif job["status"] == "failed":

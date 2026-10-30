@@ -116,6 +116,8 @@ def _shape(value, schema):
         return isinstance(value, list) and len(value) <= 100 and all(_shape(v, schema['items']) for v in value)
     if kind == 'NUMBER':
         return type(value) in (int, float) and math.isfinite(value)
+    if kind == 'INTEGER':
+        return type(value) is int
     return isinstance(value, str) and len(value) <= 12000 and value in schema.get('enum', [value])
 
 

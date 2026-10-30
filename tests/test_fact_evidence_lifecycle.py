@@ -54,6 +54,8 @@ def generator_module():
         'fact_test.image_policy': image_policy,
         'fact_test.constitution': module('fact_test.constitution', CONSTITUTION_RESPONSE_SCHEMA={}, build_constitution_prompt=lambda *args: 'constitution prompt', validate_constitution_content=lambda *args: True),
         'fact_test.constitution_sources': module('fact_test.constitution_sources', enrich_constitution_text=AsyncMock(side_effect=lambda fact: fact)),
+        'fact_test.indian_laws': module('fact_test.indian_laws', INDIAN_LAWS_RESPONSE_SCHEMA={}, build_indian_laws_prompt=lambda *args: 'Indian laws prompt', validate_indian_laws_content=lambda *args: True),
+        'fact_test.country': module('fact_test.country', COUNTRY_RESPONSE_SCHEMA={}, COUNTRY_IMAGE_INSTRUCTIONS='Country image rules', build_country_prompt=lambda *args: 'Country prompt', validate_country_content=lambda *args: True, enrich_country_identity=lambda fact:fact),
     })
 
     value.logger = Mock()
@@ -82,6 +84,7 @@ def routes_module():
         'src.facts.fact_generator': module('src.facts.fact_generator', SUPPORTED_CATEGORIES=[], generate_daily_fact=AsyncMock()),
         'src.facts.lifecycle': lifecycle,
         'src.facts.visual_prompts': visual_prompts,
+        'src.facts.country_photos': module('src.facts.country_photos', find_country_photos=AsyncMock(return_value=[])),
         'src.facts.image_generator': module('src.facts.image_generator', generate_and_save_image=AsyncMock()),
     })
     value.logger = Mock()

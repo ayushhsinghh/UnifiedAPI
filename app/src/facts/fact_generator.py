@@ -34,7 +34,9 @@ from .psychology import PSYCHOLOGY_RESPONSE_SCHEMA, build_psychology_prompt, val
 from .learning import LEARNER_INSTRUCTIONS, normalize_learning_level
 from .constitution import CONSTITUTION_RESPONSE_SCHEMA, build_constitution_prompt, validate_constitution_content
 from .constitution_sources import enrich_constitution_text
+from .indian_laws import INDIAN_LAWS_RESPONSE_SCHEMA, build_indian_laws_prompt, validate_indian_laws_content
 from .image_policy import IMAGE_INSTRUCTIONS, IMAGE_KEYS, validate_image_plan
+from .country import COUNTRY_RESPONSE_SCHEMA, COUNTRY_IMAGE_INSTRUCTIONS, build_country_prompt, validate_country_content, enrich_country_identity
 
 # ── Retry constants ──────────────────────────────────────────────────────
 
@@ -69,7 +71,13 @@ async def generate_daily_fact(
     if blocklist is None:
         blocklist = []
 
-    if category == 'indian_constitution':
+    if category == 'country':
+        prompt = build_country_prompt(blocklist)
+        response_schema = COUNTRY_RESPONSE_SCHEMA
+    elif category == 'indian_laws':
+        prompt = build_indian_laws_prompt(blocklist)
+        response_schema = INDIAN_LAWS_RESPONSE_SCHEMA
+    elif category == 'indian_constitution':
         prompt = build_constitution_prompt(blocklist)
         response_schema = CONSTITUTION_RESPONSE_SCHEMA
     elif category == 'psychology':
@@ -94,7 +102,8 @@ async def generate_daily_fact(
         response_schema = FACT_RESPONSE_SCHEMA
 
     # Every provider and fallback receives the same non-expert audience contract.
-    prompt += '\n\n' + LEARNER_INSTRUCTIONS + '\n\n' + IMAGE_INSTRUCTIONS
+    audience = LEARNER_INSTRUCTIONS if category != 'country' else LEARNER_INSTRUCTIONS.replace('Teach ONE interesting fact or useful new idea', 'Teach ONE country through connected useful ideas').replace('Aim for a focused 3-6 minute read, not an encyclopedia chapter or exam syllabus.', 'A country portrait can span an accessible 8-15 minute read.').replace('Before returning, check that a newcomer can explain the central fact in one sentence.', 'Before returning, check that a newcomer can describe the country in a few sentences.')
+    prompt += '\n\n' + audience + '\n\n' + (COUNTRY_IMAGE_INSTRUCTIONS if category == 'country' else IMAGE_INSTRUCTIONS)
     last_error: Optional[Exception] = None
     
     fallback_models = [cfg.GEMINI_MODEL_NAME, "gemini-3.8-flash", "gemini-3.5-flash", cfg.OPENAI_MODEL_NAME]
@@ -143,9 +152,20 @@ async def generate_daily_fact(
                     and (category != 'physics' or validate_physics_content(fact))
                     and (category != 'biology' or validate_biology_content(fact))
                     and (category != 'psychology' or validate_psychology_content(fact))
-                    and (category != 'indian_constitution' or validate_constitution_content(fact))):
+                    and (category != 'indian_constitution' or validate_constitution_content(fact))
+                    and (category != 'indian_laws' or validate_indian_laws_content(fact))
+                    and (category != 'country' or validate_country_content(fact))):
                 normalize_evidence(fact)
                 fact["category"] = category
+                if category == 'country':
+                    enrich_country_identity(fact)
+                if category == 'indian_laws':
+                    # Never trust model-generated verification or retrieval metadata.
+                    fact['indian_laws_validation'] = {'structure_checked': True,
+                        'source_verification': 'not_performed', 'legal_currency_check': 'not_performed',
+                        'retrieved_sources': [], 'checked_at': None}
+                    fact['visual_suggestions'] = {key: value for key, value in fact['visual_suggestions'].items()
+                                                  if key in IMAGE_KEYS and value.strip()}
                 if category == 'physics':
                     fact['physics_validation'] = {
                         'arithmetic_checked': bool(fact['physics_lesson']['worked_example']['calculations']),

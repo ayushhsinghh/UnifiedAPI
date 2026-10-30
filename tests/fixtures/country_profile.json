@@ -1,0 +1,357 @@
+{
+  "category": "country",
+  "topic": "Japan: islands, everyday life and global connections",
+  "schema_version": "2.0",
+  "article_type": "country_profile",
+  "headline_fact": "Japan connects a varied island landscape with traditions and ideas that travel far beyond its shores.",
+  "summary": "Get to know Japan through its location, everyday life, history, places and contributions. This sample profile introduces a few connections rather than presenting every region as the same.",
+  "did_you_know": "Regional differences are part of understanding Japan.",
+  "core_mechanics": "Geography, history and people together shape a country.",
+  "why_it_matters": "A country becomes easier to understand when its facts connect to daily life.",
+  "in_depth_breakdown": {
+    "detailed_processes": [],
+    "real_world_application": "Connect a country’s people, places and history.",
+    "fascinating_trivia": []
+  },
+  "common_misconceptions": [],
+  "learning_takeaways": [
+    "Find the country on the map.",
+    "Connect everyday life with history.",
+    "Explore contributions beyond familiar stereotypes."
+  ],
+  "emoji_icon": "",
+  "difficulty_level": "Beginner",
+  "region": "Global",
+  "fun_rating": 7,
+  "read_time_seconds": 360,
+  "tags": [
+    "Japan",
+    "geography",
+    "culture"
+  ],
+  "related_categories": [
+    "geography",
+    "history",
+    "culture"
+  ],
+  "visual_suggestions": {
+    "cover": "Mount Fuji landscape Japan",
+    "overview": "Kyoto street Japan",
+    "how_it_works": "Japan rice meal",
+    "explanation_2": "Japan railway train",
+    "explanation_3": "",
+    "explanation_4": "",
+    "explanation_5": "",
+    "explanation_6": ""
+  },
+  "share_text": "Meet Japan through its islands, everyday life and global connections.",
+  "content_freshness": "evergreen",
+  "sources": [
+    {
+      "id": "s1",
+      "title": "Web Japan — country fact sheets",
+      "url": "https://web-japan.org/factsheet/"
+    },
+    {
+      "id": "s2",
+      "title": "The Metropolitan Museum of Art — Hokusai, Under the Wave off Kanagawa",
+      "url": "https://www.metmuseum.org/art/collection/search/45434"
+    },
+    {
+      "id": "s3",
+      "title": "Nobel Prize — Yasunari Kawabata",
+      "url": "https://www.nobelprize.org/prizes/literature/1968/kawabata/facts/"
+    },
+    {
+      "id": "s4",
+      "title": "WTA — Naomi Osaka",
+      "url": "https://www.wtatennis.com/players/319998/naomi-osaka"
+    }
+  ],
+  "claim_citations": [],
+  "sources_or_references": [],
+  "generated_at": "2026-10-30T10:00:00Z",
+  "image_details": [
+    {
+      "slot": "overview",
+      "placement": "overview",
+      "alt": "A street scene in Japan.",
+      "caption": "A street scene in Japan.",
+      "learning_purpose": "Connect a real scene to this part of the country profile."
+    },
+    {
+      "slot": "how_it_works",
+      "placement": "everyday",
+      "alt": "An example of food in Japan.",
+      "caption": "An example of food in Japan.",
+      "learning_purpose": "Connect a real scene to this part of the country profile."
+    },
+    {
+      "slot": "explanation_2",
+      "placement": "contributions",
+      "alt": "Rail transport in Japan.",
+      "caption": "Rail transport in Japan.",
+      "learning_purpose": "Connect a real scene to this part of the country profile."
+    }
+  ],
+  "country_profile": {
+    "identity": {
+      "iso2": "JP",
+      "name": "Japan"
+    },
+    "introduction": {
+      "central_idea": "An island country becomes more interesting when geography, daily life and world connections are read together.",
+      "surprising_fact": "Japan’s regions have different landscapes, foods and local traditions.",
+      "learning_goals": [
+        "Locate Japan and its nearby seas.",
+        "Understand a few connections between daily life and history.",
+        "Recognise contributions from different fields."
+      ],
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "geography": {
+      "location_explanation": "Japan lies off the eastern coast of Asia. The Pacific Ocean lies to its east, while seas separate it from the Asian mainland.",
+      "seas": [
+        "Pacific Ocean",
+        "Sea of Japan",
+        "East China Sea"
+      ],
+      "landscapes": [
+        "Mountainous interiors and coastal plains.",
+        "Islands with differing climates and local environments."
+      ],
+      "major_cities": [
+        {
+          "name": "Tokyo",
+          "significance": "A major political, economic and cultural centre."
+        },
+        {
+          "name": "Kyoto",
+          "significance": "A city associated with a long history of cultural activity."
+        }
+      ],
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "essentials": {
+      "population": {
+        "value": null,
+        "year": null,
+        "unit": "people",
+        "scope": "A dated population estimate is not supplied in this offline sample.",
+        "source_ids": [
+          "s1"
+        ]
+      },
+      "time_zones": {
+        "explanation": "Japan uses Japan Standard Time, UTC+9.",
+        "source_ids": [
+          "s1"
+        ]
+      },
+      "spoken_languages": []
+    },
+    "flag": {
+      "description": "A red disc appears on a white field.",
+      "symbolism": "The disc represents the sun. Further historical meanings need their own supporting sources.",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "everyday_life": [
+      {
+        "title": "Food has regional roots",
+        "explanation": "Rice is an important part of many meals, but local ingredients and traditions vary.",
+        "why_it_matters": "Looking beyond one familiar dish reveals regional differences.",
+        "source_ids": [
+          "s1"
+        ]
+      },
+      {
+        "title": "Tradition and daily routines coexist",
+        "explanation": "Seasonal celebrations sit alongside modern working and family lives.",
+        "why_it_matters": "A country is not a single unchanging tradition.",
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "history_milestones": [
+      {
+        "date_label": "1603–1868",
+        "event": "The Edo period",
+        "significance": "This period provides context for urban cultural traditions and later change.",
+        "source_ids": [
+          "s1"
+        ]
+      },
+      {
+        "date_label": "1868",
+        "event": "The Meiji Restoration",
+        "significance": "A useful turning point for understanding major political and social changes.",
+        "source_ids": [
+          "s1"
+        ]
+      },
+      {
+        "date_label": "After 1945",
+        "event": "Postwar change",
+        "significance": "Reconstruction and social change help explain modern Japan.",
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "global_contributions": [
+      {
+        "title": "Stories cross borders",
+        "explanation": "Japanese literature and visual storytelling reach audiences in many countries.",
+        "why_it_matters": "Cultural influence travels through translation and adaptation.",
+        "source_ids": [
+          "s1"
+        ]
+      },
+      {
+        "title": "Transport becomes a shared idea",
+        "explanation": "Railway development offers one way to explore engineering and public life.",
+        "why_it_matters": "Transport connects technology with everyday experience.",
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "products_and_industries": [
+      {
+        "title": "Vehicles and engineering",
+        "explanation": "Motor vehicles are one important part of Japan’s industrial story.",
+        "why_it_matters": "An industry includes design, manufacturing and international supply chains.",
+        "source_ids": [
+          "s1"
+        ]
+      },
+      {
+        "title": "Craft and manufactured goods",
+        "explanation": "Local crafts and large-scale manufacturing represent different kinds of production.",
+        "why_it_matters": "A famous brand alone does not explain where every product is made.",
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "notable_places": [
+      {
+        "name": "Mount Fuji",
+        "kind": "natural",
+        "location": "Honshu",
+        "explanation": "A mountain with a strong presence in Japanese art and cultural life.",
+        "why_it_matters": "A natural landmark can also carry cultural meaning.",
+        "source_ids": [
+          "s1"
+        ]
+      },
+      {
+        "name": "Kyoto",
+        "kind": "city",
+        "location": "Kansai",
+        "explanation": "A city that offers ways to explore historical cultural traditions.",
+        "why_it_matters": "Places help connect history with the present.",
+        "source_ids": [
+          "s1"
+        ]
+      },
+      {
+        "name": "Local shopping streets",
+        "kind": "everyday",
+        "location": "Many towns and cities",
+        "explanation": "Everyday streets offer a different view from famous monuments.",
+        "why_it_matters": "Ordinary places are part of understanding a country too.",
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "notable_people": [
+      {
+        "name": "Katsushika Hokusai",
+        "field": "Visual art",
+        "connection": "A Japanese artist active during the Edo period.",
+        "contribution": "His prints include the widely recognised image often called The Great Wave.",
+        "context": "One artist’s work is a starting point, not a complete account of Japanese art.",
+        "source_ids": [
+          "s2"
+        ]
+      },
+      {
+        "name": "Yasunari Kawabata",
+        "field": "Literature",
+        "connection": "A Japanese writer.",
+        "contribution": "He received the Nobel Prize in Literature in 1968.",
+        "context": "Literature gives another route into a country’s cultural history.",
+        "source_ids": [
+          "s3"
+        ]
+      },
+      {
+        "name": "Naomi Osaka",
+        "field": "Sport",
+        "connection": "A tennis player born in Osaka who represents Japan.",
+        "contribution": "Her international tennis career connects Japan with a wider sporting audience.",
+        "context": "An individual’s life can cross countries and cultural backgrounds.",
+        "source_ids": [
+          "s4"
+        ]
+      }
+    ],
+    "surprising_facts": [
+      {
+        "title": "A country contains many local stories",
+        "explanation": "Regional landscapes and traditions differ within Japan.",
+        "why_it_matters": "A national overview should leave room for local detail.",
+        "source_ids": [
+          "s1"
+        ]
+      },
+      {
+        "title": "Art can change how a place is recognised",
+        "explanation": "Images of Mount Fuji travel far beyond the mountain itself.",
+        "why_it_matters": "Cultural works can shape worldwide recognition of a place.",
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "common_misunderstandings": [
+      {
+        "misunderstanding": "One city represents the whole country.",
+        "explanation": "Tokyo is an important starting point, but other regions offer different histories and daily experiences.",
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "knowledge_checks": [
+      {
+        "question": "Why does a country profile include ordinary places as well as famous landmarks?",
+        "answer": "Daily life also teaches us about a country.",
+        "explanation": "Monuments alone cannot describe how people live."
+      }
+    ],
+    "takeaways": [
+      "Locate Japan in relation to eastern Asia and the Pacific.",
+      "Look for regional differences within a national story.",
+      "Explore contributions through people, products and culture."
+    ],
+    "curiosity_questions": [
+      "How does island geography shape transport?",
+      "Which regional food tradition would you like to understand?"
+    ],
+    "related_topics": [
+      "Japan",
+      "Island geography",
+      "Japanese art"
+    ]
+  }
+}
