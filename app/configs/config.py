@@ -77,7 +77,7 @@ GEMINI_MODEL_NAME = "gemini-3.6-flash"
 
 # OpenAI / fallback generation
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
-OPENAI_MODEL_NAME = "gpt-5.6-luna"
+OPENAI_MODEL_NAME = "gpt-6-luna"
 
 # NVIDIA NIM / image generation
 NVIDIA_API_KEY = os.getenv("NVIDIA_API_KEY", "")
