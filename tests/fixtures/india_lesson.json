@@ -1,0 +1,196 @@
+{
+  "category": "india",
+  "topic": "Water, steps and the making of a stepwell",
+  "schema_version": "2.0",
+  "article_type": "india_lesson",
+  "headline_fact": "A stepwell brings a route down to water into the design of the well itself.",
+  "summary": "A stepwell combines a water source with a descending architectural space. This lesson follows the relationship between access, structure and meaning.",
+  "did_you_know": "An object can keep moving even when the net force is zero. Net force changes motion; it is not needed to maintain constant velocity.",
+  "core_mechanics": "A stepped route connects ground level with lower spaces around the water source.",
+  "why_it_matters": "Looking at the route helps us understand the design rather than seeing only a decorated hole in the ground.",
+  "in_depth_breakdown": {
+    "detailed_processes": [],
+    "real_world_application": "A trolley carrying more mass needs more net force to achieve the same acceleration.",
+    "fascinating_trivia": []
+  },
+  "common_misconceptions": [],
+  "learning_takeaways": [
+    "Follow the route, not only the well shaft.",
+    "Separate a building’s historical purpose from its present use."
+  ],
+  "emoji_icon": "",
+  "difficulty_level": "beginner",
+  "region": "Gujarat, India",
+  "fun_rating": 8,
+  "read_time_seconds": 480,
+  "tags": [
+    "India",
+    "architecture",
+    "water"
+  ],
+  "related_categories": [
+    "science",
+    "mathematics"
+  ],
+  "visual_suggestions": {
+    "cover": "Editorial illustration of a Gujarat stepwell, with a descending stone corridor, quiet left third and no writing. Clearly a reconstruction, not documentary evidence.",
+    "overview": "Overview illustration showing a stepped route to a lower water source, with the path centered, no text and a different viewpoint from the cover."
+  },
+  "share_text": "Explore one idea behind Indian stepwells.",
+  "content_freshness": "evergreen",
+  "sources": [
+    {
+      "id": "s1",
+      "title": "UNESCO: Rani-ki-Vav at Patan, Gujarat",
+      "url": "https://whc.unesco.org/en/list/922/"
+    }
+  ],
+  "claim_citations": [],
+  "sources_or_references": [],
+  "generated_at": "2026-10-30T10:00:00Z",
+  "image_details": [
+    {
+      "slot": "overview",
+      "placement": "overview",
+      "alt": "An illustration of the relationship between a stepped route and a water source",
+      "caption": "Illustration: a stepped route makes the lower part of a well accessible.",
+      "learning_purpose": "Summarize the relationship between access and the water source."
+    }
+  ],
+  "india_lesson": {
+    "theme": "heritage",
+    "question": "How does a stepwell turn a water source into a place people can enter?",
+    "learning_goal": "Learn to read one water structure through its route, its parts and its meaning.",
+    "central_idea": "A stepwell joins the water source to an architectural route. At Rani-ki-Vav, this arrangement also carries artistic, religious and commemorative meaning.",
+    "region": "Patan, Gujarat, with wider stepwell traditions across the subcontinent",
+    "period": "Rani-ki-Vav: 11th century CE; historical water use and present heritage context",
+    "opening_story": {
+      "title": "Look beyond the edge of the well",
+      "story": "Imagine studying a photograph of a deep stone structure. At first, you notice its repeated steps. Then you see that the steps form a route through the space. This is an illustrative viewing exercise, not a historical eyewitness account.",
+      "question": "What changes when you think of the structure as a route as well as a water source?",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "background": {
+      "explanation": "A stepwell is an underground water structure with a stepped architectural arrangement. The example here is Rani-ki-Vav in Gujarat. Its specific history helps us explore one design idea without treating all Indian water structures as identical.",
+      "key_terms": [
+        {
+          "term": "Shaft",
+          "meaning": "The deep well opening, distinct from the route and surrounding spaces."
+        },
+        {
+          "term": "Pavilion",
+          "meaning": "A built space that forms part of the architectural arrangement."
+        }
+      ],
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "chapters": [
+      {
+        "id": "route",
+        "title": "Start with the route down",
+        "explanation": "Begin by looking for the route from ground level into the structure. A stepwell makes that route part of the architecture. The lower spaces are connected to the surface through steps rather than being visible only from the edge of a shaft.\n\nFor this reading exercise, trace where a person could stand, turn and descend. This is a way to understand the layout. It does not establish how visitors may use the protected monument today.",
+        "details": [
+          "The route and the water source are different parts of the design.",
+          "An access route can be studied without assuming that the well still functions."
+        ],
+        "example": "Illustrative exercise: sketch a path down the page, then mark the water source separately. The two marks explain different jobs.",
+        "why_it_matters": "Following a route gives each space a role. It helps turn a complicated view into a layout you can explain.",
+        "source_ids": [
+          "s1"
+        ]
+      },
+      {
+        "id": "parts",
+        "title": "See how the parts fit together",
+        "explanation": "At Rani-ki-Vav, a stepped corridor, pavilions, a tank and a well shaft form a connected arrangement. These names identify different parts of the same place. A corridor provides a route. A pavilion is a built space along that arrangement.\n\nLook at a photograph in two passes. First, identify the large spaces. Then look at the carved surfaces. This keeps the detail from hiding the layout.",
+        "details": [
+          "A tank and a shaft should not be treated as the same feature.",
+          "The whole arrangement matters as well as each individual part."
+        ],
+        "example": "Illustrative exercise: describe a building first by its rooms and routes, then by its decoration. Apply the same order to a stepwell.",
+        "why_it_matters": "A clear order of observation makes unfamiliar architecture easier to read.",
+        "source_ids": [
+          "s1"
+        ]
+      },
+      {
+        "id": "meaning",
+        "title": "Water architecture can carry meaning",
+        "explanation": "Rani-ki-Vav joins a functional water structure with a religious and commemorative purpose. Its decoration belongs to that broader design. Understanding the site therefore requires more than explaining access to water.\n\nKeep those roles separate before connecting them. Ask what the layout does, what the decoration expresses and why this particular structure was built. A different stepwell can have a different history.",
+        "details": [
+          "A practical role does not exclude an artistic or religious one.",
+          "One monument does not represent every place or period in India."
+        ],
+        "example": "Illustrative comparison: a bridge may provide a crossing and also serve as a memorial. Those roles answer different questions.",
+        "why_it_matters": "Separating the roles prevents a single explanation from flattening a complex place.",
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "case_study": {
+      "title": "A closer look at Rani-ki-Vav",
+      "place": "Patan, Gujarat",
+      "story": "UNESCO describes Rani-ki-Vav as an 11th-century memorial that combines water architecture with a temple-like design. Its corridor, pavilions, tank and shaft belong to one connected arrangement. The carvings add another layer to the experience of moving through that space.",
+      "what_it_shows": "The example connects access, structure and meaning. It also shows why a site’s individual history matters.",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "timeline": [],
+    "wider_connections": {
+      "explanation": "This way of looking can help with other structures. Begin with the practical task, then trace the spaces and routes that support it. Add the historical and cultural context afterward.",
+      "examples": [
+        "Ask how a building’s route relates to its purpose.",
+        "Separate original use from current use."
+      ],
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "nuances": [
+      {
+        "idea": "An old water structure is not automatically a working water source today",
+        "clarification": "UNESCO notes that Rani-ki-Vav no longer functions as a water well. Its surviving architecture remains valuable for understanding its earlier design.",
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "photos": [
+      {
+        "id": "route-photo",
+        "section_id": "route",
+        "subject": "Rani ki Vav",
+        "kind": "place",
+        "query": "Rani ki Vav Patan India steps"
+      },
+      {
+        "id": "case-photo",
+        "section_id": "case-study",
+        "subject": "Rani ki Vav",
+        "kind": "place",
+        "query": "Rani ki Vav Patan India pavilions"
+      }
+    ],
+    "knowledge_checks": [
+      {
+        "question": "Why distinguish the route from the shaft?",
+        "answer": "They describe different parts of the arrangement.",
+        "explanation": "The shaft identifies the well opening. The route explains how the surrounding space connects to lower levels."
+      }
+    ],
+    "takeaways": [
+      "Follow the route, not only the well shaft.",
+      "Separate a building’s historical purpose from its present use."
+    ],
+    "related_topics": [
+      "Water architecture in Gujarat",
+      "Reading a historic building"
+    ]
+  }
+}

@@ -76,4 +76,5 @@ def normalize_evidence(fact):
     normalize_lesson_links(fact.get('constitution_lesson'))
     normalize_lesson_links(fact.get('indian_law_lesson'))
     normalize_lesson_links(fact.get('country_profile'))
+    normalize_lesson_links(fact.get('india_lesson'))
     return fact

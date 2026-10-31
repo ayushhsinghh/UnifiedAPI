@@ -24,6 +24,9 @@ Set legacy supporting_image to null in category lessons. Use image_details for t
 
 
 def validate_image_plan(fact, myth=None):
+    if fact.get('article_type') == 'india_lesson':
+        from .india import validate_india_images
+        return validate_india_images(fact)
     if fact.get('article_type') == 'country_profile':
         from .country import validate_country_images
         return validate_country_images(fact)

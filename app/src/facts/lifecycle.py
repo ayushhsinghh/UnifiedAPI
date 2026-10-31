@@ -13,6 +13,9 @@ def expected_image_keys(visual_suggestions):
 
 def fact_image_keys(fact):
     keys=expected_image_keys(fact.get('visual_suggestions',{}))
+    if fact.get('article_type')=='india_lesson':
+        from src.facts.india import india_photo_entries, india_carousel_keys
+        return [key for key in ('cover','overview') if fact.get('visual_suggestions',{}).get(key)] + [p['key'] for p in india_photo_entries(fact)] + india_carousel_keys(fact)
     if fact.get('article_type')=='country_profile' and fact.get('country_media',{}).get('photo_layout') in ('contextual_v1','contextual_v2'):
         from src.facts.country_photos import country_scene_plan
         keys=list(dict.fromkeys(keys+list(country_scene_plan(fact.get('country_profile',{}),extended=fact['country_media']['photo_layout']=='contextual_v2'))))
