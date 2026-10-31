@@ -1,0 +1,325 @@
+{
+  "category": "technology",
+  "topic": "Home Wi-Fi and the internet",
+  "schema_version": "2.0",
+  "article_type": "technology_lesson",
+  "headline_fact": "Wi-Fi connects your device to a local network; reaching a website needs a wider path.",
+  "summary": "Follow a page request from a phone through a home router and towards a remote service.",
+  "did_you_know": "A working local connection does not establish that every remote service is reachable.",
+  "core_mechanics": "A local radio link carries data between a device and an access point. Other network links carry it onwards.",
+  "why_it_matters": "Separating the local link from the wider path helps explain everyday connection problems.",
+  "in_depth_breakdown": {
+    "detailed_processes": [],
+    "real_world_application": "A trolley carrying more mass needs more net force to achieve the same acceleration.",
+    "fascinating_trivia": []
+  },
+  "common_misconceptions": [],
+  "learning_takeaways": [
+    "Separate the local wireless link from the wider network path.",
+    "One connection indicator does not describe the whole system."
+  ],
+  "emoji_icon": "",
+  "difficulty_level": "beginner",
+  "region": "Global",
+  "fun_rating": 8,
+  "read_time_seconds": 480,
+  "tags": [
+    "technology",
+    "networks",
+    "everyday systems"
+  ],
+  "related_categories": [
+    "science"
+  ],
+  "visual_suggestions": {
+    "cover": "Conceptual editorial illustration of a home network with a phone and router; quiet left for title, no labels, logos or fake screen text.",
+    "overview": "Conceptual illustration distinguishing a local wireless link from a wider network connection, no text."
+  },
+  "share_text": "Discover the difference between Wi-Fi and the wider internet path.",
+  "content_freshness": "evergreen",
+  "sources": [
+    {
+      "id": "s1",
+      "title": "Demonstration source — example content for layout testing",
+      "url": "https://example.org/technology-demo"
+    }
+  ],
+  "claim_citations": [],
+  "sources_or_references": [],
+  "generated_at": "2026-10-31T10:00:00Z",
+  "image_details": [
+    {
+      "slot": "overview",
+      "placement": "overview",
+      "alt": "Conceptual illustration of local and wider network connections",
+      "caption": "Illustration: one local link is part of a wider exchange.",
+      "learning_purpose": "Distinguish the local radio connection from the onward network path."
+    }
+  ],
+  "content_hash": "technology-preview",
+  "technology_lesson": {
+    "subject_type": "network",
+    "identity": {
+      "name": "Home Wi-Fi and the internet",
+      "domain": "Networking",
+      "scope": "A simplified home-network example",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "version_context": null,
+    "hook": "Wi-Fi connects your device to a local network; reaching a website needs a wider path.",
+    "question": "Why can Wi-Fi be connected while a website still does not open?",
+    "learning_goal": "Follow the local link and the wider network path as separate parts of one familiar experience.",
+    "opening_scenario": {
+      "title": "A connected symbol, but no page",
+      "experience": "You open a browser and request a page. The device shows a Wi-Fi connection, but the page is not available. The symbol tells you something about one part of the path, not every part.",
+      "question": "Which part of the connection does the symbol describe?",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "problem": {
+      "what_is_hard": "A remote page depends on several systems working together. A single connection indicator cannot explain the state of the whole path.",
+      "why_it_matters": "Separating those responsibilities makes the technology easier to understand without treating one symptom as a complete diagnosis.",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "central_idea": "A local radio link carries data between a device and an access point. Other network links carry it onwards.",
+    "system_model": {
+      "inputs": [
+        {
+          "id": "request",
+          "name": "Page request",
+          "explanation": "A request for content from a remote service.",
+          "source_ids": [
+            "s1"
+          ]
+        }
+      ],
+      "components": [
+        {
+          "id": "phone",
+          "name": "Your phone",
+          "role": "The browser prepares a request. The device exchanges data over its local wireless connection.",
+          "source_ids": [
+            "s1"
+          ]
+        },
+        {
+          "id": "router",
+          "name": "Home router",
+          "role": "A typical home device combines a Wi-Fi access point, which connects local wireless devices, with routing functions that send traffic onwards.",
+          "source_ids": [
+            "s1"
+          ]
+        },
+        {
+          "id": "server",
+          "name": "Remote service",
+          "role": "A remote system handles the request and sends response data back through the network.",
+          "source_ids": [
+            "s1"
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "id": "page",
+          "name": "Returned page data",
+          "explanation": "Response data that the browser can use to present the requested content.",
+          "source_ids": [
+            "s1"
+          ]
+        }
+      ]
+    },
+    "walkthrough": [
+      {
+        "id": "prepare",
+        "title": "The device prepares a request",
+        "component_ids": [
+          "request",
+          "phone"
+        ],
+        "what_happens": "The browser asks for remote content, and the device prepares data to send through its network connection.",
+        "what_changes": "A user action becomes data that the network can carry.",
+        "source_ids": [
+          "s1"
+        ]
+      },
+      {
+        "id": "local",
+        "title": "The local wireless link carries data",
+        "component_ids": [
+          "phone",
+          "router"
+        ],
+        "what_happens": "The phone exchanges data with the home access point using radio signals. This is the local Wi-Fi part of the example.",
+        "what_changes": "The request moves from the device into the local network.",
+        "source_ids": [
+          "s1"
+        ]
+      },
+      {
+        "id": "remote",
+        "title": "The wider network path matters too",
+        "component_ids": [
+          "router",
+          "server",
+          "page"
+        ],
+        "what_happens": "Other network equipment carries the request onwards. A remote service can return data along a network path. The browser still depends on that wider exchange.",
+        "what_changes": "The local request can become a remote exchange, followed by returned data.",
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "diagram": {
+      "type": "flow",
+      "title": "One request, two different parts of the path",
+      "caption": "A simplified path. The local radio link and the wider network exchange have different responsibilities.",
+      "description": "The phone exchanges data with a home router over a local radio link. Other networks connect the home network with a remote service. Return arrows show that data also comes back.",
+      "assumptions": [
+        "Other network equipment is omitted from this overview.",
+        "The home device combines an access point with routing functions."
+      ],
+      "node_ids": [
+        "phone",
+        "router",
+        "server"
+      ],
+      "connections": [
+        {
+          "from_id": "phone",
+          "to_id": "router",
+          "label": "Local radio link",
+          "what_moves": "Request data"
+        },
+        {
+          "from_id": "router",
+          "to_id": "phone",
+          "label": "Local return link",
+          "what_moves": "Returned page data"
+        },
+        {
+          "from_id": "router",
+          "to_id": "server",
+          "label": "Through other networks",
+          "what_moves": "Request data"
+        },
+        {
+          "from_id": "server",
+          "to_id": "router",
+          "label": "Network return path",
+          "what_moves": "Response data"
+        }
+      ],
+      "layers": [],
+      "comparison_basis": null,
+      "comparisons": [],
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "worked_example": {
+      "title": "A page request in a home network",
+      "kind": "illustrative",
+      "starting_conditions": [
+        "The phone has joined the home wireless network.",
+        "The example uses a remote page rather than a local file."
+      ],
+      "actions": [
+        "The browser requests content from the remote service.",
+        "The phone exchanges request data over its local Wi-Fi link.",
+        "The home network and other systems carry data onwards if the required path is available."
+      ],
+      "outcome": "The local wireless exchange can work even when the requested remote content is unavailable.",
+      "explanation": "The connection indicator concerns one part of the system. It does not establish that the remote service, name lookup and every intervening network link work.",
+      "limits": [
+        "This example does not diagnose a particular device or reproduce a real request.",
+        "Real network paths contain more equipment and protocols than this overview shows."
+      ],
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "tradeoffs": [
+      {
+        "benefit": "Move without a network cable",
+        "cost": "A radio link depends on conditions such as distance, obstacles and competing use.",
+        "when_it_matters": "The same device can behave differently in different parts of a home.",
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "failure_modes": [
+      {
+        "symptom": "Connected to Wi-Fi, but remote content is unavailable",
+        "cause": "One possibility is that the local link works while some other part of the path is unavailable.",
+        "what_it_shows": "The symptom alone does not identify the failed component.",
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "practical_implications": [
+      {
+        "title": "Read indicators within their scope",
+        "explanation": "A local connection indicator and the availability of a remote page describe different parts of the experience. Understanding that distinction helps you ask a more precise question.",
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "misconceptions": [
+      {
+        "belief": "Wi-Fi and the internet mean the same connection",
+        "correction": "Wi-Fi describes a local wireless connection; the wider network path is a separate part of the system.",
+        "explanation": "A device can exchange data locally without establishing that a remote internet service is reachable.",
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "optional_depth": [
+      {
+        "title": "What the radio link carries",
+        "explanation": "Data is represented through changes in a radio signal. The exact methods depend on the wireless standard and equipment; this lesson does not model those details.",
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "knowledge_checks": [
+      {
+        "question": "Does a Wi-Fi connection prove that a remote website is available?",
+        "answer": "No. It describes a local connection, not the complete remote path.",
+        "explanation": "The remote exchange depends on other systems beyond the local radio link."
+      }
+    ],
+    "takeaways": [
+      "Separate the local wireless link from the wider network path.",
+      "One connection indicator does not describe the whole system."
+    ],
+    "related_topics": [
+      "QR codes",
+      "Solid-state storage"
+    ],
+    "photos": [
+      {
+        "id": "hardware",
+        "section_id": "system",
+        "kind": "hardware",
+        "component_id": "router",
+        "subject": "Wireless router",
+        "queries": [
+          "wireless router"
+        ]
+      }
+    ]
+  }
+}

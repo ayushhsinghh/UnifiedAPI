@@ -74,10 +74,9 @@ CATEGORY_HINTS: Dict[str, str] = {
         "Indian kingdoms' contributions to art, post-independence modernization"
     ),
     "technology": (
-        "fundamental technologies that run the modern world, amusing and bizarre tech inventions, "
-        "latest cutting-edge breakthroughs shaping the future (AI, quantum computing, robotics), "
-        "historical tech milestones, the hidden engineering behind everyday devices, "
-        "future tech concepts and theoretical engineering, the evolution of the internet"
+        "Accessible global technologies behind familiar actions and devices; system parts, "
+        "information/energy/material flows, concrete examples, practical tradeoffs and limits; "
+        "stable concepts in computing, networks, hardware and manufacturing"
     ),
     "science": (
         "CV Raman & Raman Effect, Homi Bhabha & nuclear program, "

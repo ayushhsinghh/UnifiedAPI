@@ -49,7 +49,7 @@ from src.facts.visual_prompts import IMAGE_SECTION_BRIEFS, build_section_image_c
 from src.facts.country_photos import find_country_photos, find_subject_photo, country_scene_queries, country_scene_plan
 from src.facts.country_media_plan import country_photo_entries
 from src.facts.unsplash_photos import track_selection
-from src.facts.photo_ranking import select_india_photos,select_country_photos,select_food_photos,select_fashion_photos,select_geography_photos,PhotoRankingUnavailable
+from src.facts.photo_ranking import select_india_photos,select_country_photos,select_food_photos,select_fashion_photos,select_geography_photos,select_technology_photos,PhotoRankingUnavailable
 from src.facts.image_generator import generate_and_save_image
 
 logger = logging.getLogger(__name__)
@@ -182,6 +182,7 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
     is_food = (article or {}).get('article_type') == 'food_lesson'
     is_fashion = (article or {}).get('article_type') == 'fashion_lesson'
     is_geography = (article or {}).get('article_type') == 'geography_lesson'
+    is_technology = (article or {}).get('article_type') == 'technology_lesson'
     is_country = (article or {}).get('article_type') == 'country_profile'
     ranked_country=is_country and (article or {}).get('country_media',{}).get('photo_ranking_version')==1
     country = (article or {}).get('country_profile') if is_country else None
@@ -265,7 +266,7 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
             )
             if url:
                 images[key] = url
-            if hybrid or is_india or is_food or is_fashion or is_geography:
+            if hybrid or is_india or is_food or is_fashion or is_geography or is_technology:
                 detail=next((d for d in (article or {}).get('image_details',[]) if d.get('slot')==key),{})
                 subject=(article or {}).get('topic') or (country or {}).get('identity',{}).get('name','the topic')
                 credit={'kind':'generated','url':url,'title':detail.get('caption') or f"Illustration of {subject}",
@@ -298,7 +299,7 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
     tasks = []
     for key, brief in IMAGE_SECTION_BRIEFS.items():
         if photos_only:continue
-        if (is_india or is_food or is_fashion or is_geography) and key not in ('cover','overview'):continue
+        if (is_india or is_food or is_fashion or is_geography or is_technology) and key not in ('cover','overview'):continue
         if key in expanded_scenes:continue
         if is_country and key not in {'cover','overview','how_it_works','explanation_2','explanation_3','explanation_4','explanation_5','explanation_6'}:
             continue
@@ -311,14 +312,15 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
                 build_section_image_context(key, article),
             ))
 
-    if is_food or is_fashion or is_geography:
+    if is_food or is_fashion or is_geography or is_technology:
         from src.facts.food import food_photo_entries
         from src.facts.fashion import fashion_photo_entries
         from src.facts.geography import geography_photo_entries
-        prefix='geography' if is_geography else 'fashion' if is_fashion else 'food'
-        select_photos={'food':select_food_photos,'fashion':select_fashion_photos,'geography':select_geography_photos}[prefix]
+        from src.facts.technology import technology_photo_entries
+        prefix='technology' if is_technology else 'geography' if is_geography else 'fashion' if is_fashion else 'food'
+        select_photos={'food':select_food_photos,'fashion':select_fashion_photos,'geography':select_geography_photos,'technology':select_technology_photos}[prefix]
         async def process_editorial_photos():
-            entries={'food':food_photo_entries,'fashion':fashion_photo_entries,'geography':geography_photo_entries}[prefix](article)
+            entries={'food':food_photo_entries,'fashion':fashion_photo_entries,'geography':geography_photo_entries,'technology':technology_photo_entries}[prefix](article)
             keys=[p['key'] for p in entries]+[f'{prefix}_scene_{n}' for n in range(6)]
             state={}
             def report(value):
@@ -337,6 +339,7 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
                         photo.update(section_id=item['section_id'],photo_id=item['id']);key=item['key']
                         if is_fashion:photo['feature_id']=item.get('feature_id')
                         if is_geography:photo['location_id']=item.get('location_id')
+                        if is_technology:photo['component_id']=item.get('component_id')
                     elif len(extras)<6:
                         key=f'{prefix}_scene_{len(extras)}';photo[prefix+'_carousel']=True;extras.append(photo)
                     else:continue

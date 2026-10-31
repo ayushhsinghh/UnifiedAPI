@@ -147,6 +147,12 @@ def build_section_image_context(key, article=None):
             if value:
                 text = value if isinstance(value, str) else json.dumps(value, ensure_ascii=False)
                 excerpt[field] = text[:4000]
+        if article.get('article_type') == 'technology_lesson':
+            lesson=article.get('technology_lesson') or {}
+            excerpt['technology_context']={field:lesson.get(field) for field in ('identity','central_idea','system_model','walkthrough')}
+            lines.append('Technology conceptual illustration: preserve the actual system roles. No fake UI, '
+                'logos, benchmark data, circuit labels or measurements. This is not a documented product photograph '
+                'or software screenshot. The browser renders structured system diagrams separately.')
         if article.get('article_type') == 'geography_lesson':
             lesson=article.get('geography_lesson') or {}
             excerpt['geography_context']={field:lesson.get(field) for field in ('identity','opening_observation','central_idea','explanation_steps')}
