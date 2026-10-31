@@ -46,12 +46,14 @@ class GeminiWorkerSupervisor:
         process = self.process
         if process is None:
             return
+        logger.info('Stopping Gemini translation worker: pid=%s', process.pid)
         # Include ffmpeg and subtitle subprocesses in shutdown, even if the
         # worker has already exited. Each worker owns its own process group.
         self._signal_group(process.pid, signal.SIGTERM)
         try:
             await asyncio.wait_for(process.wait(), timeout=self.stop_seconds)
         except asyncio.TimeoutError:
+            logger.warning('Gemini worker shutdown timed out; killing process group: pid=%s', process.pid)
             self._signal_group(process.pid, signal.SIGKILL)
             await process.wait()
         finally:

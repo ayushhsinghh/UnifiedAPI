@@ -9,15 +9,19 @@ Sets up:
 
 import logging
 import logging.config
+from pathlib import Path
 
 from configs.config import get_config
 
 cfg = get_config()
 
 
-def setup_logging() -> None:
+def setup_logging(file_suffix="") -> None:
     """Configure logging once at application startup."""
     handlers = ["console", "app_log_handler", "error_log_handler"]
+    def log_path(filename):
+        path = Path(filename)
+        return str(path.with_name(path.stem + file_suffix + path.suffix)) if file_suffix else filename
     
     logging_handlers = {
         "console": {
@@ -29,7 +33,7 @@ def setup_logging() -> None:
             "class": "logging.handlers.RotatingFileHandler",
             "level": "DEBUG",
             "formatter": "default",
-            "filename": cfg.LOG_FILE_APP,
+            "filename": log_path(cfg.LOG_FILE_APP),
             "maxBytes": cfg.LOG_MAX_BYTES,
             "backupCount": cfg.LOG_BACKUP_COUNT,
             "encoding": "utf8",
@@ -38,7 +42,7 @@ def setup_logging() -> None:
             "class": "logging.FileHandler",
             "level": "ERROR",
             "formatter": "default",
-            "filename": cfg.LOG_FILE_ERRORS,
+            "filename": log_path(cfg.LOG_FILE_ERRORS),
             "encoding": "utf8",
         },
     }

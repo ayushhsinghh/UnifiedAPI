@@ -1,8 +1,12 @@
 """Paced, finite Live Translate sessions. Nothing is committed on a failed attempt."""
 import asyncio
+import logging
 import wave
 
 from .gemini_media import IN_RATE, OUT_RATE, MediaError, write_pcm
+from .gemini_logging import event
+
+logger = logging.getLogger(__name__)
 
 
 def offset_seconds(value):
@@ -37,13 +41,17 @@ async def translate_section(source, start, end, target_language, raw_path, api_k
     duration = (end - start) / IN_RATE
 
     try:
+        event(logger, 'live_connect_started', model=model, target_language=target_language,
+              source_seconds=duration, timeout_seconds=duration + 180)
         async with client.aio.live.connect(model=model, config=config) as session:
+            event(logger, 'live_connected')
             async def send():
                 clock = asyncio.get_running_loop()
                 deadline = clock.time()
                 with wave.open(str(source), 'rb') as audio:
                     audio.setpos(start)
                     remaining = end - start
+                    next_progress = 10 * IN_RATE
                     while remaining:
                         size = min(1600, remaining)
                         data = audio.readframes(size)
@@ -54,8 +62,14 @@ async def translate_section(source, start, end, target_language, raw_path, api_k
                         await session.send_realtime_input(audio=types.Blob(data=data, mime_type='audio/pcm;rate=16000'))
                         deadline += size / IN_RATE
                         remaining -= size
+                        sent = end - start - remaining
+                        if sent >= next_progress:
+                            event(logger, 'live_input_progress', sent_seconds=sent / IN_RATE,
+                                  total_seconds=duration, output_bytes=len(output))
+                            next_progress += 10 * IN_RATE
                 await session.send_realtime_input(audio_stream_end=True)
                 flushed.set()
+                event(logger, 'live_input_complete_draining_output', sent_seconds=duration)
 
             async def receive():
                 while True:
@@ -81,6 +95,8 @@ async def translate_section(source, start, end, target_language, raw_path, api_k
                             for part in content.model_turn.parts or []:
                                 inline = part.inline_data
                                 if inline and inline.data:
+                                    if not output:
+                                        event(logger, 'live_first_audio_received')
                                     mime = inline.mime_type or ''
                                     if not mime.startswith('audio/pcm') or ('rate=' in mime and 'rate=24000' not in mime):
                                         raise MediaError('Live translation returned an unsupported audio format.')
@@ -89,6 +105,9 @@ async def translate_section(source, start, end, target_language, raw_path, api_k
                                         raise MediaError('Live translation exceeded the section output limit.')
                         # A flushed final turn is required. Never treat a quiet network as completion.
                         if flushed.is_set() and content.turn_complete:
+                            event(logger, 'live_output_drained', output_bytes=len(output),
+                                  output_seconds=len(output) / (OUT_RATE * 2),
+                                  transcript_segments=len(transcripts))
                             return
                     if not received:
                         raise MediaError('Live session closed before final output completion.')
@@ -105,6 +124,7 @@ async def translate_section(source, start, end, target_language, raw_path, api_k
         if not output:
             raise MediaError('Gemini returned no translated audio for this section.')
         write_pcm(raw_path, bytes(output))
+        event(logger, 'live_audio_saved', output_samples=len(output) // 2)
         return {'input_transcript': ''.join(input_transcripts), 'transcripts': transcripts}
     finally:
         await client.aio.aclose()

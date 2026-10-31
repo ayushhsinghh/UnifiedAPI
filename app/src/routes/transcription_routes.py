@@ -257,4 +257,5 @@ def retry_gemini_job(request: Request, job_id: str, current_user: dict = Depends
         raise HTTPException(503, 'Gemini audio translation is not enabled.')
     if not gemini_repo.retry(job_id, current_user['email']):
         raise HTTPException(409, 'Only failed or cancelled jobs can be retried.')
+    logger.info('Gemini job_retry_queued job=%s completed_sections=%d', job_id, len(job.get('sections', [])))
     return {'job_id': job_id, 'status': 'pending'}

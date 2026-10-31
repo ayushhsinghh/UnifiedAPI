@@ -2,13 +2,18 @@
 import asyncio
 import array
 import json
+import logging
 import math
 import os
 import shutil
 import sys
+import time
 import wave
 from fractions import Fraction
 from pathlib import Path
+from .gemini_logging import event, redact
+
+logger = logging.getLogger(__name__)
 
 IN_RATE = 16000
 OUT_RATE = 24000
@@ -19,6 +24,9 @@ class MediaError(Exception):
 
 
 async def command(*args):
+    tool = Path(str(args[0])).name
+    started = time.monotonic()
+    event(logger, 'media_command_started', tool=tool)
     process = await asyncio.create_subprocess_exec(*map(str, args), stdout=asyncio.subprocess.PIPE,
                                                    stderr=asyncio.subprocess.PIPE)
     try:
@@ -29,8 +37,18 @@ async def command(*args):
         await process.wait()
         raise
     if process.returncode:
-        # Do not log filenames, signed URLs, or entire provider/process output.
+        diagnostic = stderr.decode('utf-8', errors='replace')
+        # Keep useful ffmpeg diagnostics without source filenames or signed URLs.
+        for arg in args[1:]:
+            value = str(arg)
+            if os.path.isabs(value):
+                diagnostic = diagnostic.replace(value, '[FILE]')
+        event(logger, 'media_command_failed', level=logging.ERROR, tool=tool,
+              exit_code=process.returncode, elapsed_seconds=round(time.monotonic() - started, 3),
+              stderr=redact(diagnostic)[-4096:])
         raise MediaError(f'{Path(str(args[0])).name} failed (exit {process.returncode}).')
+    event(logger, 'media_command_completed', tool=tool,
+          elapsed_seconds=round(time.monotonic() - started, 3))
     return stdout
 
 

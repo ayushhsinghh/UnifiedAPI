@@ -367,7 +367,16 @@ class WorkerTests(unittest.IsolatedAsyncioTestCase):
                 if seconds in (2, 5): return
                 await original_sleep(seconds)
             with patch.object(worker.asyncio, 'sleep', side_effect=fast_sleep):
-                await worker.run_claimed(job, translate)
+                with self.assertLogs('src.transcription', level='INFO') as logs:
+                    await worker.run_claimed(job, translate)
+        output = '\n'.join(logs.output)
+        self.assertEqual(output.count('Gemini translation_attempt_failed '), 3)
+        self.assertIn('job=' + job['job_id'], output)
+        self.assertIn('stage=translation section=1 attempt=3', output)
+        self.assertIn('ConnectionError: private provider failure', output)
+        self.assertIn('Traceback (most recent call last)', output)
+        self.assertIn('Gemini processing_failed', output)
+        self.assertIn('Gemini job_failure_saved', output)
         failed = self.db.jobs.find_one({'job_id': job['job_id']})
         self.assertEqual(failed['status'], 'failed')
         self.assertEqual(failed['sections'], [])
