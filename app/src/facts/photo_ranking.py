@@ -89,11 +89,14 @@ async def rank_photos(fact,photos,*,client=None,report=lambda state:None):
     finally:
         if owned:await client.close()
 
-async def select_india_photos(fact,*,report=lambda state:None,fetch=None,rank=None,excluded=()):
+async def select_india_photos(fact,*,report=lambda state:None,fetch=None,rank=None,excluded=(),fallback_fetch=None):
     primary=india_carousel_queries(fact)
     variants=[q for query in primary for q in india_carousel_searches(query,fact)]
     queries=list(dict.fromkeys([*primary,*variants]))[:12]
-    return await _select_photos(fact,queries,report=report,fetch=fetch,rank=rank,excluded=excluded)
+    if fetch is None and fallback_fetch is None:
+        from .country_photos import ranking_candidates as fallback_fetch
+    return await _select_photos(fact,queries,report=report,fetch=fetch,rank=rank,excluded=excluded,
+        fallback_fetch=fallback_fetch,fallback_queries=queries)
 
 def country_ranking_queries(fact):
     profile=fact.get('country_profile',{});name=profile.get('identity',{}).get('name','')
@@ -107,29 +110,47 @@ def country_ranking_queries(fact):
 async def select_country_photos(fact,*,report=lambda state:None,fetch=None,rank=None,excluded=()):
     return await _select_photos(fact,country_ranking_queries(fact),report=report,fetch=fetch,rank=rank,excluded=excluded)
 
-async def _select_photos(fact,queries,*,report,fetch=None,rank=None,excluded=()):
+async def _select_photos(fact,queries,*,report,fetch=None,rank=None,excluded=(),fallback_fetch=None,fallback_queries=()):
     if fetch is None:
         from .unsplash_photos import ranking_candidates
         fetch=ranking_candidates
     rank=rank or rank_photos
     pool={};sources=set(excluded);selected=[]
     semaphore=asyncio.Semaphore(3)
-    async def collect(query):
+    async def collect(query,source):
         async with semaphore:
-            try:return await asyncio.wait_for(fetch(query),timeout=15)
+            try:return await asyncio.wait_for(source(query),timeout=15)
             except Exception:return []
+    def merge(results,prioritize=False):
+        nonlocal pool
+        incoming={}
+        for photos in results:
+            for photo in photos:
+                if photo['source_url'] in sources or photo['provider_id'] in pool or photo['provider_id'] in incoming:continue
+                sources.add(photo['source_url']);incoming[photo['provider_id']]=photo
+        pool=dict(list(({**incoming,**pool} if prioritize else {**pool,**incoming}).items())[:240])
+    def progress(status,**extra):
+        report({'status':status,'candidate_count':len(pool),
+            'provider_counts':{p:sum(v.get('provider')==p for v in pool.values()) for p in ('unsplash','wikimedia')},**extra})
     # Widen the search once when the first batch cannot supply ten relevant photos.
     for start in (0,6):
         batch=queries[start:start+6]
         if not batch:break
         report({'status':'collecting','searches':start+len(batch)})
-        results=await asyncio.gather(*(collect(q) for q in batch))
-        for photos in results:
-            for photo in photos:
-                if len(pool)>=240:break
-                if photo['source_url'] in sources or photo['provider_id'] in pool:continue
-                sources.add(photo['source_url']);pool[photo['provider_id']]=photo
+        results=await asyncio.gather(*(collect(q,fetch) for q in batch))
+        merge(results);progress('collecting',searches=start+len(batch))
         if len(pool)<MIN_PHOTOS:continue
         selected=await rank(fact,list(pool.values())[:240],report=report)
         if len(selected)>=MIN_PHOTOS:return selected[:MAX_PHOTOS]
+    if fallback_fetch:
+        # Commons often covers named crafts that stock-photo providers do not.
+        # It supplies candidates, not an unchecked or popularity-based filler set.
+        progress('collecting',source='wikimedia')
+        merge(await asyncio.gather(*(collect(q,fallback_fetch) for q in fallback_queries[:12])),prioritize=True)
+        progress('collecting',source='wikimedia')
+        if len(pool)>=MIN_PHOTOS:
+            selected=await rank(fact,list(pool.values()),report=report)
+            if len(selected)>=MIN_PHOTOS:return selected[:MAX_PHOTOS]
+    progress('insufficient',relevant_count=len(selected),minimum=MIN_PHOTOS,
+        reason='not_enough_relevant_metadata' if pool else 'no_candidates')
     return []

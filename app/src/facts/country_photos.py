@@ -195,6 +195,38 @@ def _lookup_subject_queries(country,subject,kind,queries):
 async def find_subject_photo(country, subject, kind, queries=None):
     return await asyncio.to_thread(_lookup_subject_queries,country,subject,kind,queries)
 
+def _ranking_candidates(query):
+    """Licensed Commons summaries for text ranking, without country-title restrictions."""
+    import requests
+    import hashlib
+    try:
+        response=requests.get('https://commons.wikimedia.org/w/api.php',params={
+            'action':'query','format':'json','generator':'search','gsrnamespace':6,
+            'gsrsearch':query[:240]+' filetype:bitmap','gsrlimit':50,
+            'prop':'imageinfo','iiprop':'url|extmetadata|mime|size','iiurlwidth':1600},
+            headers={'User-Agent':'CuriosityArchive/1.0 (https://fact.ayush.ltd)'},
+            timeout=(3,7),allow_redirects=False,stream=True)
+        with response:
+            if response.status_code!=200:return []
+            data=bytearray()
+            for chunk in response.iter_content(16384):
+                data.extend(chunk)
+                if len(data)>2_500_000:return []
+            payload=__import__('json').loads(data)
+        pages=payload.get('query',{}).get('pages',{})
+        if not isinstance(pages,dict):return []
+        # Low-resolution files cannot become large reader photographs.
+        payload={'query':{'pages':{k:p for k,p in pages.items() if
+            all(type((p.get('imageinfo') or [{}])[0].get(d)) is int and
+                (p['imageinfo'][0][d]>=800) for d in ('width','height'))}}}
+        return [dict(p,provider='wikimedia',provider_id='commons_'+hashlib.sha256(p['source_url'].encode()).hexdigest()[:24],
+            description_text=p['title']+'. '+p['description'],alt_description='',search_query=query)
+            for p in photo_candidates(payload)][:30]
+    except (requests.RequestException,ValueError,TypeError):return []
+
+async def ranking_candidates(query):
+    return await asyncio.to_thread(_ranking_candidates,query)
+
 
 def country_scene_queries(profile, extended=False):
     cities=profile.get('geography',{}).get('major_cities',[])

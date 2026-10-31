@@ -27,6 +27,48 @@ def response(photos):
     return types.SimpleNamespace(choices=[types.SimpleNamespace(message=types.SimpleNamespace(content=json.dumps({'selected':selected})))])
 
 class RankTests(unittest.IsolatedAsyncioTestCase):
+    async def test_india_uses_commons_and_reranks_metadata_when_stock_searches_are_insufficient(self):
+        from test_country import candidate,photo_candidates
+        base=photo_candidates(candidate())[0]
+        commons=[dict(base,provider='wikimedia',provider_id=f'commons_{i}',
+            source_url=f'https://commons.wikimedia.org/wiki/File:Mirror{i}.jpg') for i in range(12)]
+        stock=AsyncMock(return_value=[]);fallback=AsyncMock(return_value=commons)
+        rank=AsyncMock(side_effect=lambda fact,photos,**kwargs:photos[:10]);states=[]
+        result=await select_india_photos(fixture(),fetch=stock,fallback_fetch=fallback,rank=rank,report=states.append)
+        self.assertEqual(len(result),10);self.assertTrue(all(p['provider']=='wikimedia' for p in result))
+        self.assertLessEqual(fallback.await_count,12);rank.assert_awaited_once()
+        self.assertEqual(states[-1]['provider_counts']['wikimedia'],12)
+        self.assertEqual(len(rank.call_args.args[1]),12) # Duplicate searches do not duplicate photos.
+
+    async def test_commons_candidates_are_ranked_not_used_as_unchecked_padding(self):
+        fallback=AsyncMock(return_value=[photo(i) for i in range(12)])
+        states=[]
+        result=await select_india_photos(fixture(),fetch=AsyncMock(return_value=[]),fallback_fetch=fallback,
+            rank=AsyncMock(return_value=[photo(0)]),report=states.append)
+        self.assertEqual(result,[]);self.assertEqual(states[-1]['relevant_count'],1)
+        self.assertEqual(states[-1]['reason'],'not_enough_relevant_metadata')
+
+    def test_commons_pool_enforces_size_license_and_fixed_hosts(self):
+        from test_country import candidate
+        from src.facts.country_photos import _ranking_candidates
+        data=candidate();info=data['query']['pages']['1']['imageinfo'][0]
+        info.update(width=1600,height=1200)
+        class Response:
+            status_code=200
+            def __enter__(self):return self
+            def __exit__(self,*args):pass
+            def iter_content(self,size):return iter([json.dumps(data).encode()])
+        with patch('requests.get',return_value=Response()) as get:
+            result=_ranking_candidates('Aranmula kannadi')
+            self.assertEqual(len(result),1);self.assertEqual(result[0]['provider'],'wikimedia')
+            self.assertIn('Actual author',result[0]['author'])
+            self.assertEqual(get.call_args.args[0],'https://commons.wikimedia.org/w/api.php')
+            info['width']=300;self.assertEqual(_ranking_candidates('Aranmula'),[])
+            info['width']=1600;info['extmetadata']['LicenseShortName']['value']='All rights reserved'
+            self.assertEqual(_ranking_candidates('Aranmula'),[])
+            info['extmetadata']['LicenseShortName']['value']='CC BY-SA 4.0'
+            info['thumburl']='https://bad.example/image.jpg';self.assertEqual(_ranking_candidates('Aranmula'),[])
+
     async def test_country_uses_the_shared_text_ranker_and_country_specific_brief(self):
         fact=country_fixture();queries=country_ranking_queries(fact)
         self.assertGreaterEqual(len(queries),6)
@@ -87,6 +129,17 @@ class RankTests(unittest.IsolatedAsyncioTestCase):
             with self.assertRaises(ValueError):validate_ranking({'selected':rows},[photo(0)])
 
 class WorkerTests(unittest.IsolatedAsyncioTestCase):
+    async def test_ranked_india_commons_photos_publish_without_unsplash_tracking(self):
+        from test_country import candidate,photo_candidates
+        base=photo_candidates(candidate())[0];r=routes_module();f=fixture();prepare_india_media(f)
+        r.select_india_photos=AsyncMock(return_value=[dict(base,provider='wikimedia',provider_id=f'commons_{i}',
+            source_url=f'https://commons.wikimedia.org/wiki/File:Mirror{i}.jpg') for i in range(10)])
+        r.track_selection=AsyncMock(return_value=False)
+        await r._background_image_task({},'hash',article=f)
+        scenes=[c.kwargs['credit'] for c in r.set_fact_image_state.call_args_list if (c.kwargs.get('credit') or {}).get('selection_mode')=='llm_ranked']
+        self.assertEqual(len(scenes),10);r.track_selection.assert_not_awaited()
+        self.assertEqual(r.set_fact_photo_selection.call_args.args[1]['status'],'completed')
+
     async def test_country_photo_only_upgrade_publishes_ten_ranked_photos_without_genai(self):
         r=routes_module();f=enrich_country_identity(country_fixture())
         r.select_country_photos=AsyncMock(return_value=[photo(i) for i in range(10)])

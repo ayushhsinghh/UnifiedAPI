@@ -389,7 +389,10 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
                         if key not in images:set_fact_image_state(content_hash,key,'failed')
         async def bounded_india_carousel():
             from src.facts.india import india_carousel_keys,india_carousel_queries
-            def report(state):set_fact_photo_selection(content_hash,state)
+            selection_state={}
+            def report(state):
+                selection_state.update(state)
+                set_fact_photo_selection(content_hash,dict(selection_state))
             ranked=(article or {}).get('india_media',{}).get('photo_ranking_version')==1
             try:
                 async def finalize():
@@ -410,11 +413,12 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
                             async with subject_semaphore:
                                 if photo['source_url'] in claimed_sources:return None
                                 claimed_sources.add(photo['source_url'])
-                                return photo if await track_selection(photo) else None
+                                return photo if photo.get('provider')!='unsplash' or await track_selection(photo) else None
                         photos=[p for p in await asyncio.gather(*(track(p) for p in selected)) if p]
                         keys=india_carousel_keys(article)
                         if len(photos)<10:
-                            report({'status':'insufficient','mode':'text_ranking','selected_count':len(photos),'minimum':10})
+                            report({'status':'insufficient','mode':'text_ranking','selected_count':len(photos),'minimum':10,
+                                'reason':'tracking_failed' if len(selected)>=10 else selection_state.get('reason','not_enough_relevant_metadata')})
                             for key in keys:set_fact_image_state(content_hash,key,'failed',clear=True)
                             return
                         for index,key in enumerate(keys):
@@ -432,7 +436,7 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
                 await asyncio.wait_for(finalize(),timeout=timeout)
             except asyncio.TimeoutError:
                 logger.warning('India carousel lookup budget expired for %s',content_hash)
-                if ranked:report({'status':'insufficient','mode':'text_ranking','selected_count':0,'minimum':10})
+                if ranked:report({'status':'insufficient','mode':'text_ranking','selected_count':0,'minimum':10,'reason':'photo_lookup_timeout'})
                 for key in india_carousel_keys(article):
                     if key not in images:set_fact_image_state(content_hash,key,'failed')
         tasks.append(bounded_india_carousel())
