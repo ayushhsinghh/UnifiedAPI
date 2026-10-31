@@ -4,6 +4,7 @@ import json
 import logging
 import math
 from .india import india_carousel_queries,india_carousel_searches
+from .country_photos import country_scene_queries
 
 logger=logging.getLogger(__name__)
 MODEL='gpt-6-luna'
@@ -23,6 +24,10 @@ rivers, mountains, waterfalls and tourism photos for a root-bridge lesson unless
 their specific teaching relevance. Prefer subject views, structures, materials and activities that
 explain the topic. Avoid repeated scenes and choose complementary views. Empty or vague metadata
 is a reason to reject, not infer a hidden subject. Never lower relevance merely to reach a count.
+For a country portrait, choose varied scenes of that particular country: daily life, food, cities,
+landscapes, architecture and named places. Metadata must support the requested country or a named
+place/practice explained in the brief. Do not substitute another country's scenery or generic stock
+portraits for named people. Country portraits are broader than one-topic India lessons.
 Return JSON only: {"selected":[{"photo_id":"supplied ID","score":0,"scene":"short scene label",
 "reason":"short metadata-grounded reason"}]}. Scores are integers from 0 to 100.
 Return at most 18 unique photos, most relevant first, with score >=70. Aim for at least 10 when
@@ -33,6 +38,15 @@ def ranking_input(fact,photos):
     lesson=fact.get('india_lesson',{})
     brief={key:lesson.get(key) for key in ('question','central_idea','region','period')}
     brief['chapters']=[{'title':c['title'],'explanation':c['explanation'][:700]} for c in lesson.get('chapters',[])[:6]]
+    if fact.get('article_type')=='country_profile':
+        profile=fact.get('country_profile',{})
+        brief={'name':profile.get('identity',{}).get('name'),'region':profile.get('identity',{}).get('region'),
+            'central_idea':profile.get('introduction',{}).get('central_idea'),
+            'location':profile.get('geography',{}).get('location_explanation'),
+            'cities':[c.get('name') for c in profile.get('geography',{}).get('major_cities',[])[:6]],
+            'places':[p.get('name') for p in profile.get('notable_places',[])[:5]]}
+        for key in ('everyday_life','products_and_industries','global_contributions'):
+            brief[key]=[{'title':p.get('title'),'explanation':p.get('explanation','')[:600]} for p in profile.get(key,[])[:5]]
     return {'topic':fact.get('topic'),'lesson':brief,'photos':[{'photo_id':p['provider_id'],
         'description':p.get('description_text',p.get('description',''))[:600],'alt_description':p.get('alt_description','')[:300]}
         for p in photos[:240]]}
@@ -76,13 +90,28 @@ async def rank_photos(fact,photos,*,client=None,report=lambda state:None):
         if owned:await client.close()
 
 async def select_india_photos(fact,*,report=lambda state:None,fetch=None,rank=None,excluded=()):
+    primary=india_carousel_queries(fact)
+    variants=[q for query in primary for q in india_carousel_searches(query,fact)]
+    queries=list(dict.fromkeys([*primary,*variants]))[:12]
+    return await _select_photos(fact,queries,report=report,fetch=fetch,rank=rank,excluded=excluded)
+
+def country_ranking_queries(fact):
+    profile=fact.get('country_profile',{});name=profile.get('identity',{}).get('name','')
+    scenes=country_scene_queries(profile,extended=True)
+    culture=[p.get('photo_subject') or p.get('title') for p in profile.get('everyday_life',[])[:2]]
+    places=[p.get('name') for p in profile.get('notable_places',[])[:2]]
+    products=[p.get('photo_subject') or p.get('title') for p in profile.get('products_and_industries',[])[:2]]
+    facets=[*scenes[:2],*culture,scenes[3],*places,*products,*scenes[4:],scenes[2]]
+    return list(dict.fromkeys(f'{name} {q}'.strip()[:240] for q in facets if q))[:12]
+
+async def select_country_photos(fact,*,report=lambda state:None,fetch=None,rank=None,excluded=()):
+    return await _select_photos(fact,country_ranking_queries(fact),report=report,fetch=fetch,rank=rank,excluded=excluded)
+
+async def _select_photos(fact,queries,*,report,fetch=None,rank=None,excluded=()):
     if fetch is None:
         from .unsplash_photos import ranking_candidates
         fetch=ranking_candidates
     rank=rank or rank_photos
-    primary=india_carousel_queries(fact)
-    variants=[q for query in primary for q in india_carousel_searches(query,fact)]
-    queries=list(dict.fromkeys([*primary,*variants]))[:12]
     pool={};sources=set(excluded);selected=[]
     semaphore=asyncio.Semaphore(3)
     async def collect(query):

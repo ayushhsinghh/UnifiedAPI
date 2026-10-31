@@ -11,6 +11,9 @@ from test_fact_evidence_lifecycle import routes_module
 from src.facts.india import prepare_india_media
 from src.facts.photo_ranking import rank_photos,validate_ranking,select_india_photos,PhotoRankingUnavailable
 from src.facts.lifecycle import image_generation_state,fact_image_keys
+from test_country import fixture as country_fixture
+from src.facts.country import enrich_country_identity
+from src.facts.photo_ranking import ranking_input,country_ranking_queries,select_country_photos
 
 def photo(index):
     return dict(provider='unsplash',provider_id=f'p{index}',url=f'https://images.unsplash.com/p{index}',
@@ -24,6 +27,17 @@ def response(photos):
     return types.SimpleNamespace(choices=[types.SimpleNamespace(message=types.SimpleNamespace(content=json.dumps({'selected':selected})))])
 
 class RankTests(unittest.IsolatedAsyncioTestCase):
+    async def test_country_uses_the_shared_text_ranker_and_country_specific_brief(self):
+        fact=country_fixture();queries=country_ranking_queries(fact)
+        self.assertGreaterEqual(len(queries),6)
+        self.assertTrue(all(q.startswith('Japan ') for q in queries))
+        brief=ranking_input(fact,[photo(0)])
+        self.assertEqual(brief['lesson']['name'],'Japan')
+        self.assertIn('everyday_life',brief['lesson']);self.assertIn('places',brief['lesson'])
+        counter=iter(range(100));fetch=AsyncMock(side_effect=lambda query:[photo(next(counter)),photo(next(counter))])
+        rank=AsyncMock(side_effect=lambda fact,photos,**kwargs:photos[:10])
+        self.assertEqual(len(await select_country_photos(fact,fetch=fetch,rank=rank)),10)
+        self.assertEqual(rank.await_count,1)
     async def test_failure_has_one_initial_attempt_and_five_retries_with_no_sdk_retries(self):
         create=AsyncMock(side_effect=TimeoutError('offline'))
         client=types.SimpleNamespace(chat=types.SimpleNamespace(completions=types.SimpleNamespace(create=create)),close=AsyncMock())
@@ -73,6 +87,37 @@ class RankTests(unittest.IsolatedAsyncioTestCase):
             with self.assertRaises(ValueError):validate_ranking({'selected':rows},[photo(0)])
 
 class WorkerTests(unittest.IsolatedAsyncioTestCase):
+    async def test_country_photo_only_upgrade_publishes_ten_ranked_photos_without_genai(self):
+        r=routes_module();f=enrich_country_identity(country_fixture())
+        r.select_country_photos=AsyncMock(return_value=[photo(i) for i in range(10)])
+        r.track_selection=AsyncMock(return_value=True)
+        await r._background_image_task({},'hash',existing_images={'cover':'https://example.org/existing'},article=f,photos_only=True)
+        r.generate_and_save_image.assert_not_awaited();r.find_country_photos.assert_not_awaited()
+        scenes=[c for c in r.set_fact_image_state.call_args_list if (c.kwargs.get('credit') or {}).get('country_carousel')]
+        self.assertEqual(len(scenes),10)
+        self.assertTrue(all(len(c.kwargs['gallery'])==1 for c in scenes))
+        self.assertEqual(r.set_fact_photo_selection.call_args.args[1]['selected_count'],10)
+        r.finish_country_photo_enrichment.assert_called_once_with('hash')
+
+    async def test_country_ranker_failure_uses_legacy_search_and_shortage_never_pads(self):
+        r=routes_module();f=enrich_country_identity(country_fixture())
+        await r._background_image_task({},'hash',article=f,photos_only=True)
+        self.assertEqual(r.find_country_photos.await_count,12)
+        self.assertEqual(r.set_fact_photo_selection.call_args.args[1]['mode'],'legacy_fallback')
+        r=routes_module();r.select_country_photos=AsyncMock(return_value=[photo(i) for i in range(9)])
+        r.track_selection=AsyncMock(return_value=True)
+        await r._background_image_task({},'hash',article=f,photos_only=True)
+        r.find_country_photos.assert_not_awaited();r.generate_and_save_image.assert_not_awaited()
+        self.assertEqual(r.set_fact_photo_selection.call_args.args[1]['status'],'insufficient')
+
+    def test_country_ranked_slots_keep_the_shared_async_timeout_and_generated_cap(self):
+        f=enrich_country_identity(country_fixture());keys=fact_image_keys(f)
+        self.assertEqual(len([k for k in keys if k.startswith('country_ranked_')]),18)
+        self.assertNotIn('explanation_3',keys)
+        self.assertEqual(f['country_media']['generated_limit'],4)
+        state=image_generation_state({'full_response':f,'image_started_at':datetime.now(timezone.utc)-timedelta(seconds=400),
+            'image_status':dict.fromkeys(keys,'processing')},300)
+        self.assertEqual(state['status'],'processing');self.assertEqual(state['timeout_seconds'],720)
     async def test_article_completes_before_media_is_scheduled(self):
         r=routes_module();f=fixture();prepare_india_media(f)
         r.generate_daily_fact=AsyncMock(return_value=f);r.store_fact.return_value='hash'

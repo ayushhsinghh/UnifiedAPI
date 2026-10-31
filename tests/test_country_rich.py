@@ -68,7 +68,7 @@ class CountryPhotoBackfillTests(unittest.IsolatedAsyncioTestCase):
     async def test_another_worker_claim_prevents_duplicate_photo_jobs(self):
         r=routes_module();f=fixture();f.pop('country_media',None)
         initial={'full_response':f}
-        busy={'full_response':f,'country_photo_enrichment':{'version':3,'status':'processing','started_at':datetime.now(timezone.utc)}}
+        busy={'full_response':f,'country_photo_enrichment':{'version':4,'status':'processing','started_at':datetime.now(timezone.utc)}}
         r.get_fact_by_hash.side_effect=[initial,busy];r.claim_country_photo_enrichment.return_value=False
         background=types.SimpleNamespace(add_task=Mock())
         self.assertEqual((await r.ensure_country_photos(None,'hash',background))['status'],'processing')
@@ -81,8 +81,10 @@ class CountryPhotoBackfillTests(unittest.IsolatedAsyncioTestCase):
         result=await r.ensure_country_photos(None,'hash',background)
         self.assertEqual(result['status'],'processing')
         self.assertTrue(background.add_task.call_args.kwargs['photos_only'])
+        self.assertEqual(background.add_task.call_args.kwargs['article']['country_media']['photo_ranking_version'],1)
+        self.assertEqual(result['country_media']['photo_ranking_version'],1)
         self.assertEqual(background.add_task.call_args.args[1],{})
-        doc['country_photo_enrichment']={'version':3,'status':'completed'}
+        doc['country_photo_enrichment']={'version':4,'status':'completed'}
         background.add_task.reset_mock()
         result=await r.ensure_country_photos(None,'hash',background)
         background.add_task.assert_not_called();self.assertEqual(result['status'],'completed')
@@ -94,11 +96,11 @@ class CountryPhotoBackfillTests(unittest.IsolatedAsyncioTestCase):
         r.generate_and_save_image.assert_not_awaited()
         self.assertEqual(r.find_country_photos.await_count,12)
         self.assertEqual(r.find_subject_photo.await_count,len(country_photo_entries(f['country_profile'])))
-        r.finish_country_photo_enrichment.assert_called_once_with('hash')
+        r.finish_country_photo_enrichment.assert_not_called()
 
     def test_stale_photo_worker_can_recover_without_stalling_the_reader(self):
         r=routes_module();doc={'full_response':fixture(),'country_photo_enrichment':{
-            'version':3,'status':'processing','started_at':datetime.now(timezone.utc)-timedelta(minutes=6)}}
+            'version':4,'status':'processing','started_at':datetime.now(timezone.utc)-timedelta(minutes=16)}}
         self.assertEqual(r._country_photo_payload(doc)['status'],'failed')
 
 if __name__=='__main__':unittest.main()

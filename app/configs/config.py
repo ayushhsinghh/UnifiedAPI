@@ -190,3 +190,12 @@ def get_config() -> SimpleNamespace:
 
     _config_cache = SimpleNamespace(**base)
     return _config_cache
+
+
+# Gemini speech translation is opt-in. Credentials stay in the API/worker environment.
+GEMINI_TRANSLATION_ENABLED = os.getenv("GEMINI_TRANSLATION_ENABLED", "false").lower() == "true"
+GEMINI_TRANSLATION_MODEL = "gemini-3.5-live-translate-preview"
+GEMINI_TRANSLATION_MAX_DURATION_SECONDS = int(os.getenv("GEMINI_TRANSLATION_MAX_DURATION_SECONDS", "21600"))
+GEMINI_TRANSLATION_LEASE_SECONDS = 180
+GEMINI_TRANSLATION_HEARTBEAT_SECONDS = 30
+GEMINI_TRANSLATION_SUBTITLE_MODEL = os.getenv("GEMINI_TRANSLATION_SUBTITLE_MODEL", "medium")

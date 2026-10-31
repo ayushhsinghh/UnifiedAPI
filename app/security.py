@@ -20,7 +20,7 @@ cfg = get_config()
 
 # --------------- Input Validation Patterns ---------------
 
-JOB_ID_PATTERN = re.compile(r"^job_[a-z0-9]{4}$")
+JOB_ID_PATTERN = re.compile(r"^job_(?:[a-z0-9]{4}|[a-f0-9]{32})$")
 SESSION_ID_PATTERN = re.compile(r"^[A-Z0-9]{5}$")
 PLAYER_NAME_PATTERN = re.compile(r"^[a-zA-Z0-9 _\-]{1,30}$")
 UUID_PATTERN = re.compile(

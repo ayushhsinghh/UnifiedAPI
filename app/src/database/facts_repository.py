@@ -225,14 +225,16 @@ def claim_country_photo_enrichment(content_hash: str) -> bool:
     from datetime import timedelta
     now=datetime.now(timezone.utc)
     result=get_db()[cfg.DAILY_FACTS_COLLECTION].update_one({'content_hash':content_hash,'$or':[
-        {'country_photo_enrichment.version':{'$ne':3}},
-        {'country_photo_enrichment.status':{'$in':['processing','failed']},'country_photo_enrichment.started_at':{'$lt':now-timedelta(minutes=5)}}]},
-        {'$set':{'country_photo_enrichment':{'version':3,'status':'processing','started_at':now}}})
+        {'country_photo_enrichment.version':{'$ne':4}},
+        {'country_photo_enrichment.status':{'$in':['processing','failed']},'country_photo_enrichment.started_at':{'$lt':now-timedelta(minutes=15)}}]},
+        {'$set':{'country_photo_enrichment':{'version':4,'status':'processing','started_at':now},
+            'full_response.country_media.photo_ranking_version':1,'full_response.country_media.photo_timeout_seconds':720,
+            'full_response.country_media.version':2,'full_response.country_media.photo_layout':'contextual_v2'}})
     return result.modified_count==1
 
 def finish_country_photo_enrichment(content_hash: str,status='completed') -> None:
     get_db()[cfg.DAILY_FACTS_COLLECTION].update_one({'content_hash':content_hash},{'$set':{
-        'country_photo_enrichment.version':3,'country_photo_enrichment.status':status,
+        'country_photo_enrichment.version':4,'country_photo_enrichment.status':status,
         'country_photo_enrichment.finished_at':datetime.now(timezone.utc)}})
 
 def finish_fact_images(content_hash: str) -> None:

@@ -49,7 +49,7 @@ from src.facts.visual_prompts import IMAGE_SECTION_BRIEFS, build_section_image_c
 from src.facts.country_photos import find_country_photos, find_subject_photo, country_scene_queries, country_scene_plan
 from src.facts.country_media_plan import country_photo_entries
 from src.facts.unsplash_photos import track_selection
-from src.facts.photo_ranking import select_india_photos,PhotoRankingUnavailable
+from src.facts.photo_ranking import select_india_photos,select_country_photos,PhotoRankingUnavailable
 from src.facts.image_generator import generate_and_save_image
 
 logger = logging.getLogger(__name__)
@@ -180,6 +180,7 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
     images = existing_images.copy()
     is_india = (article or {}).get('article_type') == 'india_lesson'
     is_country = (article or {}).get('article_type') == 'country_profile'
+    ranked_country=is_country and (article or {}).get('country_media',{}).get('photo_ranking_version')==1
     country = (article or {}).get('country_profile') if is_country else None
     hybrid = is_country and (article or {}).get('country_media',{}).get('version') == 2
     contextual = hybrid and (article or {}).get('country_media',{}).get('photo_layout') in ('contextual_v1','contextual_v2')
@@ -188,6 +189,7 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
     claimed = set(images.values())
     previous_photos=[photo for group in (article or {}).get('country_photo_galleries',{}).values() if isinstance(group,list) for photo in group if isinstance(photo,dict)]
     claimed_sources = {p.get('source_url') for p in previous_photos if p.get('source_url')}
+    if ranked_country:claimed_sources={p.get('source_url') for p in previous_photos if p.get('subject_kind') and p.get('source_url')}
     if is_india:
         claimed_sources.update(p.get('source_url') for p in (article or {}).get('image_credits',{}).values() if isinstance(p,dict) and p.get('source_url'))
     claimed_photographers = {p.get('author') for p in previous_photos if p.get('provider')=='unsplash'}
@@ -196,6 +198,7 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
     scenes = dict(zip(('explanation_3','explanation_4','explanation_5','explanation_6'), country_scene_queries(country))) if contextual else {}
     expanded_scenes = country_scene_plan(country, extended=True) if extended else {}
     scene_semaphore = asyncio.Semaphore(3)
+    legacy_scene_counts={}
 
     async def process_scene(key, query):
         """Documentary photo search only. This function never calls image generation."""
@@ -214,6 +217,7 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
                     if item.get('provider')=='unsplash' and not await track_selection(item):continue
                     gallery.append({**{k:v for k,v in item.items() if k!='download_location'},'scene_query':query})
             photo=gallery[0] if gallery else None
+            legacy_scene_counts[key]=len(gallery)
             if photo:images[key]=photo['url']
             logger.info('Country scene %s/%s (%s): %d selected',content_hash,key,query,len(gallery))
             set_fact_image_state(content_hash,key,'ready' if photo else 'failed',photo['url'] if photo else None,credit=photo,gallery=gallery)
@@ -434,14 +438,56 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
         tasks.append(bounded_india_carousel())
 
     # Scene slots have a separate photo-only path; the GenAI key set stays unchanged.
-    tasks.extend(process_scene(key,query) for key,query in expanded_scenes.items())
+    async def process_ranked_country():
+        keys=[f'country_ranked_{n}' for n in range(18)]
+        def report(state):set_fact_photo_selection(content_hash,state)
+        async def finalize():
+            report({'status':'collecting','mode':'text_ranking'})
+            try:
+                selected=await select_country_photos(article,report=report,excluded=claimed_sources)
+            except Exception as error:
+                logger.warning('Country photo text ranking unavailable; using legacy selection (%s)',type(error).__name__)
+                report({'status':'collecting','mode':'legacy_fallback'})
+                for key in keys:
+                    images.pop(key,None)
+                    set_fact_image_state(content_hash,key,'not_requested',clear=True,gallery=[])
+                await asyncio.gather(*(process_scene(key,query) for key,query in expanded_scenes.items()))
+                report({'status':'completed','mode':'legacy_fallback','selected_count':sum(legacy_scene_counts.values())})
+                return
+            async def track(photo):
+                async with scene_semaphore:
+                    if photo['source_url'] in claimed_sources:return None
+                    claimed_sources.add(photo['source_url'])
+                    return photo if await track_selection(photo) else None
+            photos=[p for p in await asyncio.gather(*(track(p) for p in selected)) if p]
+            if len(photos)<10:
+                for key in keys:set_fact_image_state(content_hash,key,'failed',clear=True,gallery=[])
+                report({'status':'insufficient','mode':'text_ranking','selected_count':len(photos),'minimum':10})
+                return
+            for index,key in enumerate(keys):
+                if index>=len(photos):
+                    set_fact_image_state(content_hash,key,'not_requested',clear=True,gallery=[]);continue
+                p=photos[index]
+                photo={**{k:v for k,v in p.items() if k!='download_location'},'country_carousel':True,
+                    'selection_mode':'llm_ranked','ranking_model':'gpt-6-luna','scene_query':p.get('search_query','')}
+                images[key]=photo['url']
+                set_fact_image_state(content_hash,key,'ready',photo['url'],credit=photo,gallery=[photo])
+            report({'status':'completed','mode':'text_ranking','selected_count':len(photos)})
+        try:await asyncio.wait_for(finalize(),timeout=720)
+        except asyncio.TimeoutError:
+            for key in keys:
+                if key not in images:set_fact_image_state(content_hash,key,'failed',gallery=[])
+            report({'status':'insufficient','mode':'text_ranking','selected_count':0,'minimum':10})
+
+    if ranked_country:tasks.append(process_ranked_country())
+    else:tasks.extend(process_scene(key,query) for key,query in expanded_scenes.items())
     if contextual:
         for item in country_photo_entries(country,extended=extended):
             tasks.append(process_subject(item['kind'],item['index'],item['subject'],item['title'],item['queries']))
     if tasks:
         await asyncio.gather(*tasks)
 
-    if contextual and extended:finish_country_photo_enrichment(content_hash)
+    if ranked_country:finish_country_photo_enrichment(content_hash)
     if not photos_only:finish_fact_images(content_hash)
     logger.info("Background image generation finished for %s with %d images", content_hash, len(images))
 
@@ -451,15 +497,16 @@ def _country_photo_payload(document):
     fact=document.get('full_response',{})
     state=document.get('country_photo_enrichment') or {}
     status=state.get('status','not_started')
-    if state.get('version',0)<3:status='not_started'
+    if state.get('version',0)<4:status='not_started'
     if status=='processing' and state.get('started_at'):
         from datetime import datetime,timezone
         started=state['started_at']
         if started.tzinfo is None:started=started.replace(tzinfo=timezone.utc)
-        if (datetime.now(timezone.utc)-started).total_seconds()>300:status='failed'
+        if (datetime.now(timezone.utc)-started).total_seconds()>900:status='failed'
     if not state and fact.get('country_media',{}).get('photo_layout')=='contextual_v2' and image_generation_state(document,cfg.FACT_IMAGE_TIMEOUT_SECONDS)['status']=='processing':
         status='processing'
-    return {'status':status,'country_photo_enrichment':{'version':state.get('version',3),'status':status},
+    return {'status':status,'country_photo_enrichment':{'version':state.get('version',4),'status':status},
+        'photo_selection':document.get('photo_selection') or {},'country_media':fact.get('country_media') or {},
         'images':document.get('images') or fact.get('images') or {},
         'image_credits':document.get('image_credits') or fact.get('image_credits') or {},
         'country_photo_galleries':document.get('country_photo_galleries') or fact.get('country_photo_galleries') or {}}
@@ -483,10 +530,12 @@ async def ensure_country_photos(request: Request,content_hash: str,background_ta
     payload=_country_photo_payload(document)
     if payload['status'] in ('completed','processing'):return payload
     if claim_country_photo_enrichment(content_hash):
-        article={**document['full_response'],'country_media':{'version':2,'photo_layout':'contextual_v2'},
+        article={**document['full_response'],'country_media':{**document['full_response'].get('country_media',{}),
+            'version':2,'photo_layout':'contextual_v2','photo_ranking_version':1,'photo_timeout_seconds':720},
             'country_photo_galleries':document.get('country_photo_galleries') or {}}
         background_tasks.add_task(_background_image_task,{},content_hash,document.get('images') or {},article=article,photos_only=True)
-        payload['status']='processing';payload['country_photo_enrichment']={'version':3,'status':'processing'}
+        payload['status']='processing';payload['country_photo_enrichment']={'version':4,'status':'processing'}
+        payload['country_media']=article['country_media']
     else:payload=_country_photo_payload(_country_photo_document(content_hash))
     return payload
 

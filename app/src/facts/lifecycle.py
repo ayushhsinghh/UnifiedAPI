@@ -18,7 +18,10 @@ def fact_image_keys(fact):
         return [key for key in ('cover','overview') if fact.get('visual_suggestions',{}).get(key)] + [p['key'] for p in india_photo_entries(fact)] + india_carousel_keys(fact)
     if fact.get('article_type')=='country_profile' and fact.get('country_media',{}).get('photo_layout') in ('contextual_v1','contextual_v2'):
         from src.facts.country_photos import country_scene_plan
-        keys=list(dict.fromkeys(keys+list(country_scene_plan(fact.get('country_profile',{}),extended=fact['country_media']['photo_layout']=='contextual_v2'))))
+        if fact.get('country_media',{}).get('photo_ranking_version')==1:
+            keys=[key for key in keys if key not in ('explanation_3','explanation_4','explanation_5','explanation_6')]
+            keys.extend(f'country_ranked_{n}' for n in range(18))
+        else:keys=list(dict.fromkeys(keys+list(country_scene_plan(fact.get('country_profile',{}),extended=fact['country_media']['photo_layout']=='contextual_v2'))))
         from src.facts.country_media_plan import country_photo_entries
         keys.extend(item['key'] for item in country_photo_entries(fact.get('country_profile',{}),extended=fact['country_media']['photo_layout']=='contextual_v2'))
     return keys
@@ -30,7 +33,7 @@ def image_generation_state(document, timeout_seconds, now=None):
     images = document.get("images") or fact.get("images") or {}
     statuses = document.get("image_status") or {}
     expected=[key for key in expected if statuses.get(key)!='not_requested']
-    if fact.get('india_media',{}).get('photo_ranking_version')==1:
+    if any(fact.get(key,{}).get('photo_ranking_version')==1 for key in ('india_media','country_media')):
         timeout_seconds=max(timeout_seconds,720)
     started = document.get("image_started_at")
     now = now or datetime.now(timezone.utc)

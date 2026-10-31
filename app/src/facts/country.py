@@ -123,6 +123,7 @@ def enrich_country_identity(fact):
     fact['images'] = {}; fact['image_credits'] = {}; fact['country_photo_galleries'] = {}
     fact.pop('country_photo_enrichment',None)
     fact['country_media'] = {'version': 2, 'photo_layout': 'contextual_v2', 'generated_limit': 4,
+        'photo_ranking_version':1,'photo_timeout_seconds':720,
         'generated_slots': [k for k in GENERATED_KEYS if fact['visual_suggestions'].get(k)],
         'commons_slots': [k for k in COMMONS_KEYS if fact['visual_suggestions'].get(k)]}
     fact['country_validation'] = {'structure_checked': True, 'identity_source': 'country_registry_snapshot',
