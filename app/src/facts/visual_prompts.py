@@ -147,6 +147,12 @@ def build_section_image_context(key, article=None):
             if value:
                 text = value if isinstance(value, str) else json.dumps(value, ensure_ascii=False)
                 excerpt[field] = text[:4000]
+        if article.get('article_type') == 'geography_lesson':
+            lesson=article.get('geography_lesson') or {}
+            excerpt['geography_context']={field:lesson.get(field) for field in ('identity','opening_observation','central_idea','explanation_steps')}
+            lines.append('Geography conceptual illustration: preserve the landform or process. No invented map '
+                'lettering, boundaries, quantitative data, or labels. Do not impersonate a real named place, '
+                'a measured landscape or satellite imagery. Real locator data and structured diagrams render separately.')
         if article.get('article_type') == 'fashion_lesson':
             lesson=article.get('fashion_lesson') or {}
             excerpt['fashion_context']={field:lesson.get(field) for field in ('subject_type','identity','recognition_guide','materials','construction')}

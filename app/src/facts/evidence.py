@@ -79,4 +79,5 @@ def normalize_evidence(fact):
     normalize_lesson_links(fact.get('india_lesson'))
     normalize_lesson_links(fact.get('food_lesson'))
     normalize_lesson_links(fact.get('fashion_lesson'))
+    normalize_lesson_links(fact.get('geography_lesson'))
     return fact

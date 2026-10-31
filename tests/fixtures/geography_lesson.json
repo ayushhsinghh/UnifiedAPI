@@ -1,0 +1,332 @@
+{
+  "category": "geography",
+  "topic": "Mountain rain shadows",
+  "schema_version": "2.0",
+  "article_type": "geography_lesson",
+  "headline_fact": "A mountain range can help create different rainfall conditions on its two sides.",
+  "summary": "Follow moist air over a ridge and connect the process with a real landscape.",
+  "did_you_know": "A nearby place can experience different conditions when the landscape changes.",
+  "core_mechanics": "Air that rises can cool; moisture can condense, and the air crossing the ridge can become drier.",
+  "why_it_matters": "Relief and air movement help explain landscape differences.",
+  "in_depth_breakdown": {
+    "detailed_processes": [],
+    "real_world_application": "A trolley carrying more mass needs more net force to achieve the same acceleration.",
+    "fascinating_trivia": []
+  },
+  "common_misconceptions": [],
+  "learning_takeaways": [
+    "Connect air movement with the shape of the land.",
+    "A rain shadow is a pattern with conditions, not a universal rule."
+  ],
+  "emoji_icon": "",
+  "difficulty_level": "beginner",
+  "region": "Global process; western North American example",
+  "fun_rating": 8,
+  "read_time_seconds": 480,
+  "tags": [
+    "geography",
+    "mountains",
+    "rainfall"
+  ],
+  "related_categories": [
+    "nature",
+    "science"
+  ],
+  "visual_suggestions": {
+    "cover": "Conceptual editorial illustration of a mountain ridge with cloudier and drier sides; no text or map lettering; quiet left for the title.",
+    "overview": "Conceptual illustration summarizing a rain shadow without numbers, map labels or equations."
+  },
+  "share_text": "Explore how mountains can affect rainfall.",
+  "content_freshness": "evergreen",
+  "sources": [
+    {
+      "id": "s1",
+      "title": "Demonstration source — example content for layout testing",
+      "url": "https://example.org/geography-demo"
+    }
+  ],
+  "claim_citations": [],
+  "sources_or_references": [],
+  "generated_at": "2026-10-31T10:00:00Z",
+  "image_details": [
+    {
+      "slot": "overview",
+      "placement": "overview",
+      "alt": "Conceptual illustration of a mountain rain shadow",
+      "caption": "Illustration: terrain and airflow interact; this is not a measured landscape.",
+      "learning_purpose": "Summarise the relationship between terrain and air movement."
+    }
+  ],
+  "content_hash": "geography-preview",
+  "geography_lesson": {
+    "subject_type": "physical_process",
+    "identity": {
+      "name": "Mountain rain shadows",
+      "region": "Global process; western North American example",
+      "scale": "Regional landscapes, with a process that occurs in many places",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "hook": "A mountain range can help create different rainfall conditions on its two sides.",
+    "question": "Why can the two sides of a mountain range look so different?",
+    "learning_goal": "Connect air movement, cooling and the shape of the land, then examine the limits of that explanation.",
+    "opening_observation": {
+      "title": "A change across a ridge",
+      "observation": "A journey across a mountain range can reveal different vegetation and moisture conditions. The change invites a question: how much does the mountain affect the air moving across it?",
+      "what_to_notice": "Compare the direction of moist air with the mountain ridge and the landscape beyond it.",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "central_idea": "Under suitable conditions, rising air cools and loses some moisture as precipitation. Air reaching the other side can be drier. The pattern also depends on wind, moisture supply and other conditions.",
+    "location_context": {
+      "explanation": "This example follows a west-to-east relationship across the Sierra Nevada. The locator shows reference points for the valley, range and western side; it does not plot the full mountain outline.",
+      "spatial_relationships": [
+        "Fresno provides a western reference point; Owens Valley lies east of the range.",
+        "The position of a ridge matters in relation to the direction of moist air."
+      ],
+      "locations": [
+        {
+          "id": "west",
+          "name": "Fresno",
+          "latitude": 36.74,
+          "longitude": -119.78,
+          "kind": "settlement",
+          "explanation": "An approximate reference point west of the Sierra Nevada.",
+          "source_ids": [
+            "s1"
+          ]
+        },
+        {
+          "id": "range",
+          "name": "Sierra Nevada",
+          "latitude": 37,
+          "longitude": -119.3,
+          "kind": "landform",
+          "explanation": "An approximate point in the mountain range, not a boundary or a summit.",
+          "source_ids": [
+            "s1"
+          ]
+        },
+        {
+          "id": "east",
+          "name": "Owens Valley",
+          "latitude": 36.6,
+          "longitude": -118.1,
+          "kind": "region",
+          "explanation": "A valley east of the Sierra Nevada used as the named example.",
+          "source_ids": [
+            "s1"
+          ]
+        }
+      ],
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "map": {
+      "title": "Across the Sierra Nevada",
+      "location_ids": [
+        "west",
+        "range",
+        "east"
+      ],
+      "default_view": "region",
+      "what_to_notice": "Find the mountain reference point between Fresno and Owens Valley. Then connect that arrangement with the process below.",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "key_terms": [
+      {
+        "term": "Windward",
+        "meaning": "The side facing the incoming wind."
+      },
+      {
+        "term": "Leeward",
+        "meaning": "The side sheltered from that incoming wind."
+      }
+    ],
+    "explanation_steps": [
+      {
+        "id": "approach",
+        "title": "Moist air reaches higher land",
+        "explanation": "Air moving towards a range can be forced upward. The incoming wind and its moisture supply matter; the presence of a mountain alone does not set the rainfall.",
+        "observable_effect": "Start by checking which side faces the moist airflow.",
+        "source_ids": [
+          "s1"
+        ]
+      },
+      {
+        "id": "rise",
+        "title": "Rising air can cool",
+        "explanation": "As air rises, it expands and cools. Under suitable conditions, water vapour condenses into droplets and precipitation can develop.",
+        "observable_effect": "Clouds and precipitation can develop on the rising side, depending on the conditions.",
+        "source_ids": [
+          "s1"
+        ]
+      },
+      {
+        "id": "beyond",
+        "title": "The air beyond the ridge can be drier",
+        "explanation": "Air crossing the range may contain less moisture. Descending air can warm, making condensation less likely. This helps explain a rain-shadow pattern.",
+        "observable_effect": "The sheltered side can have drier conditions than the side receiving the moist air.",
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "diagram": {
+      "type": "cross_section",
+      "title": "Follow the air across a ridge",
+      "caption": "A simplified relationship between incoming air, rising terrain and a drier sheltered side.",
+      "description": "The terrain is conceptual. Arrows connect moist air approaching the slope, air rising and cooling, and drier air descending beyond the ridge. This is not measured terrain or a forecast.",
+      "assumptions": [
+        "Air moves across the ridge in the direction shown.",
+        "Enough moisture is present for condensation and precipitation under suitable conditions."
+      ],
+      "profile": [
+        {
+          "x": 0,
+          "height": 0.12
+        },
+        {
+          "x": 0.25,
+          "height": 0.2
+        },
+        {
+          "x": 0.5,
+          "height": 0.95
+        },
+        {
+          "x": 0.75,
+          "height": 0.25
+        },
+        {
+          "x": 1,
+          "height": 0.12
+        }
+      ],
+      "nodes": [
+        {
+          "id": "moist",
+          "label": "Moist air approaches",
+          "detail": "The incoming air supplies moisture and moves towards higher land.",
+          "x": 0.12,
+          "y": 0.65
+        },
+        {
+          "id": "rising",
+          "label": "Air rises and cools",
+          "detail": "Rising air can cool enough for condensation and precipitation.",
+          "x": 0.5,
+          "y": 0.15
+        },
+        {
+          "id": "dry",
+          "label": "Drier air descends",
+          "detail": "Air beyond the ridge may have less moisture; descending air can warm.",
+          "x": 0.88,
+          "y": 0.65
+        }
+      ],
+      "connections": [
+        {
+          "from_id": "moist",
+          "to_id": "rising",
+          "label": "Forced upward"
+        },
+        {
+          "from_id": "rising",
+          "to_id": "dry",
+          "label": "Some moisture lost"
+        }
+      ],
+      "comparisons": [],
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "case_study": {
+      "title": "A closer look at Owens Valley",
+      "location_id": "east",
+      "observation": "Owens Valley lies east of the Sierra Nevada. Its position makes it useful for discussing the sheltered side of a mountain range.",
+      "explanation": "The range can influence air arriving from the west. The rain-shadow process helps explain part of the valley’s moisture setting, but does not describe every storm or every local condition.",
+      "what_it_shows": "A geographic explanation connects place, landform and air movement rather than treating each as an isolated fact.",
+      "variability": "Wind direction, season, storm track and other influences can change the pattern.",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "human_connections": [
+      {
+        "title": "Water and everyday decisions",
+        "explanation": "Differences in water availability can influence farming, settlement and water management. A physical process is one part of that story, alongside technology, policy and history.",
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "variations": [
+      {
+        "title": "A different wind direction",
+        "conditions": "Air does not always approach a ridge from the same side.",
+        "difference": "Changing airflow changes which slopes face the incoming air and how the process develops.",
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "misconceptions": [
+      {
+        "belief": "Every mountain makes one side a desert",
+        "correction": "A rain shadow depends on conditions.",
+        "explanation": "Moisture supply, air movement, terrain and other weather systems all contribute.",
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "limits": [
+      "The diagram explains a process; it cannot predict rainfall for a specific day."
+    ],
+    "knowledge_checks": [
+      {
+        "question": "Why is the direction of the incoming air important?",
+        "answer": "It helps identify which slope faces the moist airflow.",
+        "explanation": "The mountain acts on moving air. The relationship between airflow and terrain matters more than the presence of a mountain by itself."
+      }
+    ],
+    "takeaways": [
+      "Connect air movement with the shape of the land.",
+      "A rain shadow is a pattern with conditions, not a universal rule."
+    ],
+    "related_topics": [
+      "River deltas",
+      "Coastal climates"
+    ],
+    "photos": [
+      {
+        "id": "process",
+        "section_id": "process",
+        "kind": "subject",
+        "subject": "Orographic clouds",
+        "location_id": null,
+        "queries": [
+          "orographic clouds"
+        ]
+      },
+      {
+        "id": "valley",
+        "section_id": "case-study",
+        "kind": "named_place",
+        "subject": "Owens Valley",
+        "location_id": "east",
+        "queries": [
+          "Owens Valley"
+        ]
+      }
+    ]
+  }
+}

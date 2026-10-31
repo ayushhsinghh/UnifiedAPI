@@ -142,12 +142,8 @@ CATEGORY_HINTS: Dict[str, str] = {
         "remittance economy (NRI contributions), Five-Year Plans history"
     ),
     "geography": (
-        "Indian river systems (Ganga, Brahmaputra, Godavari), "
-        "Himalayan geology & tectonic activity, Deccan Plateau formation, "
-        "Indian coastline (7,500+ km), Western & Eastern Ghats, "
-        "Thar Desert geography, Northeast India's biodiversity, "
-        "Indian islands (Lakshadweep, Andaman), Indo-Gangetic plain fertility, "
-        "Indian climate zones"
+        "Global landforms, rivers, coasts, climate patterns, landscapes and human-environment relationships; "
+        "one clear question, meaningful maps, physical processes and real named case studies"
     ),
     "culture": (
         "Indian classical dance forms (Bharatanatyam, Kathak, Odissi), "

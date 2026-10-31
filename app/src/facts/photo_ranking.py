@@ -35,6 +35,9 @@ For fashion lessons, identify the exact garment, textile, construction detail or
 Generic models, similar clothing, travel scenery and stock portraits cannot identify a named designer,
 person or museum object. Only metadata-supported details qualify. A photo of a whole garment does not
 demonstrate a requested close-up feature unless its metadata supports that feature.
+For geography, require the actual landform, process or named place in the request. A river or mountain
+from the same region is not sufficient. Satellite imagery must identify its location and view in metadata;
+do not treat illustrations, similar places or generic aerial views as satellite evidence.
 Return JSON only: {"selected":[{"photo_id":"supplied ID","score":0,"scene":"short scene label",
 "reason":"short metadata-grounded reason"}]}. Scores are integers from 0 to 100.
 Return at most 18 unique photos, most relevant first, with score >=70. Aim for at least 10 when
@@ -60,6 +63,9 @@ def ranking_input(fact,photos):
     if fact.get('article_type')=='fashion_lesson':
         fashion=fact.get('fashion_lesson',{})
         brief={k:fashion.get(k) for k in ('subject_type','identity','introduction','recognition_guide','materials','construction','photos')}
+    if fact.get('article_type')=='geography_lesson':
+        geography=fact.get('geography_lesson',{})
+        brief={k:geography.get(k) for k in ('subject_type','identity','central_idea','location_context','explanation_steps','case_study','photos')}
     return {'topic':fact.get('topic'),'lesson':brief,'photos':[{'photo_id':p['provider_id'],
         'description':p.get('description_text',p.get('description',''))[:600],'alt_description':p.get('alt_description','')[:300]}
         for p in photos[:240]]}
@@ -82,7 +88,7 @@ def validate_ranking(payload,photos,request_ids=None,request_key='food_request_i
 
 async def rank_photos(fact,photos,*,client=None,report=lambda state:None):
     owned=client is None
-    editorial=next((kind for kind in ('food','fashion') if fact.get('article_type')==kind+'_lesson'),None)
+    editorial=next((kind for kind in ('food','fashion','geography') if fact.get('article_type')==kind+'_lesson'),None)
     requests={p['id'] for p in fact.get(editorial+'_lesson',{}).get('photos',[])} if editorial else None
     prompt=SYSTEM_PROMPT
     if requests is not None:
@@ -137,6 +143,10 @@ async def select_fashion_photos(fact,*,report=lambda state:None,fetch=None,commo
     from .fashion import fashion_photo_entries
     return await _select_editorial_photos(fact,fashion_photo_entries(fact),'fashion_request_ids',report=report,fetch=fetch,commons=commons,rank=rank,excluded=excluded)
 
+async def select_geography_photos(fact,*,report=lambda state:None,fetch=None,commons=None,rank=None,excluded=()):
+    from .geography import geography_photo_entries
+    return await _select_editorial_photos(fact,geography_photo_entries(fact),'geography_request_ids',report=report,fetch=fetch,commons=commons,rank=rank,excluded=excluded)
+
 async def _select_editorial_photos(fact,entries,request_key,*,report,fetch=None,commons=None,rank=None,excluded=()):
     """Small, scene-bound pool; only Commons may identify historical objects or people."""
     if fetch is None:
@@ -151,7 +161,7 @@ async def _select_editorial_photos(fact,entries,request_key,*,report,fetch=None,
             except Exception:return item,[]
     report({'status':'collecting','mode':'text_ranking'})
     searches=[collect(item,query,source) for item in entries for query in item['queries'][:2]
-        for source in ((commons,) if item.get('kind') in ('historical_object','person') else (commons,fetch))]
+        for source in ((commons,) if item.get('kind') in ('historical_object','person','named_place','satellite') else (commons,fetch))]
     by_source={}
     for item,photos in await asyncio.gather(*searches):
         for photo in photos:
@@ -165,7 +175,7 @@ async def _select_editorial_photos(fact,entries,request_key,*,report,fetch=None,
     if not pool:return []
     def permitted(photo,request_id):
         item=next((e for e in entries if e['id']==request_id),None)
-        return item is not None and (item.get('kind') not in ('historical_object','person') or photo.get('provider')=='wikimedia')
+        return item is not None and (item.get('kind') not in ('historical_object','person','named_place','satellite') or photo.get('provider')=='wikimedia')
     try:
         selected=await rank(fact,list(pool.values()),report=report)
         return [{**p,request_key:ids} for p in selected if (ids:=[i for i in p.get(request_key,[]) if permitted(p,i)])][:18]
