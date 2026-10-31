@@ -186,14 +186,9 @@ CATEGORY_HINTS: Dict[str, str] = {
         "electromagnetism quirks, the physics of everyday objects"
     ),
     "fashion": (
-        "Indian traditional clothing (Sari, Kurta, Sherwani, Lehenga), "
-        "history of Indian textiles (Khadi, Chanderi, Ikat, Chikankari), "
-        "Bollywood fashion influence, indigenous natural dyes (indigo, madder), "
-        "Indian sustainable & ethical fashion movements, "
-        "regional embroidery styles (Phulkari, Zardosi, Kantha), "
-        "handloom weaving traditions, evolution of the Indian wedding attire, "
-        "modern Indian designers on the global stage, "
-        "historical jewelry making (Kundan, Polki)"
+        "Global garments, textiles, accessories, construction techniques and dress traditions; "
+        "recognise distinctive details, understand materials, cultural context and construction, "
+        "explore wearing properties, practical uses, care and meaningful regional variations"
     ),
     "art": (
         "Indian miniature painting traditions (Mughal, Rajput, Pahari), "

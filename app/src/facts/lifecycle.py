@@ -13,6 +13,9 @@ def expected_image_keys(visual_suggestions):
 
 def fact_image_keys(fact):
     keys=expected_image_keys(fact.get('visual_suggestions',{}))
+    if fact.get('article_type')=='fashion_lesson':
+        from src.facts.fashion import fashion_photo_entries
+        return [key for key in ('cover','overview') if fact.get('visual_suggestions',{}).get(key)]+[p['key'] for p in fashion_photo_entries(fact)]+[f'fashion_scene_{n}' for n in range(6)]
     if fact.get('article_type')=='food_lesson':
         from src.facts.food import food_photo_entries
         return [key for key in ('cover','overview') if fact.get('visual_suggestions',{}).get(key)]+[p['key'] for p in food_photo_entries(fact)]+[f'food_scene_{n}' for n in range(6)]
@@ -36,7 +39,7 @@ def image_generation_state(document, timeout_seconds, now=None):
     images = document.get("images") or fact.get("images") or {}
     statuses = document.get("image_status") or {}
     expected=[key for key in expected if statuses.get(key)!='not_requested']
-    if fact.get('article_type')=='food_lesson' or any(fact.get(key,{}).get('photo_ranking_version')==1 for key in ('india_media','country_media')):
+    if fact.get('article_type') in ('food_lesson','fashion_lesson') or any(fact.get(key,{}).get('photo_ranking_version')==1 for key in ('india_media','country_media')):
         timeout_seconds=max(timeout_seconds,720)
     started = document.get("image_started_at")
     now = now or datetime.now(timezone.utc)

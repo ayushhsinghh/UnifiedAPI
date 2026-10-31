@@ -37,6 +37,7 @@ from .constitution_sources import enrich_constitution_text
 from .indian_laws import INDIAN_LAWS_RESPONSE_SCHEMA, build_indian_laws_prompt, validate_indian_laws_content
 from .india import INDIA_RESPONSE_SCHEMA, INDIA_IMAGE_INSTRUCTIONS, build_india_prompt, validate_india_content, prepare_india_media
 from .food import FOOD_RESPONSE_SCHEMA, FOOD_IMAGE_INSTRUCTIONS, build_food_prompt, validate_food_content, prepare_food_media
+from .fashion import FASHION_RESPONSE_SCHEMA, FASHION_IMAGE_INSTRUCTIONS, build_fashion_prompt, validate_fashion_content, prepare_fashion_media
 from .image_policy import IMAGE_INSTRUCTIONS, IMAGE_KEYS, validate_image_plan
 from .country import COUNTRY_RESPONSE_SCHEMA, COUNTRY_IMAGE_INSTRUCTIONS, build_country_prompt, validate_country_content, enrich_country_identity
 
@@ -73,7 +74,10 @@ async def generate_daily_fact(
     if blocklist is None:
         blocklist = []
 
-    if category == 'food':
+    if category == 'fashion':
+        prompt = build_fashion_prompt(blocklist)
+        response_schema = FASHION_RESPONSE_SCHEMA
+    elif category == 'food':
         prompt = build_food_prompt(blocklist)
         response_schema = FOOD_RESPONSE_SCHEMA
     elif category == 'india':
@@ -113,9 +117,9 @@ async def generate_daily_fact(
     audience = LEARNER_INSTRUCTIONS if category != 'country' else LEARNER_INSTRUCTIONS.replace('Teach ONE interesting fact or useful new idea', 'Teach ONE country through connected useful ideas').replace('Aim for a focused 3-6 minute read, not an encyclopedia chapter or exam syllabus.', 'A country portrait can span an accessible 8-15 minute read.').replace('Before returning, check that a newcomer can explain the central fact in one sentence.', 'Before returning, check that a newcomer can describe the country in a few sentences.')
     if category == 'india':
         audience = audience.replace('Aim for a focused 3-6 minute read, not an encyclopedia chapter or exam syllabus.', 'Explore one focused India topic in an accessible 7-10 minute read.')
-    if category == 'food':
+    if category in ('food','fashion'):
         audience = audience.replace('3-6 minute','6-10 minute')
-    prompt += '\n\n' + audience + '\n\n' + (FOOD_IMAGE_INSTRUCTIONS if category == 'food' else INDIA_IMAGE_INSTRUCTIONS if category == 'india' else COUNTRY_IMAGE_INSTRUCTIONS if category == 'country' else IMAGE_INSTRUCTIONS)
+    prompt += '\n\n' + audience + '\n\n' + (FASHION_IMAGE_INSTRUCTIONS if category == 'fashion' else FOOD_IMAGE_INSTRUCTIONS if category == 'food' else INDIA_IMAGE_INSTRUCTIONS if category == 'india' else COUNTRY_IMAGE_INSTRUCTIONS if category == 'country' else IMAGE_INSTRUCTIONS)
     last_error: Optional[Exception] = None
     
     fallback_models = [cfg.GEMINI_MODEL_NAME, "gemini-3.8-flash", "gemini-3.5-flash", cfg.OPENAI_MODEL_NAME]
@@ -168,9 +172,12 @@ async def generate_daily_fact(
                     and (category != 'indian_laws' or validate_indian_laws_content(fact))
                     and (category != 'country' or validate_country_content(fact))
                     and (category != 'india' or validate_india_content(fact))
-                    and (category != 'food' or validate_food_content(fact))):
+                    and (category != 'food' or validate_food_content(fact))
+                    and (category != 'fashion' or validate_fashion_content(fact))):
                 normalize_evidence(fact)
                 fact["category"] = category
+                if category == 'fashion':
+                    prepare_fashion_media(fact)
                 if category == 'food':
                     prepare_food_media(fact)
                 if category == 'india':

@@ -1,0 +1,264 @@
+{
+  "category": "fashion",
+  "topic": "Denim",
+  "schema_version": "2.0",
+  "article_type": "fashion_lesson",
+  "headline_fact": "Look at the diagonal weave before judging denim by its colour.",
+  "summary": "Learn to recognise denim, understand its construction and consider how different versions behave.",
+  "did_you_know": "A fabric name and a fibre name describe different things.",
+  "core_mechanics": "A twill weave creates diagonal lines; the yarns and finishing affect how the fabric feels.",
+  "why_it_matters": "Recognising construction helps you ask better questions about a garment.",
+  "in_depth_breakdown": {
+    "detailed_processes": [],
+    "real_world_application": "A trolley carrying more mass needs more net force to achieve the same acceleration.",
+    "fascinating_trivia": []
+  },
+  "common_misconceptions": [],
+  "learning_takeaways": [
+    "Look for construction details, not colour alone.",
+    "A fibre and a fabric are different things."
+  ],
+  "emoji_icon": "",
+  "difficulty_level": "beginner",
+  "region": "Global use",
+  "fun_rating": 8,
+  "read_time_seconds": 480,
+  "tags": [
+    "fashion",
+    "textiles",
+    "construction"
+  ],
+  "related_categories": [
+    "culture",
+    "technology"
+  ],
+  "visual_suggestions": {
+    "cover": "Editorial illustration of denim cloth showing the weave, quiet left third, no words or logos.",
+    "overview": "Illustration of folded denim showing face, reverse and texture; no labels."
+  },
+  "share_text": "Learn what to notice in denim.",
+  "content_freshness": "evergreen",
+  "sources": [
+    {
+      "id": "s1",
+      "title": "Demonstration source — example content for layout testing",
+      "url": "https://example.org/fashion-demo"
+    }
+  ],
+  "claim_citations": [],
+  "sources_or_references": [],
+  "generated_at": "2026-10-31T10:00:00Z",
+  "image_details": [
+    {
+      "slot": "overview",
+      "placement": "overview",
+      "alt": "Illustration of denim cloth and its texture",
+      "caption": "Illustration: fabric construction contributes to the surface.",
+      "learning_purpose": "Connect the appearance of denim with its woven structure."
+    }
+  ],
+  "content_hash": "fashion-preview",
+  "fashion_lesson": {
+    "subject_type": "textile",
+    "identity": {
+      "name": "Denim",
+      "local_name": "Denim",
+      "region": "Global use",
+      "period": "Historical development and present use",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "hook": "Look at the diagonal weave before judging denim by its colour.",
+    "question": "What makes denim more than a blue fabric?",
+    "learning_goal": "Recognise a few visible details, then connect the weave and materials with everyday use.",
+    "introduction": {
+      "explanation": "Denim is a fabric rather than a fibre. A familiar example uses a twill weave with differently coloured yarns. Looking at the face, reverse and diagonal lines helps explain the appearance of the material.",
+      "why_it_matters": "Two garments can share a colour while using very different fabrics. Recognising the structure gives you a better starting point than the colour alone.",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "recognition_guide": [
+      {
+        "id": "diagonal",
+        "feature": "Diagonal lines in the weave",
+        "where_to_look": "Look closely at an unobstructed area of the fabric. Follow the small repeating lines across its face.",
+        "why_it_matters": "The diagonal pattern helps you recognise a twill construction.",
+        "comparison": "A plain weave has a different interlacing pattern; blue colour alone does not identify denim.",
+        "source_ids": [
+          "s1"
+        ]
+      },
+      {
+        "id": "face-reverse",
+        "feature": "A difference between face and reverse",
+        "where_to_look": "Compare the outer face with the inside of a cuff or an unfinished sample.",
+        "why_it_matters": "Different yarns can be more visible on each face. This helps explain why the inside can look lighter.",
+        "comparison": null,
+        "source_ids": [
+          "s1"
+        ]
+      },
+      {
+        "id": "fabric-not-fibre",
+        "feature": "The yarns beneath the surface",
+        "where_to_look": "Examine the texture and the material information on the actual item.",
+        "why_it_matters": "Cotton is a fibre; denim names a fabric. Some versions include other fibres that change their behaviour.",
+        "comparison": null,
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "origin_and_context": {
+      "explanation": "Denim has a history of workwear and later fashion use. Its materials, production methods and meanings change across places and periods.",
+      "uncertainty": "Names and origin stories can be more complicated than a single place or invention date.",
+      "deeper_history": "A full history can follow the cloth, its production and the garments made from it separately. The material and the clothing do not have identical histories.",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "materials": [
+      {
+        "name": "Cotton",
+        "material_type": "fibre",
+        "role": "Cotton can supply the yarns used to weave the cloth.",
+        "tradeoffs": "The fibre content alone does not tell you the thickness, finishing or comfort of the final item.",
+        "source_ids": [
+          "s1"
+        ]
+      },
+      {
+        "name": "Denim cloth",
+        "material_type": "fabric",
+        "role": "The woven structure brings yarns together into the fabric used for garments.",
+        "tradeoffs": "Different weights and finishes can make denim feel quite different. A fabric name is not a universal performance guarantee.",
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "construction": [
+      {
+        "title": "The twill structure",
+        "explanation": "A repeating interlacing pattern produces the small diagonal lines. The yarns and finishing also affect the surface, so the weave is one part of the explanation.",
+        "visible_effect": "Look for a diagonal repeat rather than treating every blue fabric as denim.",
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "wearing_properties": [
+      {
+        "property": "Weight and movement",
+        "explanation": "A heavier sample may feel more substantial, while a lighter sample can move more freely.",
+        "depends_on": "The actual weight, fibre blend, finishing and garment cut all matter.",
+        "source_ids": [
+          "s1"
+        ]
+      },
+      {
+        "property": "Texture",
+        "explanation": "Some versions feel firm and others feel soft. Feel the actual item rather than relying on its colour.",
+        "depends_on": "The yarns, weave and treatments affect the surface.",
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "practical_guide": {
+      "introduction": "Connect the fabric with the way the finished item is used.",
+      "wearing_suggestions": [],
+      "use_examples": [
+        "Notice denim in jeans, jackets and other garments. Compare the fabrics instead of assuming they are identical."
+      ],
+      "fit_and_movement": [
+        "Check whether the actual garment lets you sit, reach and move comfortably."
+      ],
+      "climate_considerations": [
+        "Consider fabric weight and garment coverage for the conditions in which you plan to wear it."
+      ],
+      "cultural_considerations": [],
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "care": [
+      {
+        "action": "Start with the care label",
+        "reason": "The maker can specify care for the actual fabric, finish and construction.",
+        "limits": "Do not apply one washing rule to every denim blend or finish.",
+        "source_ids": [
+          "s1"
+        ]
+      },
+      {
+        "action": "Consider colour transfer",
+        "reason": "Some dyed fabrics can transfer colour under certain conditions.",
+        "limits": "Check the maker’s guidance; this example does not establish colourfastness.",
+        "source_ids": [
+          "s1"
+        ]
+      },
+      {
+        "action": "Treat unusual finishes separately",
+        "reason": "A finish or added component may need a different approach.",
+        "limits": "Ask the maker when the label does not explain how to care for the item.",
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "variations": [
+      {
+        "name": "Lighter and heavier versions",
+        "region_or_period": "Contemporary use",
+        "difference": "Different weights can suit different constructions. Weight alone does not determine quality.",
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "misconceptions": [
+      {
+        "belief": "All blue cloth is denim",
+        "correction": "Colour is not enough to identify a fabric.",
+        "explanation": "Look at the weave and the material information on the actual item.",
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "takeaways": [
+      "Look for construction details, not colour alone.",
+      "A fibre and a fabric are different things."
+    ],
+    "related_topics": [
+      "Twill weave",
+      "Linen fabric"
+    ],
+    "photos": [
+      {
+        "id": "recognition",
+        "section_id": "recognition",
+        "kind": "detail",
+        "feature_id": "diagonal",
+        "subject": "Denim twill",
+        "queries": [
+          "denim twill texture"
+        ]
+      },
+      {
+        "id": "materials",
+        "section_id": "materials",
+        "kind": "subject",
+        "feature_id": null,
+        "subject": "Denim fabric",
+        "queries": [
+          "denim fabric"
+        ]
+      }
+    ]
+  }
+}

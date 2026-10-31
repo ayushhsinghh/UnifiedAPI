@@ -147,6 +147,12 @@ def build_section_image_context(key, article=None):
             if value:
                 text = value if isinstance(value, str) else json.dumps(value, ensure_ascii=False)
                 excerpt[field] = text[:4000]
+        if article.get('article_type') == 'fashion_lesson':
+            lesson=article.get('fashion_lesson') or {}
+            excerpt['fashion_context']={field:lesson.get(field) for field in ('subject_type','identity','recognition_guide','materials','construction')}
+            lines.append('Fashion editorial illustration: preserve the specific garment, textile, material and construction. '
+                'No invented logos, labels or measurements. Do not impersonate a named designer, person or museum object. '
+                'Generated images are illustrations, not authentic historical or product evidence.')
         if article.get('article_type') == 'food_lesson':
             lesson=article.get('food_lesson') or {}
             excerpt['food_context']={field:lesson.get(field) for field in ('identity','introduction','sensory_profile','key_ingredients')}

@@ -31,6 +31,10 @@ portraits for named people. Country portraits are broader than one-topic India l
 For a food lesson, select the exact dish, ingredient or cooking process requested in the brief.
 Prefer complementary views. A generic restaurant or another dish from the same cuisine is insufficient.
 Photos of finished food do not document a requested preparation step unless the metadata says so.
+For fashion lessons, identify the exact garment, textile, construction detail or process in the brief.
+Generic models, similar clothing, travel scenery and stock portraits cannot identify a named designer,
+person or museum object. Only metadata-supported details qualify. A photo of a whole garment does not
+demonstrate a requested close-up feature unless its metadata supports that feature.
 Return JSON only: {"selected":[{"photo_id":"supplied ID","score":0,"scene":"short scene label",
 "reason":"short metadata-grounded reason"}]}. Scores are integers from 0 to 100.
 Return at most 18 unique photos, most relevant first, with score >=70. Aim for at least 10 when
@@ -53,11 +57,14 @@ def ranking_input(fact,photos):
     if fact.get('article_type')=='food_lesson':
         food=fact.get('food_lesson',{})
         brief={k:food.get(k) for k in ('identity','introduction','sensory_profile','key_ingredients','food_science','photos')}
+    if fact.get('article_type')=='fashion_lesson':
+        fashion=fact.get('fashion_lesson',{})
+        brief={k:fashion.get(k) for k in ('subject_type','identity','introduction','recognition_guide','materials','construction','photos')}
     return {'topic':fact.get('topic'),'lesson':brief,'photos':[{'photo_id':p['provider_id'],
         'description':p.get('description_text',p.get('description',''))[:600],'alt_description':p.get('alt_description','')[:300]}
         for p in photos[:240]]}
 
-def validate_ranking(payload,photos,request_ids=None):
+def validate_ranking(payload,photos,request_ids=None,request_key='food_request_ids'):
     rows=payload.get('selected') if isinstance(payload,dict) else None
     if not isinstance(rows,list) or len(rows)>MAX_PHOTOS:raise ValueError('Invalid ranking format')
     by_id={p['provider_id']:p for p in photos};seen=set();selected=[]
@@ -67,18 +74,19 @@ def validate_ranking(payload,photos,request_ids=None):
         if not isinstance(photo_id,str) or photo_id not in by_id or photo_id in seen:raise ValueError('Unknown or repeated photo ID')
         if type(score) not in (int,float) or not math.isfinite(score) or not 0<=score<=100:raise ValueError('Invalid relevance score')
         if any(not isinstance(row.get(k),str) or not row[k].strip() or len(row[k])>300 for k in ('scene','reason')):raise ValueError('Missing ranking explanation')
-        if request_ids is not None and row['scene'] not in request_ids:raise ValueError('Unknown food photo request')
+        if request_ids is not None and row['scene'] not in request_ids:raise ValueError('Unknown editorial photo request')
         seen.add(photo_id)
-        if score>=70:selected.append((score,{**by_id[photo_id],'food_request_ids':[row['scene']]} if request_ids is not None else by_id[photo_id]))
+        if score>=70:selected.append((score,{**by_id[photo_id],request_key:[row['scene']]} if request_ids is not None else by_id[photo_id]))
     selected.sort(key=lambda pair:pair[0],reverse=True)
     return [p for score,p in selected]
 
 async def rank_photos(fact,photos,*,client=None,report=lambda state:None):
     owned=client is None
-    requests={p['id'] for p in fact.get('food_lesson',{}).get('photos',[])} if fact.get('article_type')=='food_lesson' else None
+    editorial=next((kind for kind in ('food','fashion') if fact.get('article_type')==kind+'_lesson'),None)
+    requests={p['id'] for p in fact.get(editorial+'_lesson',{}).get('photos',[])} if editorial else None
     prompt=SYSTEM_PROMPT
     if requests is not None:
-        prompt+='\nFor food lessons, scene MUST be one exact photos request id from the brief. Select a photo only for that requested subject and section. Return fewer than ten freely; there is no minimum for food lessons.'
+        prompt+='\nFor this editorial lesson, scene MUST be one exact photos request id from the brief. Select a photo only for that requested subject and section. Cover complementary requests when metadata supports them. Return fewer than ten freely; there is no minimum for this lesson.'
     if owned:
         import openai
         from configs.config import get_config
@@ -92,7 +100,7 @@ async def rank_photos(fact,photos,*,client=None,report=lambda state:None):
                         {'role':'user','content':json.dumps(ranking_input(fact,photos),ensure_ascii=False)}],
                     response_format={'type':'json_object'},reasoning_effort='none',max_completion_tokens=4096,store=False),
                     timeout=ATTEMPT_TIMEOUT)
-                return validate_ranking(json.loads(response.choices[0].message.content),photos,request_ids=requests)
+                return validate_ranking(json.loads(response.choices[0].message.content),photos,request_ids=requests,request_key=(editorial or 'food')+'_request_ids')
             except Exception as error:
                 logger.warning('Photo text ranking attempt %d/%d failed (%s)',attempt+1,RETRIES+1,type(error).__name__)
                 if attempt==RETRIES:raise PhotoRankingUnavailable('Photo ranking exhausted five retries') from error
@@ -122,8 +130,15 @@ async def select_country_photos(fact,*,report=lambda state:None,fetch=None,rank=
     return await _select_photos(fact,country_ranking_queries(fact),report=report,fetch=fetch,rank=rank,excluded=excluded)
 
 async def select_food_photos(fact,*,report=lambda state:None,fetch=None,commons=None,rank=None,excluded=()):
-    """Small, scene-bound food pool; no ten-photo quota and no image inputs."""
     from .food import food_photo_entries
+    return await _select_editorial_photos(fact,food_photo_entries(fact),'food_request_ids',report=report,fetch=fetch,commons=commons,rank=rank,excluded=excluded)
+
+async def select_fashion_photos(fact,*,report=lambda state:None,fetch=None,commons=None,rank=None,excluded=()):
+    from .fashion import fashion_photo_entries
+    return await _select_editorial_photos(fact,fashion_photo_entries(fact),'fashion_request_ids',report=report,fetch=fetch,commons=commons,rank=rank,excluded=excluded)
+
+async def _select_editorial_photos(fact,entries,request_key,*,report,fetch=None,commons=None,rank=None,excluded=()):
+    """Small, scene-bound pool; only Commons may identify historical objects or people."""
     if fetch is None:
         from .unsplash_photos import ranking_candidates as fetch
     if commons is None:
@@ -134,9 +149,9 @@ async def select_food_photos(fact,*,report=lambda state:None,fetch=None,commons=
         async with semaphore:
             try:return item,await asyncio.wait_for(source(query),timeout=15)
             except Exception:return item,[]
-    entries=food_photo_entries(fact)
     report({'status':'collecting','mode':'text_ranking'})
-    searches=[collect(item,query,source) for item in entries for query in item['queries'][:2] for source in (commons,fetch)]
+    searches=[collect(item,query,source) for item in entries for query in item['queries'][:2]
+        for source in ((commons,) if item.get('kind') in ('historical_object','person') else (commons,fetch))]
     by_source={}
     for item,photos in await asyncio.gather(*searches):
         for photo in photos:
@@ -144,19 +159,24 @@ async def select_food_photos(fact,*,report=lambda state:None,fetch=None,commons=
             photo_id=by_source.get(photo['source_url'],photo['provider_id'])
             if photo_id not in pool:
                 if len(pool)>=240:continue
-                pool[photo_id]={**photo,'food_request_ids':[]};by_source[photo['source_url']]=photo_id
-            if item['id'] not in pool[photo_id]['food_request_ids']:pool[photo_id]['food_request_ids'].append(item['id'])
+                pool[photo_id]={**photo,request_key:[]};by_source[photo['source_url']]=photo_id
+            if item['id'] not in pool[photo_id][request_key]:pool[photo_id][request_key].append(item['id'])
     report({'status':'ranking','candidate_count':len(pool)})
     if not pool:return []
-    try:return (await rank(fact,list(pool.values()),report=report))[:18]
+    def permitted(photo,request_id):
+        item=next((e for e in entries if e['id']==request_id),None)
+        return item is not None and (item.get('kind') not in ('historical_object','person') or photo.get('provider')=='wikimedia')
+    try:
+        selected=await rank(fact,list(pool.values()),report=report)
+        return [{**p,request_key:ids} for p in selected if (ids:=[i for i in p.get(request_key,[]) if permitted(p,i)])][:18]
     except PhotoRankingUnavailable:
         import re
         report({'status':'collecting','mode':'metadata_fallback','candidate_count':len(pool)})
         def matched_requests(photo):
             evidence=set(re.findall(r'\w+', (photo.get('description','')+' '+photo.get('title','')).casefold()))
-            return [item['id'] for item in entries if item['id'] in photo['food_request_ids']
+            return [item['id'] for item in entries if item['id'] in photo[request_key] and permitted(photo,item['id'])
                 and (wanted:={w for w in re.findall(r'\w+',item['subject'].casefold()) if len(w)>3}) and wanted<=evidence]
-        return [{**p,'food_request_ids':ids} for p in pool.values() if (ids:=matched_requests(p))][:18]
+        return [{**p,request_key:ids} for p in pool.values() if (ids:=matched_requests(p))][:18]
 
 async def _select_photos(fact,queries,*,report,fetch=None,rank=None,excluded=(),fallback_fetch=None,fallback_queries=()):
     if fetch is None:
