@@ -1,48 +1,35 @@
 """
 Centralized logging configuration.
 
-Sets up:
-- Console handler (INFO level)
-- Rotating file handler for app.log (DEBUG level)
-- Separate file handler for errors.log (ERROR level)
+The API writes all records to app.log. Supervised workers forward records to
+the API over a pipe, so only the API owns and rotates the log file.
 """
 
 import logging
 import logging.config
-from pathlib import Path
 
 from configs.config import get_config
 
 cfg = get_config()
 
 
-def setup_logging(file_suffix="") -> None:
+def setup_logging(forward_to_parent=False) -> None:
     """Configure logging once at application startup."""
-    handlers = ["console", "app_log_handler", "error_log_handler"]
-    def log_path(filename):
-        path = Path(filename)
-        return str(path.with_name(path.stem + file_suffix + path.suffix)) if file_suffix else filename
+    handlers = ["console"] if forward_to_parent else ["app_log_handler"]
     
     logging_handlers = {
         "console": {
             "class": "logging.StreamHandler",
-            "level": "INFO",
-            "formatter": "default",
+            "level": "DEBUG",
+            "formatter": "worker_forward" if forward_to_parent else "default",
         },
         "app_log_handler": {
             "class": "logging.handlers.RotatingFileHandler",
             "level": "DEBUG",
             "formatter": "default",
-            "filename": log_path(cfg.LOG_FILE_APP),
+            "filename": cfg.LOG_FILE_APP,
             "maxBytes": cfg.LOG_MAX_BYTES,
             "backupCount": cfg.LOG_BACKUP_COUNT,
-            "encoding": "utf8",
-        },
-        "error_log_handler": {
-            "class": "logging.FileHandler",
-            "level": "ERROR",
-            "formatter": "default",
-            "filename": log_path(cfg.LOG_FILE_ERRORS),
             "encoding": "utf8",
         },
     }
@@ -51,11 +38,18 @@ def setup_logging(file_suffix="") -> None:
         "version": 1,
         "disable_existing_loggers": False,
         "formatters": {
+            "worker_forward": {
+                "()": "src.transcription.gemini_logging.ForwardingFormatter",
+            },
             "default": {
                 "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
             },
         },
-        "handlers": logging_handlers,
+        "handlers": {name: logging_handlers[name] for name in handlers},
+        "loggers": {
+            name: {"handlers": [], "level": "INFO", "propagate": True}
+            for name in ("uvicorn", "uvicorn.error", "uvicorn.access")
+        },
         "root": {
             "level": "DEBUG",
             "handlers": handlers,

@@ -345,7 +345,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--once', action='store_true')
     from logging_config import setup_logging
-    setup_logging(file_suffix='.gemini-worker')
+    setup_logging(forward_to_parent=os.getenv('SUBFORGE_GEMINI_LOG_FORWARDING') == '1')
     # Protocol DEBUG logs can contain audio frames, transcripts, and auth headers.
     # The worker's own events provide diagnostics without these payloads.
     for noisy_logger in ('websockets', 'httpx', 'httpcore', 'google', 'google_genai'):

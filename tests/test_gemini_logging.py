@@ -12,6 +12,27 @@ from src.transcription import gemini_media as media
 
 
 class LoggingTests(unittest.IsolatedAsyncioTestCase):
+    def test_api_configuration_has_one_file_and_no_error_or_console_handler(self):
+        from logging_config import setup_logging
+        with patch('logging.config.dictConfig') as configure, patch('logging.info'):
+            setup_logging()
+        config = configure.call_args.args[0]
+        self.assertEqual(config['root']['handlers'], ['app_log_handler'])
+        self.assertEqual(list(config['handlers']), ['app_log_handler'])
+        self.assertEqual(Path(config['handlers']['app_log_handler']['filename']).name, 'app.log')
+        for name in ('uvicorn', 'uvicorn.error', 'uvicorn.access'):
+            self.assertEqual(config['loggers'][name]['handlers'], [])
+            self.assertTrue(config['loggers'][name]['propagate'])
+
+    def test_supervised_worker_forwards_without_opening_any_log_file(self):
+        from logging_config import setup_logging
+        with patch('logging.config.dictConfig') as configure, patch('logging.info'):
+            setup_logging(forward_to_parent=True)
+        config = configure.call_args.args[0]
+        self.assertEqual(list(config['handlers']), ['console'])
+        self.assertEqual(config['handlers']['console']['formatter'], 'worker_forward')
+        self.assertEqual(config['handlers']['console']['level'], 'DEBUG')
+
     async def test_failure_contains_traceback_and_redacts_credentials(self):
         token = context.set({'job': 'job_test', 'stage': 'translation', 'section': 2, 'attempt': 3})
         logger = logging.getLogger('gemini_logging_test')

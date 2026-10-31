@@ -1,11 +1,22 @@
 """Correlated translation diagnostics without credentials or transcript content."""
 from contextvars import ContextVar
+import json
 import logging
 import os
 import re
 import traceback
 
 context = ContextVar('gemini_log_context', default={})
+
+
+class ForwardingFormatter(logging.Formatter):
+    """One physical line per record preserves severity and multiline tracebacks."""
+    def format(self, record):
+        message = record.getMessage()
+        if record.exc_info:
+            message += '\n' + self.formatException(record.exc_info)
+        return json.dumps({'gemini_worker_log': True, 'level': record.levelno,
+                           'message': redact(message)})
 
 
 def redact(value):

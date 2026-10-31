@@ -92,7 +92,6 @@ OCI_BUCKET_NAME = os.getenv("OCI_BUCKET_NAME", "fact_images")
 
 # Logging
 LOG_FILE_APP = "app.log"
-LOG_FILE_ERRORS = "errors.log"
 LOG_MAX_BYTES = 5 * 1024 * 1024  # 5 MB
 LOG_BACKUP_COUNT = 5
 
