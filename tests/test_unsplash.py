@@ -24,6 +24,17 @@ def payload():
 
 
 class UnsplashTests(unittest.TestCase):
+    def test_text_ranker_fetches_thirty_summaries_without_discarding_missing_country_text(self):
+        data=payload();data['results'][0].update(description=None,alt_description='A living root bridge')
+        response=Mock(status_code=200,content=b'{}');response.json.return_value=data
+        with patch.dict(os.environ,{'UNSPLASH_ACCESS_KEY':'test-only'}),patch('requests.get',return_value=response) as get:
+            photos=u._ranking_candidates('meghalaya')
+        self.assertEqual(len(photos),1)
+        self.assertEqual(photos[0]['description_text'],'')
+        self.assertEqual(photos[0]['alt_description'],'A living root bridge')
+        self.assertEqual(get.call_args.kwargs['params']['per_page'],30)
+        self.assertEqual(get.call_args.kwargs['params']['query'],'meghalaya')
+        self.assertEqual(get.call_count,1)
     def test_fewer_than_three_tag_matches_uses_the_three_most_liked_valid_photos(self):
         details={};raw=[]
         for index in range(5):

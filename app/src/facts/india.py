@@ -96,11 +96,12 @@ def india_carousel_queries(fact):
     return queries[:6]
 
 def india_carousel_keys(fact):
-    if fact.get('india_media',{}).get('carousel_version') not in (1,2):return []
+    if fact.get('india_media',{}).get('photo_ranking_version')==1:return [f'india_scene_{n}' for n in range(18)]
+    if fact.get('india_media',{}).get('carousel_version') not in (1,2,3):return []
     return [f'india_scene_{n}' for n in range(india_carousel_per_query(fact)*len(india_carousel_queries(fact)))]
 
 def india_carousel_per_query(fact):
-    return 3 if fact.get('india_media',{}).get('carousel_version')==2 else 2
+    return 3 if fact.get('india_media',{}).get('carousel_version') in (2,3) else 2
 
 PHOTO_STOPWORDS={'india','indian','photo','photograph','the','and','for','with','from','near','view','landscape','village','hill','hills'}
 def _photo_words(value):
@@ -128,6 +129,7 @@ def india_carousel_tag_matches(photo,query,fact):
     return bool(tags&wanted) and india_carousel_matches(photo,query,fact)
 
 def india_carousel_accepted(photo,query,fact):
+    if photo.get('selection_mode')=='llm_ranked' and photo.get('ranking_model')=='gpt-6-luna':return True
     popular=(photo.get('provider')=='unsplash' and photo.get('detail_fetched') is True
         and photo.get('selection_mode')=='popular_fallback' and bool(query.strip()))
     return popular or india_carousel_matches(photo,query,fact)
@@ -148,7 +150,7 @@ def prepare_india_media(fact):
     fact['visual_suggestions']={k:v for k,v in fact['visual_suggestions'].items() if k in ('cover','overview')}
     fact['images']={};fact['image_credits']={}
     fact['india_media']={'version':1,'generated_limit':2,'photo_limit':6,'generated_slots':['cover','overview'],
-        'carousel_version':2,'carousel_limit':18}
+        'carousel_version':3,'carousel_limit':18,'photo_ranking_version':1,'photo_timeout_seconds':720}
     fact['india_validation']={'structure_checked':True,'source_verification':'not_performed'}
 
 def build_india_prompt(blocklist):

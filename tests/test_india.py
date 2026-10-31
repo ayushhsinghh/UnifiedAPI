@@ -62,7 +62,7 @@ class IndiaContractTests(unittest.TestCase):
         self.assertEqual(f['images'],{});self.assertEqual(f['india_media']['generated_limit'],2)
         keys=set(fact_image_keys(f))
         self.assertTrue({'cover','overview','india_photo_0','india_photo_1'}<=keys)
-        self.assertEqual(len([k for k in keys if k.startswith('india_scene_')]),9)
+        self.assertEqual(len([k for k in keys if k.startswith('india_scene_')]),18)
         self.assertIn('ONE rich, specific topic',build_india_prompt(['recent topic']))
 
 class IndiaWorkerTests(unittest.IsolatedAsyncioTestCase):

@@ -29,6 +29,9 @@ def image_generation_state(document, timeout_seconds, now=None):
     expected = fact_image_keys(fact)
     images = document.get("images") or fact.get("images") or {}
     statuses = document.get("image_status") or {}
+    expected=[key for key in expected if statuses.get(key)!='not_requested']
+    if fact.get('india_media',{}).get('photo_ranking_version')==1:
+        timeout_seconds=max(timeout_seconds,720)
     started = document.get("image_started_at")
     now = now or datetime.now(timezone.utc)
     if started and started.tzinfo is None:
@@ -38,4 +41,4 @@ def image_generation_state(document, timeout_seconds, now=None):
     pending = [key for key in expected if key not in ready and statuses.get(key) == "processing" and not expired]
     failed = [key for key in expected if key not in ready and key not in pending]
     status = "not_requested" if not expected else "processing" if pending else "partial" if ready and failed else "failed" if failed else "completed"
-    return {"status": status, "expected": expected, "ready": ready, "pending": pending, "failed": failed}
+    return {"status": status, "expected": expected, "ready": ready, "pending": pending, "failed": failed,"timeout_seconds":timeout_seconds}

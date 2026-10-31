@@ -106,7 +106,7 @@ def get_random_cached_fact(category: str, include_metadata: bool = False) -> Opt
         {"$match": {"category": category, "full_response.difficulty_level": {
             "$in": ["beginner", "intermediate", "Beginner", "Intermediate"]}}},
         {"$sample": {"size": 1}},
-        {"$project": {"full_response": 1, "content_hash": 1, "images": 1, "image_status": 1, "image_started_at": 1, "generation_metadata": 1, "_id": 0}},
+        {"$project": {"full_response": 1, "content_hash": 1, "images": 1, "image_status": 1, "image_started_at": 1, "generation_metadata": 1,"image_credits":1,"photo_selection":1, "_id": 0}},
     ]
     results = list(db[cfg.DAILY_FACTS_COLLECTION].aggregate(pipeline))
     if results:
@@ -154,6 +154,9 @@ def get_facts_list(
             fact_data['image_credits'] = doc['image_credits']
         if 'country_photo_galleries' in doc:
             fact_data['country_photo_galleries'] = doc['country_photo_galleries']
+        if 'photo_selection' in doc:fact_data['photo_selection']=doc['photo_selection']
+        from src.facts.lifecycle import image_generation_state
+        fact_data['image_generation']=image_generation_state(doc,cfg.FACT_IMAGE_TIMEOUT_SECONDS)
             
         results.append(fact_data)
         
@@ -212,6 +215,10 @@ def set_fact_image_state(content_hash: str, key: str, status: str, url=None, cre
     get_db()[cfg.DAILY_FACTS_COLLECTION].update_one(
         {"content_hash": content_hash}, change)
 
+
+def set_fact_photo_selection(content_hash: str,state:dict) -> None:
+    """Persist progress only, never a cached LLM ranking response."""
+    get_db()[cfg.DAILY_FACTS_COLLECTION].update_one({'content_hash':content_hash},{'$set':{'photo_selection':state}})
 
 def claim_country_photo_enrichment(content_hash: str) -> bool:
     """One cached photo-only search per plan version, with recovery after a stale worker."""

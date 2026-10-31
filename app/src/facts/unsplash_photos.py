@@ -41,7 +41,7 @@ def candidates(payload, country):
             plain((photo.get('location') or {}).get('country')),
             plain((photo.get('location') or {}).get('name')),
             ' '.join(tags)])
-        if not re.search(r'\b' + re.escape(country) + r'\b', evidence, re.I):
+        if country and not re.search(r'\b' + re.escape(country) + r'\b', evidence, re.I):
             continue
         width, height = photo.get('width'), photo.get('height')
         if not isinstance(width, int) or not isinstance(height, int) or min(width, height) < 800:
@@ -57,7 +57,7 @@ def candidates(payload, country):
                 r'/photos/[\w-]+/download', urlsplit(tracking).path):
             continue
         result.append(dict(provider='unsplash', provider_id=photo.get('id'), url=url,
-            title=description, description=description, author=plain(user['name']),
+            title=description, description=description,description_text=plain(photo.get('description')), author=plain(user['name']),
             author_url=referral(author_url), source_url=referral(source),
             license='Unsplash License', license_url=referral('https://unsplash.com/license'),
             width=width, height=height, download_location=tracking, tags=tags,
@@ -141,6 +141,23 @@ def _search(country, query, match=None, exact_query=False, popular_fallback=Fals
 
 async def search(country, query, *, match=None, exact_query=False, popular_fallback=False):
     return await asyncio.to_thread(_search, country, query,match,exact_query,popular_fallback)
+
+def _ranking_candidates(query):
+    """Larger metadata-only pool; relevance is decided by the text ranker, not missing summary tags."""
+    import requests
+    key=access_key()
+    if not key:return []
+    try:
+        response=requests.get('https://api.unsplash.com/search/photos',
+            params={'query':query[:240],'per_page':30,'content_filter':'high','order_by':'relevant'},
+            headers={'Authorization':f'Client-ID {key}','Accept-Version':'v1'},timeout=(3,7),allow_redirects=False)
+        if response.status_code!=200 or len(response.content)>2_500_000:return []
+        return [dict(photo,search_query=query) for photo in candidates(response.json(),None)
+            if isinstance(photo.get('provider_id'),str) and re.fullmatch(r'[A-Za-z0-9_-]{1,100}',photo['provider_id'])]
+    except (requests.RequestException,ValueError,TypeError):return []
+
+async def ranking_candidates(query):
+    return await asyncio.to_thread(_ranking_candidates,query)
 
 
 def _track(photo):

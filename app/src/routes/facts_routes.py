@@ -38,6 +38,7 @@ from src.database.facts_repository import (
     finish_fact_images,
     claim_country_photo_enrichment,
     finish_country_photo_enrichment,
+    set_fact_photo_selection,
 )
 from src.facts.fact_generator import (
     SUPPORTED_CATEGORIES,
@@ -48,6 +49,7 @@ from src.facts.visual_prompts import IMAGE_SECTION_BRIEFS, build_section_image_c
 from src.facts.country_photos import find_country_photos, find_subject_photo, country_scene_queries, country_scene_plan
 from src.facts.country_media_plan import country_photo_entries
 from src.facts.unsplash_photos import track_selection
+from src.facts.photo_ranking import select_india_photos,PhotoRankingUnavailable
 from src.facts.image_generator import generate_and_save_image
 
 logger = logging.getLogger(__name__)
@@ -129,6 +131,7 @@ async def process_fact_generation_task(
 
     content_hash = cached.get("content_hash") if cached else None
     stored = cached
+    image_work=None
     if not cached:
         try:
             content_hash = store_fact(fact, category, generation_metadata=generation_metadata)
@@ -136,7 +139,7 @@ async def process_fact_generation_task(
                 keys = fact_image_keys(fact)
                 if keys:
                     start_fact_images(content_hash, keys)
-                    asyncio.create_task(_background_image_task(fact["visual_suggestions"], content_hash, article=fact))
+                    image_work=(fact["visual_suggestions"],content_hash,fact)
             else:
                 # Exact duplicates still reference their existing images and state.
                 content_hash = _compute_content_hash(fact["headline_fact"])
@@ -147,6 +150,7 @@ async def process_fact_generation_task(
         fact["images"] = stored["images"]
         fact['image_credits'] = stored.get('image_credits') or {}
         fact['country_photo_galleries'] = stored.get('country_photo_galleries') or {}
+        fact['photo_selection']=stored.get('photo_selection') or {}
     image_state = image_generation_state(stored or {"full_response": fact}, cfg.FACT_IMAGE_TIMEOUT_SECONDS)
     fact_response = {
         "success": True,
@@ -164,6 +168,10 @@ async def process_fact_generation_task(
     }
     if not update_fact_job(job_id, "completed", fact_data=fact_response):
         logger.error("Job %s could not be marked completed", job_id)
+        return
+    if image_work:
+        visuals,stored_hash,article=image_work
+        asyncio.create_task(_background_image_task(visuals,stored_hash,article=article))
 
 
 async def _background_image_task(visual_suggestions: dict, content_hash: str, existing_images: dict = None, article: dict = None, photos_only: bool = False):
@@ -336,7 +344,8 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
             for number,key in enumerate(keys):
                 if key not in retained:continue
                 prior=(article or {}).get('image_credits',{}).get(key) or {}
-                query=india_carousel_queries(article)[number//per_query]
+                queries=india_carousel_queries(article)
+                query=queries[min(number//per_query,len(queries)-1)] if queries else ''
                 if not india_carousel_accepted(prior,prior.get('scene_query',query),article):
                     retained.discard(key);images.pop(key,None)
                     set_fact_image_state(content_hash,key,'failed',clear=True)
@@ -375,11 +384,51 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
                     for key in slots:
                         if key not in images:set_fact_image_state(content_hash,key,'failed')
         async def bounded_india_carousel():
-            from src.facts.india import india_carousel_keys
+            from src.facts.india import india_carousel_keys,india_carousel_queries
+            def report(state):set_fact_photo_selection(content_hash,state)
+            ranked=(article or {}).get('india_media',{}).get('photo_ranking_version')==1
             try:
-                await asyncio.wait_for(process_india_carousel(),timeout=max(1,min(240,cfg.FACT_IMAGE_TIMEOUT_SECONDS-10)))
+                async def finalize():
+                    if ranked:
+                        report({'status':'collecting','mode':'text_ranking'})
+                        try:
+                            selected=await select_india_photos(article,report=report,excluded=claimed_sources)
+                        except Exception as error:
+                            logger.warning('Photo text ranking unavailable; using legacy selection (%s)',type(error).__name__)
+                            report({'status':'collecting','mode':'legacy_fallback'})
+                            await process_india_carousel()
+                            attempted=len(india_carousel_queries(article))*3
+                            for key in india_carousel_keys(article)[attempted:]:
+                                if key not in images:set_fact_image_state(content_hash,key,'not_requested',clear=True)
+                            report({'status':'completed','mode':'legacy_fallback','selected_count':sum(key in images for key in india_carousel_keys(article))})
+                            return
+                        async def track(photo):
+                            async with subject_semaphore:
+                                if photo['source_url'] in claimed_sources:return None
+                                claimed_sources.add(photo['source_url'])
+                                return photo if await track_selection(photo) else None
+                        photos=[p for p in await asyncio.gather(*(track(p) for p in selected)) if p]
+                        keys=india_carousel_keys(article)
+                        if len(photos)<10:
+                            report({'status':'insufficient','mode':'text_ranking','selected_count':len(photos),'minimum':10})
+                            for key in keys:set_fact_image_state(content_hash,key,'failed',clear=True)
+                            return
+                        for index,key in enumerate(keys):
+                            if index>=len(photos):
+                                set_fact_image_state(content_hash,key,'not_requested',clear=True);continue
+                            p=photos[index]
+                            photo={**{k:v for k,v in p.items() if k!='download_location'},'india_carousel':True,
+                                'selection_mode':'llm_ranked','ranking_model':'gpt-6-luna','scene_query':p.get('search_query','')}
+                            images[key]=photo['url']
+                            set_fact_image_state(content_hash,key,'ready',photo['url'],credit=photo)
+                        report({'status':'completed','mode':'text_ranking','selected_count':len(photos)})
+                        return
+                    await process_india_carousel()
+                timeout=720 if ranked else max(1,min(240,cfg.FACT_IMAGE_TIMEOUT_SECONDS-10))
+                await asyncio.wait_for(finalize(),timeout=timeout)
             except asyncio.TimeoutError:
                 logger.warning('India carousel lookup budget expired for %s',content_hash)
+                if ranked:report({'status':'insufficient','mode':'text_ranking','selected_count':0,'minimum':10})
                 for key in india_carousel_keys(article):
                     if key not in images:set_fact_image_state(content_hash,key,'failed')
         tasks.append(bounded_india_carousel())
@@ -514,6 +563,7 @@ async def get_fact_job_status(job_id: str) -> dict:
                 fact_data["fact"]["images"] = stored.get("images") or {}
                 fact_data['fact']['image_credits'] = stored.get('image_credits') or {}
                 fact_data['fact']['country_photo_galleries'] = stored.get('country_photo_galleries') or {}
+                fact_data['fact']['photo_selection']=stored.get('photo_selection') or {}
                 fact_data["image_generation"] = image_generation_state(stored, cfg.FACT_IMAGE_TIMEOUT_SECONDS)
         response["data"] = fact_data
     elif job["status"] == "failed":
@@ -593,7 +643,8 @@ async def retry_image_generation(
         queries=india_carousel_queries(full_response)
         for index,key in enumerate(india_carousel_keys(full_response)):
             credit=(fact_doc.get('image_credits') or {}).get(key) or {}
-            if key in existing_images and not india_carousel_accepted(credit,credit.get('scene_query',queries[index//india_carousel_per_query(full_response)]),full_response):
+            query=queries[min(index//india_carousel_per_query(full_response),len(queries)-1)] if queries else ''
+            if key in existing_images and not india_carousel_accepted(credit,credit.get('scene_query',query),full_response):
                 missing_keys.append(key)
     
     if not missing_keys:

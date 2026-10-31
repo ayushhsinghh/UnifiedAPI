@@ -74,7 +74,7 @@ def routes_module():
         def __init__(self, status_code, detail): self.status_code, self.detail = status_code, detail
     repo_names = ['get_facts_list', 'get_random_cached_fact', 'get_recent_topic_keys', 'store_fact',
         'update_fact_images', 'delete_fact', 'get_fact_by_hash', '_compute_content_hash',
-        'start_fact_images', 'set_fact_image_state', 'finish_fact_images', 'claim_country_photo_enrichment', 'finish_country_photo_enrichment']
+        'start_fact_images', 'set_fact_image_state', 'finish_fact_images', 'claim_country_photo_enrichment', 'finish_country_photo_enrichment','set_fact_photo_selection']
     value = load('routes_test', 'src/routes/facts_routes.py', {
         **config_import,
         'fastapi': module('fastapi', APIRouter=Router, BackgroundTasks=object, Header=lambda *a, **k: None,
@@ -91,6 +91,7 @@ def routes_module():
             find_subject_photo=AsyncMock(return_value=[]), country_scene_queries=photo_plan.country_scene_queries,
             country_scene_plan=photo_plan.country_scene_plan),
         'src.facts.image_generator': module('src.facts.image_generator', generate_and_save_image=AsyncMock()),
+        'src.facts.photo_ranking': module('src.facts.photo_ranking',select_india_photos=AsyncMock(side_effect=RuntimeError('Offline ranking fixture')),PhotoRankingUnavailable=RuntimeError),
     })
     value.logger = Mock()
     return value
