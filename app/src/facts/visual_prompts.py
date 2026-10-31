@@ -147,6 +147,11 @@ def build_section_image_context(key, article=None):
             if value:
                 text = value if isinstance(value, str) else json.dumps(value, ensure_ascii=False)
                 excerpt[field] = text[:4000]
+        if article.get('article_type') == 'food_lesson':
+            lesson=article.get('food_lesson') or {}
+            excerpt['food_context']={field:lesson.get(field) for field in ('identity','introduction','sensory_profile','key_ingredients')}
+            lines.append('Food editorial illustration: preserve the exact dish, ingredients, texture and regional preparation. '
+                'No lettering, nutrition charts or invented restaurant identities. This is an illustration, not a documented recipe result.')
         if article.get('article_type') == 'india_lesson':
             lesson = article.get('india_lesson') or {}
             excerpt['india_context'] = {field: lesson.get(field) for field in ('question','central_idea','region','period','case_study')}

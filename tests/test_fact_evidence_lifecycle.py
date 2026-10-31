@@ -39,6 +39,7 @@ config_import = {'configs.config': module('configs.config', get_config=lambda: C
 
 def generator_module():
     from src.facts import india as india_contract
+    from src.facts import image_policy as image_policy_contract
     value = load('fact_test.generator', 'src/facts/fact_generator.py', {
         **config_import,
         'openai': module('openai', AsyncOpenAI=Mock()),
@@ -52,12 +53,13 @@ def generator_module():
         'fact_test.biology': module('fact_test.biology', BIOLOGY_RESPONSE_SCHEMA={}, build_biology_prompt=lambda *args: 'biology prompt', validate_biology_content=lambda *args: True),
         'fact_test.psychology': module('fact_test.psychology', PSYCHOLOGY_RESPONSE_SCHEMA={}, build_psychology_prompt=lambda *args: 'psychology prompt', validate_psychology_content=lambda *args: True),
         'fact_test.learning': learning,
-        'fact_test.image_policy': image_policy,
+        'fact_test.image_policy': image_policy_contract,
         'fact_test.constitution': module('fact_test.constitution', CONSTITUTION_RESPONSE_SCHEMA={}, build_constitution_prompt=lambda *args: 'constitution prompt', validate_constitution_content=lambda *args: True),
         'fact_test.constitution_sources': module('fact_test.constitution_sources', enrich_constitution_text=AsyncMock(side_effect=lambda fact: fact)),
         'fact_test.indian_laws': module('fact_test.indian_laws', INDIAN_LAWS_RESPONSE_SCHEMA={}, build_indian_laws_prompt=lambda *args: 'Indian laws prompt', validate_indian_laws_content=lambda *args: True),
         'fact_test.country': module('fact_test.country', COUNTRY_RESPONSE_SCHEMA={}, COUNTRY_IMAGE_INSTRUCTIONS='Country image rules', build_country_prompt=lambda *args: 'Country prompt', validate_country_content=lambda *args: True, enrich_country_identity=lambda fact:fact),
         'fact_test.india': india_contract,
+        'fact_test.food': __import__('src.facts.food',fromlist=['food']),
     })
 
     value.logger = Mock()
@@ -92,7 +94,8 @@ def routes_module():
             country_scene_plan=photo_plan.country_scene_plan),
         'src.facts.image_generator': module('src.facts.image_generator', generate_and_save_image=AsyncMock()),
         'src.facts.photo_ranking': module('src.facts.photo_ranking',select_india_photos=AsyncMock(side_effect=RuntimeError('Offline ranking fixture')),
-            select_country_photos=AsyncMock(side_effect=RuntimeError('Offline ranking fixture')),PhotoRankingUnavailable=RuntimeError),
+            select_country_photos=AsyncMock(side_effect=RuntimeError('Offline ranking fixture')),
+            select_food_photos=AsyncMock(return_value=[]),PhotoRankingUnavailable=RuntimeError),
     })
     value.logger = Mock()
     return value

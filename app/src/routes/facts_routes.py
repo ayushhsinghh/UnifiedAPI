@@ -49,7 +49,7 @@ from src.facts.visual_prompts import IMAGE_SECTION_BRIEFS, build_section_image_c
 from src.facts.country_photos import find_country_photos, find_subject_photo, country_scene_queries, country_scene_plan
 from src.facts.country_media_plan import country_photo_entries
 from src.facts.unsplash_photos import track_selection
-from src.facts.photo_ranking import select_india_photos,select_country_photos,PhotoRankingUnavailable
+from src.facts.photo_ranking import select_india_photos,select_country_photos,select_food_photos,PhotoRankingUnavailable
 from src.facts.image_generator import generate_and_save_image
 
 logger = logging.getLogger(__name__)
@@ -179,6 +179,7 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
         existing_images = {}
     images = existing_images.copy()
     is_india = (article or {}).get('article_type') == 'india_lesson'
+    is_food = (article or {}).get('article_type') == 'food_lesson'
     is_country = (article or {}).get('article_type') == 'country_profile'
     ranked_country=is_country and (article or {}).get('country_media',{}).get('photo_ranking_version')==1
     country = (article or {}).get('country_profile') if is_country else None
@@ -262,7 +263,7 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
             )
             if url:
                 images[key] = url
-            if hybrid or is_india:
+            if hybrid or is_india or is_food:
                 detail=next((d for d in (article or {}).get('image_details',[]) if d.get('slot')==key),{})
                 subject=(article or {}).get('topic') or (country or {}).get('identity',{}).get('name','the topic')
                 credit={'kind':'generated','url':url,'title':detail.get('caption') or f"Illustration of {subject}",
@@ -295,7 +296,7 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
     tasks = []
     for key, brief in IMAGE_SECTION_BRIEFS.items():
         if photos_only:continue
-        if is_india and key not in ('cover','overview'):continue
+        if (is_india or is_food) and key not in ('cover','overview'):continue
         if key in expanded_scenes:continue
         if is_country and key not in {'cover','overview','how_it_works','explanation_2','explanation_3','explanation_4','explanation_5','explanation_6'}:
             continue
@@ -307,6 +308,41 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
                 key, f"{content_hash}_{key}.jpg", prompt, brief["ratio"],
                 build_section_image_context(key, article),
             ))
+
+    if is_food:
+        from src.facts.food import food_photo_entries
+        async def process_food_photos():
+            entries=food_photo_entries(article);keys=[p['key'] for p in entries]+[f'food_scene_{n}' for n in range(6)]
+            state={}
+            def report(value):
+                state.update(value);set_fact_photo_selection(content_hash,dict(state))
+            async def finalize():
+                selected=await select_food_photos(article,report=report,excluded=claimed_sources)
+                used=set();ready=set();extras=[]
+                for p in selected:
+                    if p['source_url'] in used:continue
+                    if p.get('provider')=='unsplash' and not await track_selection(p):continue
+                    used.add(p['source_url'])
+                    item=next((entry for entry in entries if entry['id'] in p.get('food_request_ids',[]) and entry['key'] not in ready),None)
+                    photo={**{k:v for k,v in p.items() if k!='download_location'},'food_photo':True,
+                        'selection_mode':state.get('mode','text_ranking'),'ranking_model':'gpt-6-luna' if state.get('mode')!='metadata_fallback' else None}
+                    if item:
+                        photo.update(section_id=item['section_id'],photo_id=item['id']);key=item['key']
+                    elif len(extras)<6:
+                        key=f'food_scene_{len(extras)}';photo['food_carousel']=True;extras.append(photo)
+                    else:continue
+                    ready.add(key);images[key]=photo['url']
+                    set_fact_image_state(content_hash,key,'ready',photo['url'],credit=photo)
+                for key in keys:
+                    if key not in ready:set_fact_image_state(content_hash,key,'not_requested',clear=True)
+                report({'status':'completed' if ready else 'insufficient','selected_count':len(ready)})
+            try:await asyncio.wait_for(finalize(),timeout=720)
+            except Exception as error:
+                logger.warning('Food photo selection failed (%s)',type(error).__name__)
+                for key in keys:
+                    if key not in images:set_fact_image_state(content_hash,key,'failed')
+                report({'status':'insufficient','reason':'photo_lookup_failed'})
+        tasks.append(process_food_photos())
 
     if is_india:
         from src.facts.india import india_photo_entries

@@ -1,0 +1,319 @@
+{
+  "category": "food",
+  "topic": "Hummus",
+  "schema_version": "2.0",
+  "article_type": "food_lesson",
+  "headline_fact": "Chickpeas, sesame and careful blending turn a few ingredients into a creamy dip.",
+  "summary": "Meet hummus, understand its texture, and make an Indian-kitchen adaptation.",
+  "did_you_know": "Blending changes the texture without changing the basic ingredients.",
+  "core_mechanics": "Soft chickpeas break down and blend with sesame paste and liquid.",
+  "why_it_matters": "A familiar ingredient can introduce a different food tradition.",
+  "in_depth_breakdown": {
+    "detailed_processes": [],
+    "real_world_application": "A trolley carrying more mass needs more net force to achieve the same acceleration.",
+    "fascinating_trivia": []
+  },
+  "common_misconceptions": [],
+  "learning_takeaways": [
+    "Texture depends on soft chickpeas and enough liquid.",
+    "Substitutions change the result."
+  ],
+  "emoji_icon": "",
+  "difficulty_level": "beginner",
+  "region": "Levant",
+  "fun_rating": 8,
+  "read_time_seconds": 480,
+  "tags": [
+    "food",
+    "Levant",
+    "chickpeas"
+  ],
+  "related_categories": [
+    "culture",
+    "science"
+  ],
+  "visual_suggestions": {
+    "cover": "Editorial illustration of hummus with chickpeas and sesame; quiet left for title; no text.",
+    "overview": "Illustration of a bowl of hummus beside chickpeas, sesame and lemon; no writing."
+  },
+  "share_text": "Discover how hummus gets its creamy texture.",
+  "content_freshness": "evergreen",
+  "sources": [
+    {
+      "id": "s1",
+      "title": "Demonstration source — example content for layout testing",
+      "url": "https://example.org/food-demo"
+    }
+  ],
+  "claim_citations": [],
+  "sources_or_references": [],
+  "generated_at": "2026-10-31T10:00:00Z",
+  "image_details": [
+    {
+      "slot": "overview",
+      "placement": "overview",
+      "alt": "Illustration of hummus and its main ingredients",
+      "caption": "Illustration: chickpeas, sesame and lemon contribute different qualities.",
+      "learning_purpose": "Connect the finished dip with its ingredients."
+    }
+  ],
+  "content_hash": "food-preview",
+  "food_lesson": {
+    "identity": {
+      "name": "Hummus",
+      "local_name": "Hummus",
+      "region": "Levant",
+      "country_names": [
+        "Lebanon",
+        "Palestine",
+        "Syria"
+      ],
+      "food_type": "Chickpea and sesame dip",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "hook": "Chickpeas, sesame and careful blending turn a few ingredients into a creamy dip.",
+    "question": "How do chickpeas become a smooth, rich dip?",
+    "learning_goal": "Understand what each ingredient does, then make a simple version at home.",
+    "introduction": {
+      "explanation": "Hummus combines cooked chickpeas with tahini, lemon juice and water. The result is a thick dip that people scoop with bread or eat with other dishes. This lesson uses a small batch to show how texture changes during blending.",
+      "how_it_is_served": "Serve it in a shallow bowl alongside bread, vegetables or a larger meal. A spoonful can also add richness to a plate of roasted vegetables.",
+      "why_it_is_interesting": "Its appeal comes from a balance of earthy chickpeas, rich sesame and bright lemon. The preparation shows how soft ingredients and a little liquid can create a smooth texture.",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "origin_and_context": {
+      "explanation": "Hummus belongs to several food traditions across the Levant. Recipes and ways of serving it vary between households and places.",
+      "regional_variation": "Some versions are looser or more lemony. Garnishes and accompaniments also vary.",
+      "uncertainty": "A shared food tradition does not have one simple, universally agreed account of its origin.",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "sensory_profile": {
+      "flavour": "Earthy chickpeas, nutty sesame and a bright lemon finish.",
+      "aroma": "A mild sesame aroma; lemon adds a fresh note.",
+      "texture": "Smooth and thick enough to scoop, rather than stiff or dry.",
+      "heat": "The base recipe is mild. Chilli is an optional variation.",
+      "serving_temperature": "Usually enjoyed cool or at room temperature, depending on the preparation.",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "key_ingredients": [
+      {
+        "name": "Chickpeas",
+        "role": "The cooked chickpeas provide most of the structure.",
+        "effect_on_taste": "They give the dip its mild, earthy base.",
+        "source_ids": [
+          "s1"
+        ]
+      },
+      {
+        "name": "Tahini",
+        "role": "Sesame paste adds fat and helps create a rich texture.",
+        "effect_on_taste": "Its nutty flavour balances the lemon.",
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "food_science": [
+      {
+        "title": "Soft chickpeas blend more smoothly",
+        "explanation": "Blending breaks the cooked chickpeas into smaller pieces. Firm chickpeas leave more noticeable particles. Enough liquid lets the mixture move through the blender instead of sticking around the blades.",
+        "kitchen_cue": "A spoon should leave a soft groove, and the mixture should spread without crumbling.",
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "recipe": {
+      "title": "A small batch of hummus",
+      "servings": 4,
+      "prep_minutes": 15,
+      "cook_minutes": 0,
+      "rest_minutes": 0,
+      "equipment": [
+        "Blender or mixer-grinder",
+        "Measuring spoons",
+        "A bowl and spatula"
+      ],
+      "traditional_preparation": "The familiar chickpea version uses chickpeas, tahini and lemon. Exact proportions and additions vary.",
+      "adaptation_notes": "Use well-cooked kabuli chana and a mixer-grinder. This is an illustrative home-kitchen adaptation; it is not presented as the only traditional recipe.",
+      "ingredients": [
+        {
+          "id": "chickpeas",
+          "name": "Cooked chickpeas",
+          "amount": 250,
+          "unit": "g",
+          "household_measure": "about 1½ cups",
+          "preparation": "Drain; use chickpeas that crush easily.",
+          "role": "Provides the body."
+        },
+        {
+          "id": "tahini",
+          "name": "Tahini",
+          "amount": 60,
+          "unit": "g",
+          "household_measure": "about 4 tablespoons",
+          "preparation": "Stir the sesame paste before measuring.",
+          "role": "Adds richness and sesame flavour."
+        },
+        {
+          "id": "lemon",
+          "name": "Lemon juice",
+          "amount": 30,
+          "unit": "ml",
+          "household_measure": "about 2 tablespoons",
+          "preparation": "Remove the seeds.",
+          "role": "Adds acidity."
+        },
+        {
+          "id": "water",
+          "name": "Water",
+          "amount": 60,
+          "unit": "ml",
+          "household_measure": "about 4 tablespoons",
+          "preparation": "Keep extra water nearby for adjusting texture.",
+          "role": "Loosens the mixture."
+        },
+        {
+          "id": "salt",
+          "name": "Salt",
+          "amount": 2,
+          "unit": "g",
+          "household_measure": "about ⅓ teaspoon",
+          "preparation": "Adjust to taste after blending.",
+          "role": "Balances the flavours."
+        }
+      ],
+      "substitutions": [
+        {
+          "ingredient_id": "tahini",
+          "substitute": "Finely ground white sesame paste",
+          "quantity": "Use 60 g of smooth sesame paste.",
+          "effect": "A home-ground paste may be coarser or stronger than commercial tahini. Keep the sesame allergen information unchanged."
+        }
+      ],
+      "steps": [
+        {
+          "title": "Combine the sesame and lemon",
+          "instruction": "Place the tahini and lemon juice in the blender. Add half the water and blend briefly.",
+          "time_guidance": "Blend for about 30 seconds, pausing if needed.",
+          "doneness_cue": "The paste looks evenly mixed, with no separate lemon juice.",
+          "ingredient_ids": [
+            "tahini",
+            "lemon",
+            "water"
+          ]
+        },
+        {
+          "title": "Add the chickpeas",
+          "instruction": "Add the chickpeas and salt. Blend, pause and scrape the sides. Add the remaining measured water gradually.",
+          "time_guidance": "Blend in short bursts for about 2–3 minutes.",
+          "doneness_cue": "The dip moves around the blades and looks mostly smooth.",
+          "ingredient_ids": [
+            "chickpeas",
+            "salt",
+            "water"
+          ]
+        },
+        {
+          "title": "Check the texture",
+          "instruction": "Spoon the dip into a bowl. Taste and check whether it spreads easily. If it is too thick, add water a little at a time.",
+          "time_guidance": "Allow about 2 minutes for checking and adjusting.",
+          "doneness_cue": "A spoon makes a soft groove without the dip looking dry.",
+          "ingredient_ids": [
+            "water"
+          ]
+        }
+      ],
+      "allergens": [
+        "Sesame, including the suggested sesame-paste substitute."
+      ],
+      "safety_notes": [
+        "Stop and unplug the mixer before reaching near the blades or scraping around them."
+      ],
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "nutrition_context": {
+      "explanation": "Chickpeas contribute protein and fibre, while sesame adds fat and richness. The whole meal and the amount eaten matter more than assigning the dip a health score.",
+      "tradeoffs": "A larger serving also provides more energy. Garnishes and extra oil change its composition.",
+      "portion_context": "The example recipe makes four small portions to accompany other foods.",
+      "estimate_status": "not_estimated",
+      "serving_basis": "One of four portions of the example recipe.",
+      "assumptions": [
+        "No numerical estimates are supplied for this demonstration recipe."
+      ],
+      "nutrients": [],
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "serving_ideas": [
+      {
+        "title": "Add contrasting textures",
+        "explanation": "Pair the smooth dip with crunchy vegetables or bread. It can accompany a meal rather than replace every other part of it.",
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "variations": [
+      {
+        "name": "A more lemon-forward version",
+        "region": "Household variation",
+        "difference": "More lemon changes the acidity and may require a small adjustment to the liquid.",
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "troubleshooting": [
+      {
+        "problem": "The dip is grainy",
+        "cause": "The chickpeas may still be too firm, or the mixture may be too dry to circulate.",
+        "fix": "Use softer cooked chickpeas and adjust the water gradually before blending again."
+      }
+    ],
+    "takeaways": [
+      "Texture depends on soft chickpeas and enough liquid.",
+      "Substitutions change the result."
+    ],
+    "related_foods": [
+      "Baba ganoush",
+      "Ful medames"
+    ],
+    "photos": [
+      {
+        "id": "dish",
+        "section_id": "overview",
+        "subject": "Hummus",
+        "queries": [
+          "hummus"
+        ]
+      },
+      {
+        "id": "sesame",
+        "section_id": "science",
+        "subject": "Tahini",
+        "queries": [
+          "tahini sesame paste"
+        ]
+      },
+      {
+        "id": "preparation",
+        "section_id": "recipe",
+        "subject": "Hummus preparation",
+        "queries": [
+          "making hummus"
+        ]
+      }
+    ]
+  }
+}

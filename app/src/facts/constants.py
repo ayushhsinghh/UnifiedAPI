@@ -55,11 +55,9 @@ CATEGORY_HINTS: Dict[str, str] = {
         "beginner regressions, safe technique, progressive overload, warm-up and recovery"
     ),
     "food": (
-        "Indian spices & masalas, regional thali traditions, "
-        "street food culture (chaat, vada pav), Mughlai cuisine origins, "
-        "South Indian fermented foods (dosa, idli), Indian pickle (achar) varieties, "
-        "chai culture & history, Indian sweets (mithai) craftsmanship, "
-        "Ayurvedic diet principles, India's spice export dominance"
+        "Global dishes, ingredients, flavour, texture, culinary traditions and food science; "
+        "complete recipes adapted to ingredients available in India, honest substitutions, "
+        "regional variations, serving ideas and balanced nutrition context"
     ),
     "space": (
         "ISRO founding & evolution, Chandrayaan missions (1, 2, 3), "
