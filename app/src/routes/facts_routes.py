@@ -327,29 +327,46 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
         tasks.extend(process_india_photo(item) for item in india_photo_entries(article))
 
         async def process_india_carousel():
-            """Unsplash-only documentary carousel. No image-generation fallback."""
-            from src.facts.india import india_carousel_queries,india_carousel_keys
+            """Subject-matched documentary carousel. No image-generation fallback."""
+            from src.facts.india import india_carousel_queries,india_carousel_keys,india_carousel_matches,india_carousel_searches,india_carousel_per_query,india_carousel_tag_matches,india_carousel_accepted
             from src.facts.unsplash_photos import search
             keys=india_carousel_keys(article)
-            descriptions=[]
+            per_query=india_carousel_per_query(article)
+            retained=set(existing_images)
+            for number,key in enumerate(keys):
+                if key not in retained:continue
+                prior=(article or {}).get('image_credits',{}).get(key) or {}
+                query=india_carousel_queries(article)[number//per_query]
+                if not india_carousel_accepted(prior,prior.get('scene_query',query),article):
+                    retained.discard(key);images.pop(key,None)
+                    set_fact_image_state(content_hash,key,'failed',clear=True)
+            search_cache={}
             for index,query in enumerate(india_carousel_queries(article)):
-                slots=keys[index*2:index*2+2]
+                slots=keys[index*per_query:index*per_query+per_query]
                 if not slots:break
-                if all(key in existing_images for key in slots):continue
+                if all(key in retained for key in slots):continue
                 try:
-                    candidates=await asyncio.wait_for(search('India',query),timeout=15)
-                    terms={w.casefold() for w in re.findall(r'[^\W_]+',query) if len(w)>=3 and w.casefold() not in ('india','indian','photo','photograph','the','and','for','with')}
-                    eligible=[p for p in candidates if terms and any(re.search(r'\b'+re.escape(term)+r'\b',p['title']+' '+p['description'],re.I) for term in terms)]
+                    eligible=[]
+                    searches=india_carousel_searches(query,article)
+                    for phrase in searches:
+                        cache_key=phrase.casefold()
+                        if cache_key not in search_cache:
+                            search_cache[cache_key]=await asyncio.wait_for(search('India',phrase,exact_query=True,
+                                match=lambda p:india_carousel_tag_matches(p,phrase,article),popular_fallback=True),timeout=55)
+                        candidates=search_cache[cache_key]
+                        eligible.extend({**p,'matched_query':phrase} for p in candidates if india_carousel_accepted(p,phrase,article))
+                        if len({p['source_url'] for p in eligible if p['source_url'] not in claimed_sources and p['url'] not in claimed})>=per_query:break
+                    if len({p['source_url'] for p in eligible if p['source_url'] not in claimed_sources and p['url'] not in claimed})<per_query:
+                        candidates=await asyncio.wait_for(find_subject_photo('India',searches[-1],'culture',queries=searches[::-1]),timeout=25)
+                        eligible.extend(p for p in candidates if india_carousel_matches(p,p.get('matched_query',searches[-1]),article))
                     for key in slots:
-                        if key in existing_images:continue
+                        if key in retained:continue
                         photo=None
                         for p in eligible:
-                            words=set(p['description'].casefold().split())
                             if p['url'] in claimed or p['source_url'] in claimed_sources:continue
-                            if any(len(words & other)/max(1,len(words | other))>.55 for other in descriptions):continue
-                            claimed.add(p['url']);claimed_sources.add(p['source_url']);descriptions.append(words)
-                            if not await track_selection(p):continue
-                            photo={**{k:v for k,v in p.items() if k!='download_location'},'india_carousel':True,'scene_query':query}
+                            claimed.add(p['url']);claimed_sources.add(p['source_url'])
+                            if p.get('provider')=='unsplash' and not await track_selection(p):continue
+                            photo={**{k:v for k,v in p.items() if k!='download_location'},'india_carousel':True,'scene_query':p.get('matched_query',query)}
                             break
                         if photo:images[key]=photo['url']
                         set_fact_image_state(content_hash,key,'ready' if photo else 'failed',photo['url'] if photo else None,credit=photo)
@@ -357,7 +374,15 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
                     logger.exception('India carousel search failed for %s/%s',content_hash,index)
                     for key in slots:
                         if key not in images:set_fact_image_state(content_hash,key,'failed')
-        tasks.append(process_india_carousel())
+        async def bounded_india_carousel():
+            from src.facts.india import india_carousel_keys
+            try:
+                await asyncio.wait_for(process_india_carousel(),timeout=max(1,min(240,cfg.FACT_IMAGE_TIMEOUT_SECONDS-10)))
+            except asyncio.TimeoutError:
+                logger.warning('India carousel lookup budget expired for %s',content_hash)
+                for key in india_carousel_keys(article):
+                    if key not in images:set_fact_image_state(content_hash,key,'failed')
+        tasks.append(bounded_india_carousel())
 
     # Scene slots have a separate photo-only path; the GenAI key set stays unchanged.
     tasks.extend(process_scene(key,query) for key,query in expanded_scenes.items())
@@ -563,6 +588,13 @@ async def retry_image_generation(
         
     # Check if we have all expected keys
     missing_keys = [k for k in expected_keys if k not in existing_images]
+    if full_response.get('article_type')=='india_lesson':
+        from src.facts.india import india_carousel_keys,india_carousel_queries,india_carousel_accepted,india_carousel_per_query
+        queries=india_carousel_queries(full_response)
+        for index,key in enumerate(india_carousel_keys(full_response)):
+            credit=(fact_doc.get('image_credits') or {}).get(key) or {}
+            if key in existing_images and not india_carousel_accepted(credit,credit.get('scene_query',queries[index//india_carousel_per_query(full_response)]),full_response):
+                missing_keys.append(key)
     
     if not missing_keys:
         raise HTTPException(status_code=400, detail="Previous run was successful. All expected images are already generated.")
@@ -570,8 +602,10 @@ async def retry_image_generation(
     logger.info("Retrying image generation for %s. Missing keys: %s", content_hash, missing_keys)
     start_fact_images(content_hash, missing_keys)
     retry_article=full_response
+    if full_response.get('article_type')=='india_lesson':
+        retry_article={**full_response,'image_credits':fact_doc.get('image_credits') or full_response.get('image_credits',{})}
     if full_response.get('country_media',{}).get('photo_layout') in ('contextual_v1','contextual_v2'):
-        retry_article={**full_response,'country_photo_galleries':fact_doc.get('country_photo_galleries') or full_response.get('country_photo_galleries',{})}
+        retry_article={**retry_article,'country_photo_galleries':fact_doc.get('country_photo_galleries') or full_response.get('country_photo_galleries',{})}
     background_tasks.add_task(_background_image_task, visual_suggestions, content_hash, existing_images,article=retry_article)
     
     return {

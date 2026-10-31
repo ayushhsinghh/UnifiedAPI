@@ -197,7 +197,7 @@ def start_fact_images(content_hash: str, keys: list) -> None:
         {"content_hash": content_hash}, {"$set": updates})
 
 
-def set_fact_image_state(content_hash: str, key: str, status: str, url=None, credit=None, gallery=None) -> None:
+def set_fact_image_state(content_hash: str, key: str, status: str, url=None, credit=None, gallery=None, clear=False) -> None:
     """Save each result separately so partial results are immediately visible."""
     updates = {f"image_status.{key}": status}
     if url:
@@ -206,8 +206,11 @@ def set_fact_image_state(content_hash: str, key: str, status: str, url=None, cre
         updates[f"image_credits.{key}"] = credit
     if gallery is not None:
         updates[f'country_photo_galleries.{key}'] = gallery
+    change={"$set":updates}
+    if clear:
+        change['$unset']={f'images.{key}':'',f'image_credits.{key}':''}
     get_db()[cfg.DAILY_FACTS_COLLECTION].update_one(
-        {"content_hash": content_hash}, {"$set": updates})
+        {"content_hash": content_hash}, change)
 
 
 def claim_country_photo_enrichment(content_hash: str) -> bool:

@@ -18,12 +18,27 @@ from test_fact_evidence_lifecycle import routes_module
 def fixture():return json.loads((Path(__file__).parent/'fixtures/india_lesson.json').read_text())
 
 class IndiaContractTests(unittest.TestCase):
+    def test_root_bridge_subject_match_rejects_a_regional_river(self):
+        from src.facts.india import india_carousel_matches,india_carousel_searches
+        f={'topic':'Meghalaya Living Root Bridges','india_lesson':{'region':'Meghalaya, Northeast India','case_study':{'place':'Nongriat Village, Sohra, Meghalaya'}}}
+        q='Living root bridge Meghalaya'
+        self.assertFalse(india_carousel_matches({'title':'Umngot river in Meghalaya','description':'Boats on a river in India'},q,f))
+        self.assertTrue(india_carousel_matches({'title':'Living root bridges in Meghalaya','description':'A root bridge in India'},q,f))
+        searches=india_carousel_searches(q,f)
+        self.assertEqual(searches[:2],[q,'Living root bridge'])
+        self.assertIn('Meghalaya bridge',searches);self.assertIn('root bridge',searches)
+        self.assertIn('Meghalaya',searches)
+        self.assertLessEqual(len(searches),5)
+        tagged={'title':'A misty scene','description':'Morning in India','tags':['India','Meghalaya','bridge','root']}
+        self.assertTrue(india_carousel_matches(tagged,'Meghalaya bridge',f))
+        tagged['tags']=['India','Meghalaya','river']
+        self.assertFalse(india_carousel_matches(tagged,'Meghalaya bridge',f))
     def test_carousel_searches_stay_topic_specific_and_bounded(self):
         from src.facts.india import india_carousel_queries,india_carousel_keys
         f=fixture();f['india_lesson']['carousel_queries']=['Gujarat stepwell','Adalaj stepwell','Rani ki Vav']
         self.assertTrue(validate_india_content(f));prepare_india_media(f)
         self.assertEqual(india_carousel_queries(f)[:3],['Gujarat stepwell','Adalaj stepwell','Rani ki Vav'])
-        self.assertLessEqual(len(india_carousel_keys(f)),12)
+        self.assertLessEqual(len(india_carousel_keys(f)),18)
         f['india_lesson']['carousel_queries']=['India']
         self.assertFalse(validate_india_content(f))
 
@@ -47,10 +62,39 @@ class IndiaContractTests(unittest.TestCase):
         self.assertEqual(f['images'],{});self.assertEqual(f['india_media']['generated_limit'],2)
         keys=set(fact_image_keys(f))
         self.assertTrue({'cover','overview','india_photo_0','india_photo_1'}<=keys)
-        self.assertEqual(len([k for k in keys if k.startswith('india_scene_')]),6)
+        self.assertEqual(len([k for k in keys if k.startswith('india_scene_')]),9)
         self.assertIn('ONE rich, specific topic',build_india_prompt(['recent topic']))
 
 class IndiaWorkerTests(unittest.IsolatedAsyncioTestCase):
+    async def test_multiple_searches_each_contribute_three_popular_fallback_photos(self):
+        r=routes_module();f=fixture();prepare_india_media(f)
+        async def search(country,query,**kwargs):
+            return [dict(provider='unsplash',provider_id=f'{query}-{n}',url=f'https://images.unsplash.com/{query}-{n}',
+                source_url=f'https://unsplash.com/photos/{query}-{n}',title='A river',description='A river in India',
+                detail_fetched=True,selection_mode='popular_fallback') for n in range(3)]
+        self.stock.side_effect=search;r.track_selection=AsyncMock(return_value=True)
+        await r._background_image_task({},'hash',article=f)
+        from collections import Counter
+        scenes=[c.kwargs['credit'] for c in r.set_fact_image_state.call_args_list if (c.kwargs.get('credit') or {}).get('india_carousel')]
+        counts=Counter(p['scene_query'] for p in scenes)
+        self.assertGreaterEqual(len(counts),3)
+        self.assertTrue(all(count==3 for count in counts.values()))
+        self.assertTrue(all(c.kwargs.get('popular_fallback') for c in self.stock.call_args_list))
+        r.generate_and_save_image.assert_not_awaited()
+
+    async def test_bad_saved_scene_is_replaced_by_commons_without_paid_generation(self):
+        r=routes_module();f=fixture();prepare_india_media(f)
+        f['india_lesson']['carousel_queries']=['Gujarat stepwell']
+        f['image_credits']={'india_scene_0':{'title':'River in Gujarat','description':'A river in India'}}
+        r.find_subject_photo=AsyncMock(return_value=[dict(provider='wikimedia',url='https://upload.wikimedia.org/stepwell',
+            source_url='https://commons.wikimedia.org/wiki/File:Stepwell',title='Gujarat stepwell',description='Rani ki Vav stepwell India')])
+        await r._background_image_task({},'hash',existing_images={'india_scene_0':'https://images.unsplash.com/river',
+            'india_photo_0':'https://example.org/inline0','india_photo_1':'https://example.org/inline1'},article=f)
+        r.generate_and_save_image.assert_not_awaited()
+        self.assertTrue(any(c.kwargs.get('clear') for c in r.set_fact_image_state.call_args_list))
+        scenes=[c.kwargs['credit'] for c in r.set_fact_image_state.call_args_list if (c.kwargs.get('credit') or {}).get('india_carousel')]
+        self.assertTrue(scenes);self.assertTrue(all(p['provider']=='wikimedia' for p in scenes))
+
     async def asyncSetUp(self):
         self.stock_patch=patch('src.facts.unsplash_photos.search',new=AsyncMock(return_value=[]))
         self.stock=self.stock_patch.start();self.addCleanup(self.stock_patch.stop)
@@ -58,13 +102,15 @@ class IndiaWorkerTests(unittest.IsolatedAsyncioTestCase):
     async def test_unsplash_carousel_uses_multiple_queries_and_never_generates_ai(self):
         r=routes_module();f=fixture();prepare_india_media(f)
         from src.facts.india import india_carousel_queries
-        async def search(country,query):
+        async def search(country,query,**kwargs):
             return [dict(provider='unsplash',url=f'https://images.unsplash.com/{query}-{n}',
                 source_url=f'https://unsplash.com/photos/{query}-{n}',title=query,
-                description=f'{query} unique{n} token{len(query)}') for n in range(2)]
+                description=f'{query} stepwell unique{n} token{len(query)}') for n in range(2)]
         self.stock.side_effect=search;r.track_selection=AsyncMock(return_value=True)
         await r._background_image_task({},'hash',article=f)
-        self.assertEqual(self.stock.await_count,len(india_carousel_queries(f)))
+        phrases=[c.args[1].casefold() for c in self.stock.await_args_list]
+        self.assertEqual(len(phrases),len(set(phrases)))
+        self.assertGreaterEqual(len(phrases),len(india_carousel_queries(f)))
         r.generate_and_save_image.assert_not_awaited()
         credits=[c.kwargs.get('credit') for c in r.set_fact_image_state.call_args_list if (c.kwargs.get('credit') or {}).get('india_carousel')]
         self.assertGreaterEqual(len(credits),2)
@@ -102,9 +148,9 @@ class IndiaWorkerTests(unittest.IsolatedAsyncioTestCase):
         r.find_subject_photo=AsyncMock(return_value=[])
         await r._background_image_task(f['visual_suggestions'],'hash',article=f)
         self.assertEqual(r.generate_and_save_image.await_count,2)
-        self.assertEqual(r.find_subject_photo.await_count,2)
+        self.assertEqual(len([c for c in r.find_subject_photo.await_args_list if c.args[2]=='places']),2)
         r.find_country_photos.assert_not_awaited()
-        self.assertEqual(r.find_subject_photo.await_args.args,('India','Rani ki Vav','places'))
+        self.assertEqual(r.find_subject_photo.await_args_list[0].args,('India','Rani ki Vav','places'))
 
     async def test_photo_credits_keep_section_binding_and_failed_photos_do_not_generate(self):
         r=routes_module();f=fixture();f['india_lesson']['photos'][0].update(kind='person',subject='A named person')

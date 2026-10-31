@@ -24,6 +24,51 @@ def payload():
 
 
 class UnsplashTests(unittest.TestCase):
+    def test_fewer_than_three_tag_matches_uses_the_three_most_liked_valid_photos(self):
+        details={};raw=[]
+        for index in range(5):
+            photo=copy.deepcopy(payload()['results'][0]);photo['id']=f'popular_{index}';photo['likes']=500-index*100
+            photo['tags']=[{'title':'bridge' if index==4 else 'river'}]
+            details[photo['id']]=photo;raw.append({'id':photo['id'],'likes':photo['likes']})
+        response=Mock(status_code=200,content=b'{}');response.json.return_value={'results':raw}
+        with patch.dict(os.environ,{'UNSPLASH_ACCESS_KEY':'test-only'}),patch('requests.get',return_value=response),patch.object(u,'_details',side_effect=lambda photo_id,key:details[photo_id]):
+            selected=u._search('Japan','bridge',popular_fallback=True)
+        self.assertEqual([p['provider_id'] for p in selected],['popular_0','popular_1','popular_2'])
+        self.assertTrue(all(p['selection_mode']=='popular_fallback' for p in selected))
+
+    def setUp(self):
+        with u._DETAIL_LOCK:u._DETAIL_CACHE.clear()
+
+    def test_search_checks_details_in_like_order_skips_bad_tags_and_caps_three(self):
+        raw=[];details={}
+        for index in range(6):
+            photo=copy.deepcopy(payload()['results'][0]);photo['id']=f'ranked_{index}';photo['likes']=600-index*100
+            photo['description']='A bridge in India';photo['tags']=[{'title':'India'},{'title':'bridge' if index else 'river'}]
+            photo['links']['html']=f'https://unsplash.com/photos/ranked_{index}'
+            raw.append({'id':photo['id'],'likes':photo['likes']});details[photo['id']]=photo
+        response=Mock(status_code=200,content=b'{}');response.json.return_value={'results':list(reversed(raw))}
+        details['ranked_2']=None
+        with patch.dict(os.environ,{'UNSPLASH_ACCESS_KEY':'test-only'}),patch('requests.get',return_value=response) as request,patch.object(u,'_details',side_effect=lambda photo_id,key:details[photo_id]) as get_detail:
+            selected=u._search('India','bridge',exact_query=True)
+        self.assertEqual([p['provider_id'] for p in selected],['ranked_1','ranked_3','ranked_4'])
+        self.assertEqual([c.args[0] for c in get_detail.call_args_list],['ranked_0','ranked_1','ranked_2','ranked_3','ranked_4'])
+        self.assertEqual(request.call_args.kwargs['params']['query'],'bridge')
+        self.assertTrue(all(p['detail_fetched'] for p in selected))
+
+    def test_detail_metadata_is_cached_and_photo_ids_cannot_change_the_host(self):
+        photo=payload()['results'][0]
+        response=Mock(status_code=200,content=b'{}');response.json.return_value=photo
+        with patch('requests.get',return_value=response) as get:
+            self.assertEqual(u._details('sample','test-only')['id'],'sample')
+            u._details('sample','test-only')
+            self.assertEqual(get.call_count,1)
+            self.assertIsNone(u._details('../bad','test-only'))
+            self.assertIsNone(u._details('https://bad.example','test-only'))
+            self.assertEqual(get.call_count,1)
+    def test_photo_tags_are_preserved_as_plain_matching_metadata(self):
+        data=payload();data['results'][0]['tags']=[{'title':'<b>bridge</b>'},{'title':'Meghalaya'},{'title':'bridge'}]
+        photo=u.candidates(data,'Japan')[0]
+        self.assertEqual(photo['tags'],['bridge','Meghalaya'])
     def test_scene_searches_cover_different_facets(self):
         queries=country_scene_queries(fixture()['country_profile'])
         self.assertEqual(len(set(queries)),4)
