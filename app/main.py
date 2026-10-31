@@ -11,6 +11,7 @@ This is the single entry point. It wires up:
 """
 
 import argparse
+import asyncio
 import logging
 import os
 import sys
@@ -52,6 +53,26 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 # Must be called BEFORE add_middleware so the instrumentor can wrap the full
 # ASGI stack. Returns a shutdown callable to flush providers on exit.
 _otel_shutdown = setup_telemetry(app)
+
+
+@app.on_event("startup")
+async def _start_gemini_worker() -> None:
+    if not cfg.GEMINI_TRANSLATION_ENABLED:
+        return
+    if not cfg.GEMINI_API_KEY:
+        logger.error("Gemini translation worker cannot start: GEMINI_API_KEY is missing")
+        return
+    from src.transcription.gemini_supervisor import GeminiWorkerSupervisor
+    supervisor = GeminiWorkerSupervisor()
+    app.state.gemini_worker_task = asyncio.create_task(supervisor.run())
+
+
+@app.on_event("shutdown")
+async def _stop_gemini_worker() -> None:
+    task = getattr(app.state, "gemini_worker_task", None)
+    if task is not None:
+        task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
 
 
 @app.on_event("shutdown")
