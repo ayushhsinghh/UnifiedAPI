@@ -39,20 +39,20 @@ async def probe(path, max_duration):
     info = json.loads(raw)
     videos = [s for s in info.get('streams', []) if s['codec_type'] == 'video' and not s.get('disposition', {}).get('attached_pic')]
     audio = next((s for s in info.get('streams', []) if s['codec_type'] == 'audio'), None)
-    if not videos or not audio:
-        raise MediaError('Upload a video containing an audio track.')
-    video = videos[0]
-    duration = video.get('duration') or info.get('format', {}).get('duration')
-    if video.get('duration_ts') and video.get('time_base'):
-        duration = Fraction(video['duration_ts']) * Fraction(video['time_base'])
+    if not audio:
+        raise MediaError('Upload an audio file or a video containing an audio track.')
+    timeline = videos[0] if videos else audio
+    duration = timeline.get('duration') or info.get('format', {}).get('duration')
+    if timeline.get('duration_ts') and timeline.get('time_base'):
+        duration = Fraction(timeline['duration_ts']) * Fraction(timeline['time_base'])
     else:
         duration = Fraction(str(duration))
     seconds = float(duration)
     if not math.isfinite(seconds) or seconds <= 0 or seconds > max_duration:
-        raise MediaError(f'Video duration must be positive and at most {max_duration // 3600} hours.')
+        raise MediaError(f'Source duration must be positive and at most {max_duration // 3600} hours.')
     return {'duration_seconds': seconds, 'output_samples': round(duration * OUT_RATE),
             'input_samples': round(duration * IN_RATE), 'audio_index': audio['index'],
-            'audio_offset_seconds': float(audio.get('start_time', 0)) - float(video.get('start_time', 0))}
+            'audio_offset_seconds': float(audio.get('start_time', 0)) - float(timeline.get('start_time', 0))}
 
 
 def require_space(directory, bytes_needed):

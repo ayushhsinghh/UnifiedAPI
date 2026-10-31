@@ -80,6 +80,17 @@ class MediaTests(unittest.IsolatedAsyncioTestCase):
             audio.setpos(9000)
             self.assertTrue(any(audio.readframes(1000)))
 
+    async def test_mp3_input_uses_its_audio_timeline(self):
+        source = self.root / 'recording.mp3'
+        await media.command('ffmpeg', '-v', 'error', '-y', '-f', 'lavfi', '-i',
+                            'sine=frequency=440:sample_rate=16000:duration=1', '-c:a', 'libmp3lame', source)
+        info = await media.probe(source, 21600)
+        self.assertEqual(info['audio_offset_seconds'], 0)
+        self.assertGreaterEqual(info['duration_seconds'], 1)
+        output = self.root / 'mp3-extracted.wav'
+        await media.extract(source, output, info)
+        self.assertEqual(media.wav_samples(output, 16000), info['input_samples'])
+
     async def test_no_audio_and_overlong_video_are_rejected(self):
         video = self.root / 'silent.mp4'
         await media.command('ffmpeg', '-v', 'error', '-y', '-f', 'lavfi', '-i', 'color=size=32x32:duration=0.1', video)
@@ -454,6 +465,18 @@ class ApiTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(job['original_filename'], 'original.mp4')
         self.assertFalse(job['generate_subtitles'])
         self.assertEqual(job['sections'], [])
+
+    async def test_gemini_upload_accepts_mp3_files(self):
+        source = self.root / 'recording.mp3'
+        await media.command('ffmpeg', '-v', 'error', '-y', '-f', 'lavfi', '-i',
+                            'sine=sample_rate=16000:duration=1', '-c:a', 'libmp3lame', source)
+        response = await self.client.post('/api/gemini/jobs', headers=self.headers,
+            data={'target_language': 'hi', 'generate_subtitles': 'false'},
+            files={'file': ('recording.mp3', source.read_bytes(), 'audio/mpeg')})
+        self.assertEqual(response.status_code, 202, response.text)
+        job = self.db.jobs.find_one({'job_id': response.json()['job_id']})
+        self.assertEqual(job['original_filename'], 'recording.mp3')
+        self.assertEqual(job['media_info']['audio_offset_seconds'], 0)
 
     async def test_existing_engine_upload_routes_keep_their_contracts(self):
         records = []
