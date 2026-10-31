@@ -1,5 +1,6 @@
 """Gemini translation submission, capabilities, and owned artifact helpers."""
 import asyncio
+import logging
 import os
 from pathlib import Path
 from uuid import uuid4
@@ -17,6 +18,7 @@ from src.transcription.gemini_languages import LANGUAGES, whisper_language
 from src.transcription.gemini_media import MediaError, probe, require_space
 from src.transcription.gemini_worker import cleanup, safe_artifact
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix='/api/gemini', tags=['gemini-translation'])
 
 
@@ -73,6 +75,7 @@ async def create_gemini_job(request: Request, file: UploadFile = File(...),
             'generate_subtitles': generate_subtitles, 'translate': True, 'language': None,
             'media_info': info, 'source_duration_seconds': info['duration_seconds']})
     except MediaError as exc:
+        logger.warning('Gemini upload rejected for job %s: %s', job_id, exc)
         partial.unlink(missing_ok=True)
         destination.unlink(missing_ok=True)
         raise HTTPException(422, str(exc)) from None
@@ -82,6 +85,8 @@ async def create_gemini_job(request: Request, file: UploadFile = File(...),
         raise
     finally:
         await file.close()
+    logger.info('Gemini upload accepted and queued: job=%s bytes=%d duration_seconds=%.3f',
+                job_id, total, info['duration_seconds'])
     return {'job_id': job_id, 'status': 'pending', 'engine': repo.ENGINE}
 
 
