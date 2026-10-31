@@ -69,6 +69,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=cfg.CORS_METHODS,
     allow_headers=cfg.CORS_HEADERS,
+    expose_headers=["Content-Length", "Content-Range", "Accept-Ranges", "Content-Disposition"],
 )
 app.add_middleware(
     SessionMiddleware, 
@@ -101,6 +102,7 @@ except Exception as exc:
 
 # ── Routers ──────────────────────────────────────────────────────────────
 from src.routes.transcription_routes import router as transcription_router  # noqa: E402
+from src.routes.gemini_routes import router as gemini_router  # noqa: E402
 from src.routes.game_routes import router as game_router  # noqa: E402
 from src.routes.admin_routes import router as admin_router  # noqa: E402
 from src.routes.auth_routes import router as auth_router  # noqa: E402
@@ -111,6 +113,7 @@ from src.routes.facts_routes import router as facts_router  # noqa: E402
 
 app.include_router(auth_router)
 app.include_router(transcription_router)
+app.include_router(gemini_router)
 app.include_router(game_router)
 app.include_router(admin_router)
 app.include_router(riva_router)

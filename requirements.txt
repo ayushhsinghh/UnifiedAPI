@@ -1,4 +1,4 @@
-fastapi==0.104.1
+fastapi==0.115.14
 uvicorn==0.24.0
 python-multipart==0.0.6
 faster-whisper==0.10.0
@@ -7,6 +7,6 @@ requests==2.31.0
 slowapi==0.1.9
 openai
 pydub
-google-genai
+google-genai==2.32.0
 httpx==0.28.1
 pypdf==6.21.4

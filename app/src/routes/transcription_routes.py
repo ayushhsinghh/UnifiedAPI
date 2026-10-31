@@ -20,9 +20,12 @@ from fastapi import (
     HTTPException,
     Request,
     UploadFile,
+    Query,
     Depends,
 )
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
+from src.database import gemini_jobs_repository as gemini_repo
+from src.routes.gemini_routes import artifact_response, owned, cancel_owned
 
 from commons import generate_job_id, limiter
 from configs.config import get_config
@@ -141,6 +144,9 @@ def get_status(request: Request, job_id: str, current_user: dict = Depends(get_c
         logger.warning("Job %s not found for user %s", job_id, current_user["email"])
         raise HTTPException(status_code=404, detail="Job not found")
 
+    if job.get("engine") == gemini_repo.ENGINE:
+        return gemini_repo.public_job(job)
+
     return {
         "job_id": job_id,
         "status": job["status"],
@@ -159,10 +165,14 @@ def get_status(request: Request, job_id: str, current_user: dict = Depends(get_c
 
 @router.get("/jobs/{job_id}/subtitles")
 @limiter.limit("30/minute")
-def get_srt(request: Request, job_id: str, current_user: dict = Depends(get_current_user)) -> FileResponse:
+def get_srt(request: Request, job_id: str, format: str = Query("srt", pattern="^(srt|vtt)$"), current_user: dict = Depends(get_current_user)) -> FileResponse:
     """Download the generated SRT subtitle file."""
     validate_job_id(job_id)
     job = get_job(job_id, user_email=current_user["email"])
+    if job and job.get("engine") == gemini_repo.ENGINE:
+        return artifact_response(job, format, request)
+    if format != "srt":
+        raise HTTPException(404, detail="VTT is available for Gemini jobs only.")
     if not job or job["status"] != JobStatus.DONE:
         raise HTTPException(status_code=404, detail="Subtitles not ready or job not found")
 
@@ -184,7 +194,8 @@ def list_jobs(request: Request, status: str | None = None, current_user: dict = 
     """List all jobs for the currently authenticated user, optionally filtered by status."""
     logger.debug("Listing jobs with status filter: %s for user %s", status, current_user["email"])
     jobs_list = get_all_jobs(user_email=current_user["email"], status=status)
-    return {"jobs": jobs_list, "total": len(jobs_list)}
+    return {"jobs": [gemini_repo.public_job(job) if job.get("engine") == gemini_repo.ENGINE else job
+                     for job in jobs_list], "total": len(jobs_list)}
 
 
 # ── Delete ───────────────────────────────────────────────────────────────
@@ -192,7 +203,7 @@ def list_jobs(request: Request, status: str | None = None, current_user: dict = 
 
 @router.delete("/jobs/{job_id}")
 @limiter.limit("10/minute")
-def delete_job_endpoint(request: Request, job_id: str, current_user: dict = Depends(get_current_user)) -> dict:
+async def delete_job_endpoint(request: Request, job_id: str, current_user: dict = Depends(get_current_user)):
     """Delete a job by ID, ensuring ownership."""
     validate_job_id(job_id)
     logger.info("Deleting job %s for user %s", job_id, current_user["email"])
@@ -200,6 +211,9 @@ def delete_job_endpoint(request: Request, job_id: str, current_user: dict = Depe
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
 
+    if job.get("engine") == gemini_repo.ENGINE:
+        result = await cancel_owned(job_id, current_user, delete=True)
+        return JSONResponse(result, status_code=202 if result["status"] == "cancelling" else 200)
     try:
         success = delete_job(job_id, user_email=current_user["email"])
         if success:
@@ -213,3 +227,34 @@ def delete_job_endpoint(request: Request, job_id: str, current_user: dict = Depe
         raise
     except Exception as exc:
         safe_error_response(exc, context="delete_job")
+
+
+@router.get("/jobs/{job_id}/audio")
+@limiter.limit("120/minute")
+def get_audio(request: Request, job_id: str, format: str = Query("wav", pattern="^(wav|mp3)$"),
+              current_user: dict = Depends(get_current_user)):
+    job = owned(job_id, current_user)
+    if job.get('engine') != gemini_repo.ENGINE:
+        raise HTTPException(404, 'Translated audio is unavailable for this job.')
+    return artifact_response(job, format, request)
+
+
+@router.post("/jobs/{job_id}/cancel", status_code=202)
+@limiter.limit("10/minute")
+async def cancel_job(request: Request, job_id: str, current_user: dict = Depends(get_current_user)):
+    return await cancel_owned(job_id, current_user)
+
+
+@router.post("/jobs/{job_id}/retry", status_code=202)
+@limiter.limit("10/minute")
+def retry_gemini_job(request: Request, job_id: str, current_user: dict = Depends(get_current_user)):
+    from configs.config import get_config
+    cfg = get_config()
+    job = owned(job_id, current_user)
+    if job.get('engine') != gemini_repo.ENGINE:
+        raise HTTPException(409, 'Only Gemini translation jobs support this retry operation.')
+    if not cfg.GEMINI_TRANSLATION_ENABLED or not cfg.GEMINI_API_KEY:
+        raise HTTPException(503, 'Gemini audio translation is not enabled.')
+    if not gemini_repo.retry(job_id, current_user['email']):
+        raise HTTPException(409, 'Only failed or cancelled jobs can be retried.')
+    return {'job_id': job_id, 'status': 'pending'}

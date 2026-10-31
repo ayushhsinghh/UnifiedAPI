@@ -74,6 +74,7 @@ class DatabaseManager:
         # Job indexes
         db[cfg.JOBS_COLLECTION].create_index("job_id", unique=True)
         db[cfg.JOBS_COLLECTION].create_index("created_at")
+        db[cfg.JOBS_COLLECTION].create_index([("engine", 1), ("status", 1), ("lease_until", 1), ("created_at", 1)])
 
         # User indexes
         db[cfg.USERS_COLLECTION].create_index("email", unique=True)
