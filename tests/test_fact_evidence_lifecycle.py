@@ -96,6 +96,7 @@ def routes_module():
         'src.facts.country_photos': module('src.facts.country_photos', find_country_photos=AsyncMock(return_value=[]),
             find_subject_photo=AsyncMock(return_value=[]), country_scene_queries=photo_plan.country_scene_queries,
             country_scene_plan=photo_plan.country_scene_plan),
+        'src.facts.unsplash_photos': module('src.facts.unsplash_photos', track_selection=AsyncMock(return_value=True)),
         'src.facts.image_generator': module('src.facts.image_generator', generate_and_save_image=AsyncMock()),
         'src.facts.photo_ranking': module('src.facts.photo_ranking',select_india_photos=AsyncMock(side_effect=RuntimeError('Offline ranking fixture')),
             select_country_photos=AsyncMock(side_effect=RuntimeError('Offline ranking fixture')),

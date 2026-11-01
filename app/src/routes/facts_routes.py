@@ -329,12 +329,16 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
                 state.update(value);set_fact_photo_selection(content_hash,dict(state))
             async def finalize():
                 selected=await select_photos(article,report=report,excluded=claimed_sources)
+                selected=sorted(selected,key=lambda p:bool(p.get('popular_pick')))
+                popular_slots=min(3,sum(bool(p.get('popular_pick')) for p in selected))
                 used=set();ready=set();extras=[]
                 for p in selected:
                     if p['source_url'] in used:continue
+                    item=None if p.get('popular_pick') else next((entry for entry in entries if entry['id'] in p.get(prefix+'_request_ids',[]) and entry['key'] not in ready),None)
+                    gallery_limit=6 if p.get('popular_pick') else 6-popular_slots
+                    if item is None and len(extras)>=gallery_limit:continue
                     if p.get('provider')=='unsplash' and not await track_selection(p):continue
                     used.add(p['source_url'])
-                    item=next((entry for entry in entries if entry['id'] in p.get(prefix+'_request_ids',[]) and entry['key'] not in ready),None)
                     photo={**{k:v for k,v in p.items() if k!='download_location'},prefix+'_photo':True,
                         'selection_mode':state.get('mode','text_ranking'),'ranking_model':'gpt-6-luna' if state.get('mode')!='metadata_fallback' else None}
                     if p.get('selection_mode')=='popular_unsplash':

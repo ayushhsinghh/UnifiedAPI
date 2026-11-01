@@ -30,7 +30,9 @@ class FeedbackContractTests(unittest.TestCase):
         self.assertTrue(all(p['selection_mode']=='popular_unsplash' and p['food_request_ids']==[] for p in selected))
         result=bank.include([{**photos[299],'ranking_score':90},*photos[:18]])
         self.assertEqual(len(result),18);self.assertEqual(len({p['source_url'] for p in result}),18)
-        self.assertEqual(result[1]['ranking_score'],90)
+        self.assertEqual(result[-2]['ranking_score'],90)
+        self.assertTrue(all(p.get('popular_pick') for p in result[-3:]))
+        self.assertTrue(all(not p.get('popular_pick') for p in result[:-3]))
         excluded=PopularUnsplash([photo(299)['source_url']]);excluded.add(photos)
         self.assertNotIn(photo(299)['source_url'],[p['source_url'] for p in excluded.include([])])
     def test_empty_ranking_preserves_normalized_scene_bound_simpler_queries(self):
@@ -75,8 +77,8 @@ class RecoveryTests(unittest.IsolatedAsyncioTestCase):
         pool=[{**photo(i),'likes':i} for i in range(6)]
         rank=AsyncMock(return_value=[{**pool[0],'food_request_ids':['dish']}])
         result=await select_food_photos(narrow_food(),fetch=AsyncMock(return_value=pool),commons=AsyncMock(return_value=[]),rank=rank)
-        self.assertEqual([p['likes'] for p in result],[5,4,3,0]);rank.assert_awaited_once()
-        self.assertEqual(result[0]['food_request_ids'],[])
+        self.assertEqual([p['likes'] for p in result],[0,5,4,3]);rank.assert_awaited_once()
+        self.assertEqual(result[-1]['food_request_ids'],[])
     async def test_ranking_transport_failure_keeps_the_popular_photos(self):
         pool=[{**photo(i),'likes':i} for i in range(3)]
         result=await select_country_photos(country_fixture(),fetch=AsyncMock(return_value=pool),rank=AsyncMock(side_effect=PhotoRankingUnavailable()))
@@ -91,6 +93,18 @@ class RecoveryTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(all(c.kwargs['credit']['selection_mode']=='popular_unsplash' for c in ready))
         self.assertTrue(all(c.kwargs['credit']['ranking_model'] is None for c in ready))
         self.assertEqual(r.track_selection.await_count,3)
+    async def test_popular_photos_end_the_existing_gallery_even_when_ranked_or_gallery_is_full(self):
+        r=routes_module();r.track_selection=AsyncMock(return_value=True)
+        ranked=[{**food_photo(i),'food_request_ids':['dish']} for i in range(8)]
+        popular=[{**photo(100+i),'likes':100-i,'popular_pick':True,'food_request_ids':['dish']} for i in range(3)]
+        r.select_food_photos=AsyncMock(return_value=[*popular,*ranked])
+        await r._background_image_task({},'hash',article=narrow_food(),photos_only=True)
+        ready=[c for c in r.set_fact_image_state.call_args_list if c.args[2]=='ready']
+        gallery=[c.kwargs['credit'] for c in ready if c.args[1].startswith('food_scene_')]
+        self.assertEqual(len(gallery),6)
+        self.assertTrue(all(not p.get('popular_pick') for p in gallery[:3]))
+        self.assertTrue(all(p.get('popular_pick') for p in gallery[-3:]))
+        self.assertTrue(all(not c.kwargs['credit'].get('popular_pick') for c in ready if c.args[1].startswith('food_photo_')))
     async def test_country_worker_publishes_popular_photos_even_with_fewer_than_ten(self):
         r=routes_module();r.track_selection=AsyncMock(return_value=True)
         chosen=PopularUnsplash();chosen.add([{**photo(i),'likes':i} for i in range(3)])
