@@ -39,6 +39,7 @@ from .india import INDIA_RESPONSE_SCHEMA, INDIA_IMAGE_INSTRUCTIONS, build_india_
 from .food import FOOD_RESPONSE_SCHEMA, FOOD_IMAGE_INSTRUCTIONS, build_food_prompt, validate_food_content, prepare_food_media
 from .fashion import FASHION_RESPONSE_SCHEMA, FASHION_IMAGE_INSTRUCTIONS, build_fashion_prompt, validate_fashion_content, prepare_fashion_media
 from .geography import GEOGRAPHY_RESPONSE_SCHEMA, GEOGRAPHY_IMAGE_INSTRUCTIONS, build_geography_prompt, validate_geography_content, prepare_geography_media
+from .economics import ECONOMICS_RESPONSE_SCHEMA, ECONOMICS_IMAGE_INSTRUCTIONS, build_economics_prompt, validate_economics_content, prepare_economics_media
 from .technology import TECHNOLOGY_RESPONSE_SCHEMA, TECHNOLOGY_IMAGE_INSTRUCTIONS, build_technology_prompt, validate_technology_content, prepare_technology_media
 from .image_policy import IMAGE_INSTRUCTIONS, IMAGE_KEYS, validate_image_plan
 from .country import COUNTRY_RESPONSE_SCHEMA, COUNTRY_IMAGE_INSTRUCTIONS, build_country_prompt, validate_country_content, enrich_country_identity
@@ -76,7 +77,10 @@ async def generate_daily_fact(
     if blocklist is None:
         blocklist = []
 
-    if category == 'technology':
+    if category == 'economics':
+        prompt = build_economics_prompt(blocklist)
+        response_schema = ECONOMICS_RESPONSE_SCHEMA
+    elif category == 'technology':
         prompt = build_technology_prompt(blocklist)
         response_schema = TECHNOLOGY_RESPONSE_SCHEMA
     elif category == 'geography':
@@ -125,9 +129,9 @@ async def generate_daily_fact(
     audience = LEARNER_INSTRUCTIONS if category != 'country' else LEARNER_INSTRUCTIONS.replace('Teach ONE interesting fact or useful new idea', 'Teach ONE country through connected useful ideas').replace('Aim for a focused 3-6 minute read, not an encyclopedia chapter or exam syllabus.', 'A country portrait can span an accessible 8-15 minute read.').replace('Before returning, check that a newcomer can explain the central fact in one sentence.', 'Before returning, check that a newcomer can describe the country in a few sentences.')
     if category == 'india':
         audience = audience.replace('Aim for a focused 3-6 minute read, not an encyclopedia chapter or exam syllabus.', 'Explore one focused India topic in an accessible 7-10 minute read.')
-    if category in ('food','fashion','geography','technology'):
+    if category in ('food','fashion','geography','technology','economics'):
         audience = audience.replace('3-6 minute','6-10 minute')
-    prompt += '\n\n' + audience + '\n\n' + (TECHNOLOGY_IMAGE_INSTRUCTIONS if category == 'technology' else GEOGRAPHY_IMAGE_INSTRUCTIONS if category == 'geography' else FASHION_IMAGE_INSTRUCTIONS if category == 'fashion' else FOOD_IMAGE_INSTRUCTIONS if category == 'food' else INDIA_IMAGE_INSTRUCTIONS if category == 'india' else COUNTRY_IMAGE_INSTRUCTIONS if category == 'country' else IMAGE_INSTRUCTIONS)
+    prompt += '\n\n' + audience + '\n\n' + (ECONOMICS_IMAGE_INSTRUCTIONS if category == 'economics' else TECHNOLOGY_IMAGE_INSTRUCTIONS if category == 'technology' else GEOGRAPHY_IMAGE_INSTRUCTIONS if category == 'geography' else FASHION_IMAGE_INSTRUCTIONS if category == 'fashion' else FOOD_IMAGE_INSTRUCTIONS if category == 'food' else INDIA_IMAGE_INSTRUCTIONS if category == 'india' else COUNTRY_IMAGE_INSTRUCTIONS if category == 'country' else IMAGE_INSTRUCTIONS)
     last_error: Optional[Exception] = None
     
     fallback_models = [cfg.GEMINI_MODEL_NAME, "gemini-3.8-flash", "gemini-3.5-flash", cfg.OPENAI_MODEL_NAME]
@@ -183,9 +187,12 @@ async def generate_daily_fact(
                     and (category != 'food' or validate_food_content(fact))
                     and (category != 'fashion' or validate_fashion_content(fact))
                     and (category != 'geography' or validate_geography_content(fact))
-                    and (category != 'technology' or validate_technology_content(fact))):
+                    and (category != 'technology' or validate_technology_content(fact))
+                    and (category != 'economics' or validate_economics_content(fact))):
                 normalize_evidence(fact)
                 fact["category"] = category
+                if category == 'economics':
+                    prepare_economics_media(fact)
                 if category == 'technology':
                     prepare_technology_media(fact)
                 if category == 'geography':

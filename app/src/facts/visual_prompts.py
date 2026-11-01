@@ -147,6 +147,10 @@ def build_section_image_context(key, article=None):
             if value:
                 text = value if isinstance(value, str) else json.dumps(value, ensure_ascii=False)
                 excerpt[field] = text[:4000]
+        if article.get('article_type') == 'economics_lesson':
+            lesson=article.get('economics_lesson') or {}
+            excerpt['economics_context']={field:lesson.get(field) for field in ('identity','central_idea','opening_scenario','mechanism')}
+            lines.append('Economics conceptual illustration: show the actual everyday choice or process. No fake charts, currency text, statistics or documentary claims.')
         if article.get('article_type') == 'technology_lesson':
             lesson=article.get('technology_lesson') or {}
             excerpt['technology_context']={field:lesson.get(field) for field in ('identity','central_idea','system_model','walkthrough')}

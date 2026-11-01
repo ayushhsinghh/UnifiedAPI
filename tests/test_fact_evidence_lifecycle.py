@@ -62,6 +62,7 @@ def generator_module():
         'fact_test.food': __import__('src.facts.food',fromlist=['food']),
         'fact_test.fashion': __import__('src.facts.fashion',fromlist=['fashion']),
         'fact_test.geography': __import__('src.facts.geography',fromlist=['geography']),
+        'fact_test.economics': __import__('src.facts.economics',fromlist=['economics']),
         'fact_test.technology': __import__('src.facts.technology',fromlist=['technology']),
     })
 
@@ -98,7 +99,7 @@ def routes_module():
         'src.facts.image_generator': module('src.facts.image_generator', generate_and_save_image=AsyncMock()),
         'src.facts.photo_ranking': module('src.facts.photo_ranking',select_india_photos=AsyncMock(side_effect=RuntimeError('Offline ranking fixture')),
             select_country_photos=AsyncMock(side_effect=RuntimeError('Offline ranking fixture')),
-            select_food_photos=AsyncMock(return_value=[]),select_fashion_photos=AsyncMock(return_value=[]),select_geography_photos=AsyncMock(return_value=[]),select_technology_photos=AsyncMock(return_value=[]),PhotoRankingUnavailable=RuntimeError),
+            select_food_photos=AsyncMock(return_value=[]),select_fashion_photos=AsyncMock(return_value=[]),select_geography_photos=AsyncMock(return_value=[]),select_technology_photos=AsyncMock(return_value=[]),select_economics_photos=AsyncMock(return_value=[]),PhotoRankingUnavailable=RuntimeError),
     })
     value.logger = Mock()
     return value

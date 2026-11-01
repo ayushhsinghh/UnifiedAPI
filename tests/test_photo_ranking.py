@@ -108,14 +108,14 @@ class RankTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(set(payload['photos'][0]),{'photo_id','description','alt_description'})
         self.assertNotIn('https://',json.dumps(payload['photos']))
 
-    async def test_wider_search_runs_when_first_ranking_cannot_supply_ten(self):
+    async def test_all_planned_searches_finish_before_the_single_initial_ranking(self):
         f=fixture();f['india_lesson']['carousel_queries']=[f'root bridge location{i}' for i in range(6)]
         counter=iter(range(100))
         fetch=AsyncMock(side_effect=lambda query:[photo(next(counter)),photo(next(counter))])
         async def rank(fact,photos,**kwargs):return photos[:5] if len(photos)<20 else photos[:10]
         ranked=AsyncMock(side_effect=rank)
         result=await select_india_photos(f,fetch=fetch,rank=ranked)
-        self.assertEqual(len(result),10);self.assertEqual(ranked.await_count,2)
+        self.assertEqual(len(result),10);self.assertEqual(ranked.await_count,1)
         self.assertEqual(fetch.await_count,12)
 
     async def test_successful_but_irrelevant_ranking_does_not_pad_with_popular_photos(self):

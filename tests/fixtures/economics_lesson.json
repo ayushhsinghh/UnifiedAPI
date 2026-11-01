@@ -1,0 +1,367 @@
+{
+  "category": "economics",
+  "topic": "When the same money buys less",
+  "schema_version": "2.0",
+  "article_type": "economics_lesson",
+  "headline_fact": "When prices rise faster than your budget, the same money buys fewer goods.",
+  "summary": "A simple basket example explains purchasing power without treating one price change as a measure of all inflation.",
+  "did_you_know": "A budget and the prices of goods work together to determine what you can buy.",
+  "core_mechanics": "The quantity a fixed budget can buy falls when the price per unit rises.",
+  "why_it_matters": "Money has meaning through the goods and services it can buy.",
+  "in_depth_breakdown": {
+    "detailed_processes": [],
+    "real_world_application": "Comparing the same basket makes a change in purchasing power easier to see.",
+    "fascinating_trivia": []
+  },
+  "common_misconceptions": [],
+  "learning_takeaways": [
+    "Purchasing power describes what money can buy.",
+    "A fixed budget buys fewer unchanged goods when their price rises.",
+    "One basket example does not measure all inflation."
+  ],
+  "emoji_icon": "",
+  "difficulty_level": "beginner",
+  "region": "Global",
+  "fun_rating": 8,
+  "read_time_seconds": 480,
+  "tags": [
+    "economics",
+    "prices",
+    "purchasing power"
+  ],
+  "related_categories": [
+    "science"
+  ],
+  "visual_suggestions": {
+    "cover": "Conceptual editorial illustration of a shopper comparing grocery baskets in a market, quiet left for the title, no lettering or fake price tags.",
+    "overview": "Conceptual illustration of two grocery baskets, one with less food, no text or statistics."
+  },
+  "share_text": "Explore purchasing power through a familiar shopping example.",
+  "content_freshness": "evergreen",
+  "sources": [
+    {
+      "id": "s1",
+      "title": "Demonstration source — example content for layout testing",
+      "url": "https://example.org/economics-demo"
+    }
+  ],
+  "claim_citations": [],
+  "sources_or_references": [],
+  "generated_at": "2026-10-31T10:00:00Z",
+  "image_details": [
+    {
+      "slot": "overview",
+      "placement": "overview",
+      "alt": "Conceptual illustration of two baskets with different quantities",
+      "caption": "Illustration: the same budget can buy different quantities.",
+      "learning_purpose": "Connect a fixed budget with a change in the price of a basket."
+    }
+  ],
+  "content_hash": "economics-preview",
+  "economics_lesson": {
+    "identity": {
+      "name": "When the same money buys less",
+      "branch": "Everyday economics",
+      "scope": "A fixed budget and one unchanged basket of goods",
+      "geography": "An illustrative shopping example, not a country-wide price measure",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "hook": "When prices rise faster than your budget, the same money buys fewer goods.",
+    "question": "Why can the same ₹500 buy less than before?",
+    "learning_goal": "Explain purchasing power through a fixed budget and a changing basket price.",
+    "opening_scenario": {
+      "title": "The budget stays the same. The basket gets smaller.",
+      "experience": "You set aside ₹500 for a weekly shop. The same basket used to cost ₹100, but now costs ₹125. You still hold ₹500. What changes is the quantity it can buy.",
+      "question": "What does your money buy now?",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "central_idea": "The quantity a fixed budget can buy falls when the price per unit rises. Purchasing power means the goods and services that an amount of money can buy.",
+    "key_terms": [
+      {
+        "term": "Purchasing power",
+        "meaning": "The goods and services that an amount of money can buy.",
+        "source_ids": [
+          "s1"
+        ]
+      },
+      {
+        "term": "Price level",
+        "meaning": "A measure that combines prices across a defined set of goods and services. One basket example alone does not establish a change in a whole economy.",
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "mechanism": {
+      "actors": [
+        {
+          "id": "shopper",
+          "name": "The shopper",
+          "role": "Chooses how to use a fixed budget.",
+          "source_ids": [
+            "s1"
+          ]
+        },
+        {
+          "id": "seller",
+          "name": "The seller",
+          "role": "Offers the same basket at the stated price.",
+          "source_ids": [
+            "s1"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "id": "budget",
+          "title": "Start with a fixed budget",
+          "actor_ids": [
+            "shopper"
+          ],
+          "action": "The shopper sets aside ₹500. For this example, the budget does not change.",
+          "what_changes": "The spending limit is held constant so we can study the effect of a price change.",
+          "why_next": "A fixed amount of money buys a quantity that depends on the price per basket.",
+          "conditions": [
+            "The budget stays at ₹500."
+          ],
+          "source_ids": [
+            "s1"
+          ]
+        },
+        {
+          "id": "price",
+          "title": "The price per basket rises",
+          "actor_ids": [
+            "seller"
+          ],
+          "action": "The basket price changes from ₹100 to ₹125. Its contents and quality stay the same.",
+          "what_changes": "Each basket takes a larger part of the budget.",
+          "why_next": "With a fixed budget, a higher price leaves room for fewer baskets.",
+          "conditions": [
+            "The basket has the same contents and quality.",
+            "This example does not explain why the seller changes the price."
+          ],
+          "source_ids": [
+            "s1"
+          ]
+        },
+        {
+          "id": "quantity",
+          "title": "The budget buys fewer baskets",
+          "actor_ids": [
+            "shopper",
+            "seller"
+          ],
+          "action": "The shopper can buy four baskets at ₹125 each instead of five at ₹100 each.",
+          "what_changes": "Purchasing power over this basket falls, even though the amount of money stays the same.",
+          "why_next": "The comparison separates the money amount from the quantity that it can buy.",
+          "conditions": [
+            "There are no discounts, substitutions, fees or changes in income."
+          ],
+          "source_ids": [
+            "s1"
+          ]
+        }
+      ]
+    },
+    "worked_example": {
+      "title": "Follow a ₹500 shopping budget",
+      "provenance": {
+        "kind": "illustrative",
+        "period": null,
+        "geography": null,
+        "as_of": null,
+        "description": "Invented numbers explain a fixed budget. They do not describe measured prices."
+      },
+      "assumptions": [
+        "The budget stays at ₹500.",
+        "Each basket contains the same goods in the same quantities.",
+        "The shopper can buy complete baskets without extra charges."
+      ],
+      "values": [
+        {
+          "id": "budget",
+          "label": "Weekly budget",
+          "value": 500,
+          "unit": "rupees"
+        },
+        {
+          "id": "before-price",
+          "label": "Earlier basket price",
+          "value": 100,
+          "unit": "rupees per basket"
+        },
+        {
+          "id": "after-price",
+          "label": "Later basket price",
+          "value": 125,
+          "unit": "rupees per basket"
+        }
+      ],
+      "calculations": [
+        {
+          "id": "before-count",
+          "label": "Baskets before the price change",
+          "operation": "divide",
+          "operand_ids": [
+            "budget",
+            "before-price"
+          ],
+          "result": 5,
+          "unit": "baskets",
+          "explanation": "Divide the budget by the price of one basket: ₹500 buys five baskets."
+        },
+        {
+          "id": "after-count",
+          "label": "Baskets after the price change",
+          "operation": "divide",
+          "operand_ids": [
+            "budget",
+            "after-price"
+          ],
+          "result": 4,
+          "unit": "baskets",
+          "explanation": "The same calculation with the later price gives four baskets."
+        }
+      ],
+      "reasoning": [
+        "Keep the budget and basket contents unchanged.",
+        "Compare the quantities that the budget buys at each price."
+      ],
+      "outcome": "The budget buys one fewer basket.",
+      "explanation": "The amount of money stays at ₹500, but its purchasing power over this basket falls.",
+      "limits": [
+        "This example does not measure economy-wide inflation.",
+        "Real shoppers can change products, quantities or shops."
+      ],
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "diagram": {
+      "type": "bar",
+      "title": "Same budget, fewer baskets",
+      "caption": "Both bars start at zero. The values are illustrative, not observed price data.",
+      "description": "At the earlier price, ₹500 buys five baskets. At the later price, it buys four.",
+      "assumptions": [
+        "Both baskets contain the same goods."
+      ],
+      "provenance": {
+        "kind": "illustrative",
+        "period": null,
+        "geography": null,
+        "as_of": null,
+        "description": "Invented numbers explain a fixed budget. They do not describe measured prices."
+      },
+      "x_label": "Basket price",
+      "unit": "baskets",
+      "labels": [
+        "₹100 per basket",
+        "₹125 per basket"
+      ],
+      "series": [
+        {
+          "name": "Quantity bought",
+          "values": [
+            5,
+            4
+          ]
+        }
+      ],
+      "comparison_basis": null,
+      "comparisons": [],
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "distributional_effects": [
+      {
+        "actor_id": "shopper",
+        "benefit": "No benefit is assumed for the shopper in this fixed-budget comparison.",
+        "cost": "The shopper can buy fewer of the same baskets.",
+        "time_horizon": "Immediately after the basket price changes, while the budget remains fixed.",
+        "conditions": "The shopper does not substitute other goods or receive more income.",
+        "source_ids": [
+          "s1"
+        ]
+      },
+      {
+        "actor_id": "seller",
+        "benefit": "The seller receives more money per basket sold.",
+        "cost": "The price change alone does not show whether profit increases. Costs or sales quantities may also change.",
+        "time_horizon": "The same selling period used for the price comparison.",
+        "conditions": "Revenue per basket and profit are different measures.",
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "real_world_case": null,
+    "conditions_and_limits": [
+      {
+        "title": "Income can change too",
+        "explanation": "If the budget rises, the result depends on how much it rises relative to prices. This example holds the budget fixed.",
+        "source_ids": [
+          "s1"
+        ]
+      },
+      {
+        "title": "One product is not the whole economy",
+        "explanation": "A broad price measure combines many goods and services. A change in one basket cannot establish what happens to all prices.",
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "misconceptions": [
+      {
+        "belief": "More money always means more purchasing power",
+        "correction": "Purchasing power depends on prices as well as the amount of money.",
+        "explanation": "A larger budget can still buy fewer goods if their prices rise sufficiently.",
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "optional_depth": [
+      {
+        "title": "Money amount and buying capacity",
+        "explanation": "A money amount describes the number of currency units. Buying capacity describes what those units can buy. A fair comparison states the goods, prices and period.",
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "knowledge_checks": [
+      {
+        "question": "If the basket price returns to ₹100 and the budget stays at ₹500, how many baskets can you buy?",
+        "answer": "Five baskets.",
+        "explanation": "Divide ₹500 by ₹100 per basket. The comparison keeps the basket unchanged."
+      }
+    ],
+    "takeaways": [
+      "Purchasing power describes what money can buy.",
+      "A fixed budget buys fewer unchanged goods when their price rises.",
+      "One basket example does not measure all inflation."
+    ],
+    "related_topics": [
+      "Opportunity cost",
+      "Why people respond to incentives"
+    ],
+    "photos": [
+      {
+        "id": "market",
+        "section_id": "overview",
+        "kind": "setting",
+        "subject": "Grocery market",
+        "queries": [
+          "grocery market"
+        ]
+      }
+    ]
+  }
+}

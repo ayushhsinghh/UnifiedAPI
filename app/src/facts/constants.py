@@ -134,11 +134,9 @@ CATEGORY_HINTS: Dict[str, str] = {
         "traditional herbal medicine (Tulsi, Ashwagandha, Turmeric)"
     ),
     "economics": (
-        "Indian GDP growth trajectory, Green Revolution & food security, "
-        "liberalization of 1991 (LPG reforms), UPI & fintech revolution, "
-        "Make in India initiative, Indian stock exchanges (BSE, NSE), "
-        "cooperative movement (Amul model), Indian textile & handloom economy, "
-        "remittance economy (NRI contributions), Five-Year Plans history"
+        "Everyday choices, opportunity cost, incentives, purchasing power, markets, trade, "
+        "labour, public goods, firms and basic macroeconomics; global beginner topics with "
+        "clear mechanisms, explicit assumptions and small illustrative examples rather than forecasts"
     ),
     "geography": (
         "Global landforms, rivers, coasts, climate patterns, landscapes and human-environment relationships; "

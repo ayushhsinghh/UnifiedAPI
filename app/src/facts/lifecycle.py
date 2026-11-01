@@ -13,6 +13,9 @@ def expected_image_keys(visual_suggestions):
 
 def fact_image_keys(fact):
     keys=expected_image_keys(fact.get('visual_suggestions',{}))
+    if fact.get('article_type')=='economics_lesson':
+        from src.facts.economics import economics_photo_entries
+        return [key for key in ('cover','overview') if fact.get('visual_suggestions',{}).get(key)]+[p['key'] for p in economics_photo_entries(fact)]+[f'economics_scene_{n}' for n in range(6)]
     if fact.get('article_type')=='technology_lesson':
         from src.facts.technology import technology_photo_entries
         return [key for key in ('cover','overview') if fact.get('visual_suggestions',{}).get(key)]+[p['key'] for p in technology_photo_entries(fact)]+[f'technology_scene_{n}' for n in range(6)]
@@ -45,7 +48,7 @@ def image_generation_state(document, timeout_seconds, now=None):
     images = document.get("images") or fact.get("images") or {}
     statuses = document.get("image_status") or {}
     expected=[key for key in expected if statuses.get(key)!='not_requested']
-    if fact.get('article_type') in ('food_lesson','fashion_lesson','geography_lesson','technology_lesson') or any(fact.get(key,{}).get('photo_ranking_version')==1 for key in ('india_media','country_media')):
+    if fact.get('article_type') in ('food_lesson','fashion_lesson','geography_lesson','technology_lesson','economics_lesson') or any(fact.get(key,{}).get('photo_ranking_version')==1 for key in ('india_media','country_media')):
         timeout_seconds=max(timeout_seconds,720)
     started = document.get("image_started_at")
     now = now or datetime.now(timezone.utc)

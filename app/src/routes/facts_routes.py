@@ -49,7 +49,7 @@ from src.facts.visual_prompts import IMAGE_SECTION_BRIEFS, build_section_image_c
 from src.facts.country_photos import find_country_photos, find_subject_photo, country_scene_queries, country_scene_plan
 from src.facts.country_media_plan import country_photo_entries
 from src.facts.unsplash_photos import track_selection
-from src.facts.photo_ranking import select_india_photos,select_country_photos,select_food_photos,select_fashion_photos,select_geography_photos,select_technology_photos,PhotoRankingUnavailable
+from src.facts.photo_ranking import select_india_photos,select_country_photos,select_food_photos,select_fashion_photos,select_geography_photos,select_technology_photos,select_economics_photos,PhotoRankingUnavailable
 from src.facts.image_generator import generate_and_save_image
 
 logger = logging.getLogger(__name__)
@@ -182,6 +182,7 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
     is_food = (article or {}).get('article_type') == 'food_lesson'
     is_fashion = (article or {}).get('article_type') == 'fashion_lesson'
     is_geography = (article or {}).get('article_type') == 'geography_lesson'
+    is_economics = (article or {}).get('article_type') == 'economics_lesson'
     is_technology = (article or {}).get('article_type') == 'technology_lesson'
     is_country = (article or {}).get('article_type') == 'country_profile'
     ranked_country=is_country and (article or {}).get('country_media',{}).get('photo_ranking_version')==1
@@ -266,7 +267,7 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
             )
             if url:
                 images[key] = url
-            if hybrid or is_india or is_food or is_fashion or is_geography or is_technology:
+            if hybrid or is_india or is_food or is_fashion or is_geography or is_technology or is_economics:
                 detail=next((d for d in (article or {}).get('image_details',[]) if d.get('slot')==key),{})
                 subject=(article or {}).get('topic') or (country or {}).get('identity',{}).get('name','the topic')
                 credit={'kind':'generated','url':url,'title':detail.get('caption') or f"Illustration of {subject}",
@@ -299,7 +300,7 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
     tasks = []
     for key, brief in IMAGE_SECTION_BRIEFS.items():
         if photos_only:continue
-        if (is_india or is_food or is_fashion or is_geography or is_technology) and key not in ('cover','overview'):continue
+        if (is_india or is_food or is_fashion or is_geography or is_technology or is_economics) and key not in ('cover','overview'):continue
         if key in expanded_scenes:continue
         if is_country and key not in {'cover','overview','how_it_works','explanation_2','explanation_3','explanation_4','explanation_5','explanation_6'}:
             continue
@@ -312,15 +313,16 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
                 build_section_image_context(key, article),
             ))
 
-    if is_food or is_fashion or is_geography or is_technology:
+    if is_food or is_fashion or is_geography or is_technology or is_economics:
         from src.facts.food import food_photo_entries
         from src.facts.fashion import fashion_photo_entries
         from src.facts.geography import geography_photo_entries
         from src.facts.technology import technology_photo_entries
-        prefix='technology' if is_technology else 'geography' if is_geography else 'fashion' if is_fashion else 'food'
-        select_photos={'food':select_food_photos,'fashion':select_fashion_photos,'geography':select_geography_photos,'technology':select_technology_photos}[prefix]
+        from src.facts.economics import economics_photo_entries
+        prefix='economics' if is_economics else 'technology' if is_technology else 'geography' if is_geography else 'fashion' if is_fashion else 'food'
+        select_photos={'food':select_food_photos,'fashion':select_fashion_photos,'geography':select_geography_photos,'technology':select_technology_photos,'economics':select_economics_photos}[prefix]
         async def process_editorial_photos():
-            entries={'food':food_photo_entries,'fashion':fashion_photo_entries,'geography':geography_photo_entries,'technology':technology_photo_entries}[prefix](article)
+            entries={'food':food_photo_entries,'fashion':fashion_photo_entries,'geography':geography_photo_entries,'technology':technology_photo_entries,'economics':economics_photo_entries}[prefix](article)
             keys=[p['key'] for p in entries]+[f'{prefix}_scene_{n}' for n in range(6)]
             state={}
             def report(value):
@@ -335,6 +337,8 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
                     item=next((entry for entry in entries if entry['id'] in p.get(prefix+'_request_ids',[]) and entry['key'] not in ready),None)
                     photo={**{k:v for k,v in p.items() if k!='download_location'},prefix+'_photo':True,
                         'selection_mode':state.get('mode','text_ranking'),'ranking_model':'gpt-6-luna' if state.get('mode')!='metadata_fallback' else None}
+                    if p.get('selection_mode')=='popular_unsplash':
+                        photo.update(selection_mode='popular_unsplash',ranking_model=None)
                     if item:
                         photo.update(section_id=item['section_id'],photo_id=item['id']);key=item['key']
                         if is_fashion:photo['feature_id']=item.get('feature_id')
@@ -464,7 +468,7 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
                                 return photo if photo.get('provider')!='unsplash' or await track_selection(photo) else None
                         photos=[p for p in await asyncio.gather(*(track(p) for p in selected)) if p]
                         keys=india_carousel_keys(article)
-                        if len(photos)<10:
+                        if len(photos)<10 and not any(p.get('popular_pick') for p in photos):
                             report({'status':'insufficient','mode':'text_ranking','selected_count':len(photos),'minimum':10,
                                 'reason':'tracking_failed' if len(selected)>=10 else selection_state.get('reason','not_enough_relevant_metadata')})
                             for key in keys:set_fact_image_state(content_hash,key,'failed',clear=True)
@@ -474,7 +478,8 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
                                 set_fact_image_state(content_hash,key,'not_requested',clear=True);continue
                             p=photos[index]
                             photo={**{k:v for k,v in p.items() if k!='download_location'},'india_carousel':True,
-                                'selection_mode':'llm_ranked','ranking_model':'gpt-6-luna','scene_query':p.get('search_query','')}
+                                'selection_mode':'popular_unsplash' if p.get('selection_mode')=='popular_unsplash' else 'llm_ranked',
+                                'ranking_model':None if p.get('selection_mode')=='popular_unsplash' else 'gpt-6-luna','scene_query':p.get('search_query','')}
                             images[key]=photo['url']
                             set_fact_image_state(content_hash,key,'ready',photo['url'],credit=photo)
                         report({'status':'completed','mode':'text_ranking','selected_count':len(photos)})
@@ -492,7 +497,10 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
     # Scene slots have a separate photo-only path; the GenAI key set stays unchanged.
     async def process_ranked_country():
         keys=[f'country_ranked_{n}' for n in range(18)]
-        def report(state):set_fact_photo_selection(content_hash,state)
+        selection_state={}
+        def report(state):
+            selection_state.update(state)
+            set_fact_photo_selection(content_hash,dict(selection_state))
         async def finalize():
             report({'status':'collecting','mode':'text_ranking'})
             try:
@@ -512,7 +520,7 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
                     claimed_sources.add(photo['source_url'])
                     return photo if await track_selection(photo) else None
             photos=[p for p in await asyncio.gather(*(track(p) for p in selected)) if p]
-            if len(photos)<10:
+            if len(photos)<10 and not any(p.get('popular_pick') for p in photos):
                 for key in keys:set_fact_image_state(content_hash,key,'failed',clear=True,gallery=[])
                 report({'status':'insufficient','mode':'text_ranking','selected_count':len(photos),'minimum':10})
                 return
@@ -521,7 +529,8 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
                     set_fact_image_state(content_hash,key,'not_requested',clear=True,gallery=[]);continue
                 p=photos[index]
                 photo={**{k:v for k,v in p.items() if k!='download_location'},'country_carousel':True,
-                    'selection_mode':'llm_ranked','ranking_model':'gpt-6-luna','scene_query':p.get('search_query','')}
+                    'selection_mode':'popular_unsplash' if p.get('selection_mode')=='popular_unsplash' else 'llm_ranked',
+                    'ranking_model':None if p.get('selection_mode')=='popular_unsplash' else 'gpt-6-luna','scene_query':p.get('search_query','')}
                 images[key]=photo['url']
                 set_fact_image_state(content_hash,key,'ready',photo['url'],credit=photo,gallery=[photo])
             report({'status':'completed','mode':'text_ranking','selected_count':len(photos)})
