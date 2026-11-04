@@ -4,13 +4,13 @@ import sys
 import types
 import unittest
 from pathlib import Path
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock,Mock
 APP=Path(__file__).resolve().parents[1]/'app';sys.path.insert(0,str(APP))
 package=types.ModuleType('src.facts');package.__path__=[str(APP/'src/facts')];sys.modules.setdefault('src.facts',package)
-from src.facts.agriculture import validate_agriculture_content,valid_agriculture_diagram,prepare_agriculture_media
+from src.facts.agriculture import validate_agriculture_content,valid_agriculture_diagram,prepare_agriculture_media,ensure_agriculture_photo_plan
 from src.facts.photo_ranking import select_agriculture_photos,rank_photos,PhotoRankingResult
 from src.facts.lifecycle import fact_image_keys
-from test_fact_evidence_lifecycle import routes_module,generator_module
+from test_fact_evidence_lifecycle import routes_module,generator_module,load,module,config_import
 from test_photo_ranking import photo as unsplash_photo
 def fixture():return json.loads((Path(__file__).parent/'fixtures/agriculture_lesson.json').read_text())
 def photo(i=0):
@@ -25,7 +25,8 @@ class AgricultureContractTests(unittest.TestCase):
         self.assertEqual(set(fact_image_keys(f)),{'cover','overview','agriculture_photo_0',*[f'agriculture_scene_{n}' for n in range(6)]})
         f['agriculture_lesson'].update(diagram=None,photos=[],measurements=[],optional_depth=[],key_terms=[])
         f['agriculture_lesson']['field_context'].update(crops=[],growing_conditions=[],when_it_matters=None)
-        self.assertTrue(validate_agriculture_content(f))
+        self.assertFalse(validate_agriculture_content(f))
+        self.assertTrue(ensure_agriculture_photo_plan(f));self.assertTrue(validate_agriculture_content(f))
     def test_invalid_sources_references_conditions_and_extra_generated_images_fail(self):
         for mutate in (lambda l:l['identity'].update(source_ids=['missing']),
             lambda l:l['process_steps'][0].update(id='surface'),
@@ -69,10 +70,14 @@ class AgricultureAsyncTests(unittest.IsolatedAsyncioTestCase):
         result=await select_agriculture_photos(fixture(),fetch=AsyncMock(return_value=photos),commons=AsyncMock(return_value=[p]),rank=rank)
         self.assertEqual(rank.await_count,2);self.assertEqual(result[0]['provider'],'wikimedia')
         self.assertTrue(all(p['popular_pick'] and p['agriculture_request_ids']==[] for p in result[-3:]))
-    async def test_no_documentary_requests_make_no_provider_or_ranker_calls(self):
-        f=fixture();f['agriculture_lesson']['photos']=[];fetch=AsyncMock();commons=AsyncMock();rank=AsyncMock()
+    async def test_empty_plan_triggers_searches_instead_of_silently_skipping(self):
+        f=fixture();f['agriculture_lesson']['photos']=[];fetch=AsyncMock(return_value=[]);commons=AsyncMock(return_value=[]);rank=AsyncMock(return_value=[])
         self.assertEqual(await select_agriculture_photos(f,fetch=fetch,commons=commons,rank=rank),[])
-        fetch.assert_not_awaited();commons.assert_not_awaited();rank.assert_not_awaited()
+        self.assertTrue(fetch.await_count);self.assertTrue(commons.await_count);rank.assert_awaited_once()
+        self.assertTrue(f['agriculture_lesson']['photos'])
+        # Exact named places never go to stock providers.
+        place=f['agriculture_lesson']['indian_case_study']['place']
+        self.assertNotIn(place,[c.args[0] for c in fetch.call_args_list])
     async def test_worker_caps_ai_images_and_preserves_step_binding(self):
         r=routes_module();f=fixture();prepare_agriculture_media(f)
         r.generate_and_save_image=AsyncMock(return_value='https://example.org/illustration.jpg')
@@ -89,3 +94,81 @@ class AgricultureAsyncTests(unittest.IsolatedAsyncioTestCase):
         self.assertIsNotNone(result);self.assertEqual(result['agriculture_media']['generated_limit'],2)
         prompt=r.genai.Client.return_value.aio.models.generate_content.call_args.kwargs['contents']
         self.assertIn('rooted in Indian agriculture',prompt);self.assertIn('no single growing season',prompt)
+
+
+class AgriculturePhotoPlanTests(unittest.TestCase):
+    def test_missing_null_empty_plans_are_bounded_and_existing_plans_stay_intact(self):
+        for missing in ('missing',None,[]):
+            f=fixture();l=f['agriculture_lesson'];l['photos']=missing
+            if missing=='missing':l.pop('photos')
+            l['identity']['name']='Apatani rice–fish farming';l['field_context']['crops']=['Rice'];l['indian_case_study']['place']='Ziro valley'
+            self.assertTrue(ensure_agriculture_photo_plan(f));self.assertTrue(validate_agriculture_content(f))
+            photos=l['photos'];self.assertEqual([p['section_id'] for p in photos],['overview','context','case'])
+            self.assertIn('Apatani rice fish farming',photos[0]['queries'])
+            self.assertEqual(photos[-1]['kind'],'named_place');self.assertEqual(photos[-1]['subject'],'Ziro valley')
+            self.assertFalse(ensure_agriculture_photo_plan(f));self.assertIs(l['photos'],photos)
+        f=fixture();photos=f['agriculture_lesson']['photos'];self.assertFalse(ensure_agriculture_photo_plan(f));self.assertIs(f['agriculture_lesson']['photos'],photos)
+    def test_fallback_does_not_invent_missing_context_or_hide_invalid_plans(self):
+        f=fixture();l=f['agriculture_lesson'];l['photos']=[];l['identity']['name']=' ';f['topic']='Seed storage';l['field_context']['crops']=[];l['indian_case_study'].pop('place')
+        ensure_agriculture_photo_plan(f);self.assertEqual(len(l['photos']),1);self.assertEqual(l['photos'][0]['subject'],'Seed storage')
+        f=fixture();f['agriculture_lesson']['photos']=[{'invalid':'request'}];self.assertFalse(ensure_agriculture_photo_plan(f));self.assertFalse(validate_agriculture_content(f))
+        f=fixture();l=f['agriculture_lesson'];l['photos']=[];l['identity']['name']='x'*400;l['field_context']['crops']=['y'*400];l['indian_case_study']['place']='z'*400
+        ensure_agriculture_photo_plan(f);self.assertTrue(all(1<=len(q)<=160 for p in l['photos'] for q in p['queries']))
+    def test_repository_patch_is_atomic_and_only_updates_missing_plan_fields(self):
+        collection=Mock();collection.update_one.return_value.matched_count=1
+        repo=load('agriculture_repo_test','src/database/facts_repository.py',{**config_import,
+            'pymongo.errors':module('pymongo.errors',DuplicateKeyError=RuntimeError),
+            'src.database.connection':module('src.database.connection',get_db=lambda:{'facts':collection})})
+        f=fixture();f['agriculture_lesson']['photos']=[];ensure_agriculture_photo_plan(f)
+        self.assertTrue(repo.save_agriculture_photo_plan('hash',f))
+        query,update=collection.update_one.call_args.args;self.assertEqual(query['content_hash'],'hash')
+        self.assertEqual(query['$or'],[{'full_response.agriculture_lesson.photos':[]},{'full_response.agriculture_lesson.photos':None}])
+        self.assertEqual(set(update['$set']),{'full_response.agriculture_lesson.photos','full_response.agriculture_media.photo_plan_version','full_response.agriculture_media.photo_plan_source'})
+        collection.update_one.return_value.matched_count=0;self.assertFalse(repo.save_agriculture_photo_plan('hash',f))
+
+class AgriculturePhotoRetryTests(unittest.IsolatedAsyncioTestCase):
+    async def test_new_generation_fills_empty_plan_before_validation_without_retrying_article(self):
+        r=generator_module();f=fixture();f['agriculture_lesson']['photos']=[]
+        generate=AsyncMock(return_value=types.SimpleNamespace(parsed=f));r.genai.Client.return_value.aio.models.generate_content=generate
+        result=await r.generate_daily_fact('agriculture',[])
+        self.assertTrue(result['agriculture_lesson']['photos']);self.assertEqual(result['agriculture_media']['photo_plan_source'],'fallback');generate.assert_awaited_once()
+    async def test_legacy_retry_persists_before_search_and_photo_only_never_calls_ai(self):
+        r=routes_module();f=fixture();f['agriculture_lesson']['photos']=[]
+        r.get_fact_by_hash.return_value={'full_response':f,'images':{'cover':'https://example.org/cover'}}
+        bg=Mock();await r.retry_image_generation(Mock(),bg,'hash',photos_only=True)
+        r.save_agriculture_photo_plan.assert_called_once();planned=r.save_agriculture_photo_plan.call_args.args[1]
+        args=bg.add_task.call_args;article=args.kwargs['article'];self.assertEqual(article['agriculture_lesson']['photos'],planned['agriculture_lesson']['photos'])
+        self.assertTrue(args.kwargs['photos_only']);self.assertTrue(all(k.startswith(('agriculture_photo_','agriculture_scene_')) for k in r.start_fact_images.call_args.args[1]))
+        first=article['agriculture_lesson']['photos'][0];r.select_agriculture_photos=AsyncMock(return_value=[{**photo(),'agriculture_request_ids':[first['id']]}])
+        await args.args[0](*args.args[1:],**args.kwargs)
+        r.generate_and_save_image.assert_not_awaited();r.save_agriculture_photo_plan.assert_called_once()
+        credit=next(c.kwargs['credit'] for c in r.set_fact_image_state.call_args_list if c.args[1]=='agriculture_photo_0' and c.kwargs.get('credit'))
+        self.assertEqual(credit['photo_id'],first['id']);self.assertEqual(credit['section_id'],'overview')
+    async def test_failed_plan_save_does_not_start_unbound_searches(self):
+        r=routes_module();f=fixture();f['agriculture_lesson']['photos']=[]
+        r.get_fact_by_hash.return_value={'full_response':f,'images':{}};r.save_agriculture_photo_plan.return_value=False
+        bg=Mock()
+        with self.assertRaises(r.HTTPException) as error:await r.retry_image_generation(Mock(),bg,'hash',photos_only=True)
+        self.assertEqual(error.exception.status_code,503);bg.add_task.assert_not_called();r.start_fact_images.assert_not_called()
+    async def test_concurrent_repair_adopts_the_stored_plan(self):
+        r=routes_module();f=fixture();f['agriculture_lesson']['photos']=[]
+        current=fixture();r.save_agriculture_photo_plan.return_value=False;r.get_fact_by_hash.return_value={'full_response':current}
+        self.assertIs(r._with_article_photo_plan(f,'hash'),current)
+    async def test_retry_preserves_ready_photos_even_when_new_search_is_empty(self):
+        r=routes_module();f=fixture();f['image_credits']={'agriculture_photo_0':photo(),'agriculture_scene_0':photo(1)}
+        existing={'cover':'https://example.org/cover','agriculture_photo_0':photo()['url'],'agriculture_scene_0':photo(1)['url']}
+        await r._background_image_task(f['visual_suggestions'],'hash',existing,article=f,photos_only=True)
+        r.generate_and_save_image.assert_not_awaited()
+        self.assertTrue(all(c.args[1] not in ('agriculture_photo_0','agriculture_scene_0') for c in r.set_fact_image_state.call_args_list))
+        self.assertEqual(r.set_fact_photo_selection.call_args.args[1]['selected_count'],2)
+        self.assertEqual(r.select_agriculture_photos.call_args.kwargs['excluded'],{photo()['source_url'],photo(1)['source_url']})
+    async def test_polling_merges_the_repaired_plan_with_its_photo_credits(self):
+        r=routes_module();old=fixture();old['agriculture_lesson']['photos']=[];current=fixture();current['agriculture_lesson']['photos']=[];ensure_agriculture_photo_plan(current)
+        r.get_fact_job.return_value={'status':'completed','fact_data':{'fact':old,'content_hash':'hash'}}
+        r.get_fact_by_hash.return_value={'full_response':current,'images':{},'image_credits':{}}
+        result=await r.get_fact_job_status('job');self.assertEqual(result['data']['fact']['agriculture_lesson']['photos'],current['agriculture_lesson']['photos'])
+    async def test_empty_search_outcome_is_distinct_from_no_search_plan(self):
+        r=routes_module();f=fixture();await r._background_image_task({},'hash',article=f,photos_only=True)
+        state=r.set_fact_photo_selection.call_args.args[1];self.assertEqual(state['status'],'insufficient');self.assertEqual(state['reason'],'no_usable_photos');self.assertEqual(state['request_count'],1)
+        f={'article_type':'food_lesson','food_lesson':{'photos':[]}};await r._background_image_task({},'hash',article=f,photos_only=True)
+        state=r.set_fact_photo_selection.call_args.args[1];self.assertEqual(state['status'],'skipped');self.assertEqual(state['reason'],'no_photo_requests')

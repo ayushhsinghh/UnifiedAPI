@@ -39,8 +39,8 @@ from .india import INDIA_RESPONSE_SCHEMA, INDIA_IMAGE_INSTRUCTIONS, build_india_
 from .food import FOOD_RESPONSE_SCHEMA, FOOD_IMAGE_INSTRUCTIONS, build_food_prompt, validate_food_content, prepare_food_media
 from .fashion import FASHION_RESPONSE_SCHEMA, FASHION_IMAGE_INSTRUCTIONS, build_fashion_prompt, validate_fashion_content, prepare_fashion_media
 from .geography import GEOGRAPHY_RESPONSE_SCHEMA, GEOGRAPHY_IMAGE_INSTRUCTIONS, build_geography_prompt, validate_geography_content, prepare_geography_media
-from .nature import NATURE_RESPONSE_SCHEMA, NATURE_IMAGE_INSTRUCTIONS, build_nature_prompt, validate_nature_content, prepare_nature_media
-from .agriculture import AGRICULTURE_RESPONSE_SCHEMA, AGRICULTURE_IMAGE_INSTRUCTIONS, build_agriculture_prompt, validate_agriculture_content, prepare_agriculture_media
+from .nature import NATURE_RESPONSE_SCHEMA, NATURE_IMAGE_INSTRUCTIONS, build_nature_prompt, validate_nature_content, prepare_nature_media, ensure_nature_photo_plan
+from .agriculture import AGRICULTURE_RESPONSE_SCHEMA, AGRICULTURE_IMAGE_INSTRUCTIONS, build_agriculture_prompt, validate_agriculture_content, prepare_agriculture_media, ensure_agriculture_photo_plan
 from .economics import ECONOMICS_RESPONSE_SCHEMA, ECONOMICS_IMAGE_INSTRUCTIONS, build_economics_prompt, validate_economics_content, prepare_economics_media
 from .technology import TECHNOLOGY_RESPONSE_SCHEMA, TECHNOLOGY_IMAGE_INSTRUCTIONS, build_technology_prompt, validate_technology_content, prepare_technology_media
 from .image_policy import IMAGE_INSTRUCTIONS, IMAGE_KEYS, validate_image_plan
@@ -182,6 +182,10 @@ async def generate_daily_fact(
                 ), timeout=_REQUEST_TIMEOUT_SECONDS)
                 fact_str = response.choices[0].message.content
                 fact = json.loads(fact_str) if fact_str else None
+
+            if isinstance(fact,dict):
+                if category == 'agriculture':ensure_agriculture_photo_plan(fact)
+                elif category == 'nature':ensure_nature_photo_plan(fact)
 
             if (isinstance(fact, dict) and fact.get("headline_fact") and normalize_learning_level(fact)
                     and validate_image_plan(fact, myth=category in {'mythbusters', 'digital_myths', 'money_myths', 'environment_myths', 'science_myths', 'nutrition_myths'}) and validate_wellness_content(fact, category)

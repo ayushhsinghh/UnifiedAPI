@@ -48,6 +48,7 @@ AGRICULTURE_LESSON_SCHEMA = _object({
     'photos':_items(_object({'id':_TEXT,'section_id':{'type':'STRING','enum':['overview','context','process','case','tradeoffs','limits']},
         'kind':{'type':'STRING','enum':['crop','tool','material','process','named_place','person','historical_object']},
         'step_id':{**_TEXT,'nullable':True},'subject':_TEXT,'queries':_strings()}))})
+AGRICULTURE_LESSON_SCHEMA['properties']['photos'].update(minItems=1,maxItems=6)
 AGRICULTURE_RESPONSE_SCHEMA = deepcopy(PHYSICS_RESPONSE_SCHEMA)
 del AGRICULTURE_RESPONSE_SCHEMA['properties']['physics_lesson']
 AGRICULTURE_RESPONSE_SCHEMA['required'].remove('physics_lesson')
@@ -87,6 +88,49 @@ def valid_agriculture_diagram(d,steps):
     return (not(d['process_step_ids'] or d['season_stages'] or d['layers'] or d['connections'])
             and bool(d['comparison_basis']) and 2<=len(d['comparisons'])<=3)
 
+def ensure_agriculture_photo_plan(fact):
+    """Fill an omitted search plan from article fields, without inventing subjects.
+
+    Keep nonempty model plans intact. These are search requests, not assertions that
+    a provider has an exact photograph of this practice or place.
+    """
+    if fact.get('article_type') != 'agriculture_lesson':return False
+    lesson=fact.get('agriculture_lesson')
+    if not isinstance(lesson,dict) or lesson.get('photos'):return False
+    if lesson.get('photos') not in (None,[]):return False
+    def phrase(value):
+        return ' '.join(value.split())[:160].strip() if isinstance(value,str) else ''
+    identity=lesson.get('identity') if isinstance(lesson.get('identity'),dict) else {}
+    subject=phrase(identity.get('name')) or phrase(fact.get('topic'))
+    if not subject:return False
+    def queries(*values):
+        result=[]
+        for value in values:
+            value=phrase(value)
+            if value and value.casefold() not in {q.casefold() for q in result}:result.append(value)
+        return result[:2]
+    plain=phrase(re.sub(r'[^\w\s]',' ',subject).replace('_',' '))
+    plan=[dict(id='fallback_overview',section_id='overview',kind='process',step_id=None,
+        subject=subject,queries=queries(subject,plain))]
+    context=lesson.get('field_context') if isinstance(lesson.get('field_context'),dict) else {}
+    crops=context.get('crops') if isinstance(context.get('crops'),list) else []
+    crops=[phrase(c) for c in crops if phrase(c)]
+    if crops:
+        # Crop images illustrate the context, never impersonate the named practice.
+        crop=crops[0]
+        plan.append(dict(id='fallback_crop',section_id='context',kind='crop',step_id=None,
+            subject=crop,queries=queries(crop+' farming',crop+' crop')))
+    case=lesson.get('indian_case_study') if isinstance(lesson.get('indian_case_study'),dict) else {}
+    place=phrase(case.get('place'))
+    if place:
+        plan.append(dict(id='fallback_place',section_id='case',kind='named_place',step_id=None,
+            subject=place,queries=queries(place,phrase(re.sub(r'[^\w\s]',' ',place)))))
+    lesson['photos']=plan
+    media=fact.get('agriculture_media')
+    if not isinstance(media,dict):media={};fact['agriculture_media']=media
+    media.update(photo_plan_version=1,photo_plan_source='fallback')
+    return True
+
 def agriculture_photo_entries(fact):
     return [dict(p,key=f'agriculture_photo_{i}') for i,p in enumerate(fact.get('agriculture_lesson',{}).get('photos',[])[:6])]
 
@@ -117,7 +161,7 @@ def validate_agriculture_content(fact):
             if m['kind']=='reported' and any(m[k] is None for k in ('place','period','as_of')):return False
             if m['as_of'] is not None and (not re.fullmatch(r'\d{4}-\d{2}-\d{2}',m['as_of']) or date.fromisoformat(m['as_of'])>date.today()):return False
         photos=l['photos'];step_ids={s['id'] for s in steps}
-        if len(photos)>6 or not _unique_ids(photos) or len({p['section_id'] for p in photos})!=len(photos):return False
+        if not 1<=len(photos)<=6 or not _unique_ids(photos) or len({p['section_id'] for p in photos})!=len(photos):return False
         return all(simple_id(p['id']) and 1<=len(p['queries'])<=2 and all(len(q)<=160 for q in p['queries'])
             and (p['step_id'] is None or (p['section_id']=='process' and p['step_id'] in step_ids)) for p in photos)
     except (KeyError,TypeError,ValueError,OverflowError):return False
@@ -125,7 +169,8 @@ def validate_agriculture_content(fact):
 def prepare_agriculture_media(fact):
     fact['visual_suggestions']={k:v for k,v in fact['visual_suggestions'].items() if k in ('cover','overview')}
     fact['images']={};fact['image_credits']={}
-    fact['agriculture_media']={'version':1,'generated_limit':2,'generated_slots':['cover','overview'],'photo_timeout_seconds':720}
+    fact['agriculture_media']={'version':1,'generated_limit':2,'generated_slots':['cover','overview'],'photo_timeout_seconds':720,
+        'photo_plan_version':1,'photo_plan_source':fact.get('agriculture_media',{}).get('photo_plan_source','model')}
     fact['agriculture_validation']={'structure_checked':True,'diagram_references_checked':True,
         'source_verification':'not_performed','agronomic_verification':'not_performed','measurement_verification':'not_performed'}
 
@@ -135,7 +180,9 @@ for overview with placement overview, caption, alt and learning_purpose. Cover: 
 subject center-right, quiet left for title, mobile-safe crop, no lettering or fabricated documentary claims.
 Overview gives a different conceptual summary. Do not generate fake field trials, numerical charts,
 diagnostic disease photographs or precise agronomic diagrams; the UI renders structured diagrams.
-Request zero to six useful documentary photos, each bound to one section. Provide kind, subject,
+Require one to six useful documentary photo-search requests, each bound to one section. Never return
+an empty photos list. Include the main practice, relevant crop/material/tool and a named case location
+when useful; each request must teach a distinct part of the lesson. Provide kind, subject,
 nullable step_id and 1-2 exact concise queries. Only process photos may reference a process step.
 Named people, named places and historical objects use Commons only. Do not use stock portraits for named
 farmers or researchers. Popular Unsplash picks remain at the END of the existing carousel, never inline.

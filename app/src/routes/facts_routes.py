@@ -39,6 +39,8 @@ from src.database.facts_repository import (
     claim_country_photo_enrichment,
     finish_country_photo_enrichment,
     set_fact_photo_selection,
+    save_agriculture_photo_plan,
+    save_nature_photo_plan,
 )
 from src.facts.fact_generator import (
     SUPPORTED_CATEGORIES,
@@ -174,9 +176,30 @@ async def process_fact_generation_task(
         asyncio.create_task(_background_image_task(visuals,stored_hash,article=article))
 
 
+def _with_article_photo_plan(article, content_hash):
+    """Repair legacy plans before scheduling so history and job polling can bind photos."""
+    category={'agriculture_lesson':'agriculture','nature_lesson':'nature'}.get(article.get('article_type'))
+    if not category:return article
+    from copy import deepcopy
+    from src.facts.agriculture import ensure_agriculture_photo_plan
+    from src.facts.nature import ensure_nature_photo_plan
+    ensure={'agriculture':ensure_agriculture_photo_plan,'nature':ensure_nature_photo_plan}[category]
+    save={'agriculture':save_agriculture_photo_plan,'nature':save_nature_photo_plan}[category]
+    prepared=deepcopy(article)
+    if not ensure(prepared):return article
+    if save(content_hash,prepared):return prepared
+    # Another retry may have installed its plan first. Use that exact persisted plan.
+    stored=get_fact_by_hash(content_hash) or {}
+    current=stored.get('full_response',{})
+    if current.get('article_type')==category+'_lesson' and current.get(category+'_lesson',{}).get('photos'):return current
+    raise HTTPException(status_code=503,detail='Could not save the photo-search plan. Please retry.')
+
+
 async def _background_image_task(visual_suggestions: dict, content_hash: str, existing_images: dict = None, article: dict = None, photos_only: bool = False):
     if existing_images is None:
         existing_images = {}
+    if article is not None:
+        article=_with_article_photo_plan(article,content_hash)
     images = existing_images.copy()
     is_india = (article or {}).get('article_type') == 'india_lesson'
     is_food = (article or {}).get('article_type') == 'food_lesson'
@@ -197,7 +220,7 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
     previous_photos=[photo for group in (article or {}).get('country_photo_galleries',{}).values() if isinstance(group,list) for photo in group if isinstance(photo,dict)]
     claimed_sources = {p.get('source_url') for p in previous_photos if p.get('source_url')}
     if ranked_country:claimed_sources={p.get('source_url') for p in previous_photos if p.get('subject_kind') and p.get('source_url')}
-    if is_india:
+    if is_india or is_agriculture or is_nature:
         claimed_sources.update(p.get('source_url') for p in (article or {}).get('image_credits',{}).values() if isinstance(p,dict) and p.get('source_url'))
     claimed_photographers = {p.get('author') for p in previous_photos if p.get('provider')=='unsplash'}
     claimed_descriptions = [set(p.get('description','').casefold().split()) for p in previous_photos if p.get('provider')=='unsplash']
@@ -328,14 +351,21 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
         async def process_editorial_photos():
             entries={'food':food_photo_entries,'fashion':fashion_photo_entries,'geography':geography_photo_entries,'technology':technology_photo_entries,'economics':economics_photo_entries,'agriculture':agriculture_photo_entries,'nature':nature_photo_entries}[prefix](article)
             keys=[p['key'] for p in entries]+[f'{prefix}_scene_{n}' for n in range(6)]
-            state={}
+            state={'plan_source':article.get(prefix+'_media',{}).get('photo_plan_source','model')} if is_agriculture or is_nature else {}
             def report(value):
                 state.update(value);set_fact_photo_selection(content_hash,dict(state))
             async def finalize():
+                if not entries:
+                    for key in keys:
+                        if not existing_images.get(key):set_fact_image_state(content_hash,key,'not_requested',clear=True)
+                    report({'status':'skipped','reason':'no_photo_requests','request_count':0,'selected_count':0})
+                    return
+                report({'status':'collecting','request_count':len(entries)})
                 selected=await select_photos(article,report=report,excluded=claimed_sources)
                 selected=sorted(selected,key=lambda p:bool(p.get('popular_pick')))
                 popular_slots=min(3,sum(bool(p.get('popular_pick')) for p in selected))
-                used=set();ready=set();extras=[]
+                used=set();ready={key for key in keys if existing_images.get(key)} if is_agriculture or is_nature else set()
+                extras=[key for key in ready if key.startswith(prefix+'_scene_')]
                 for p in selected:
                     if p['source_url'] in used:continue
                     item=None if p.get('popular_pick') else next((entry for entry in entries if entry['id'] in p.get(prefix+'_request_ids',[]) and entry['key'] not in ready),None)
@@ -355,13 +385,13 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
                         if is_agriculture:photo['step_id']=item.get('step_id')
                         if is_nature:photo['feature_id']=item.get('feature_id')
                     elif len(extras)<6:
-                        key=f'{prefix}_scene_{len(extras)}';photo[prefix+'_carousel']=True;extras.append(photo)
+                        key=next(f'{prefix}_scene_{n}' for n in range(6) if f'{prefix}_scene_{n}' not in ready);photo[prefix+'_carousel']=True;extras.append(photo)
                     else:continue
                     ready.add(key);images[key]=photo['url']
                     set_fact_image_state(content_hash,key,'ready',photo['url'],credit=photo)
                 for key in keys:
                     if key not in ready:set_fact_image_state(content_hash,key,'not_requested',clear=True)
-                report({'status':'completed' if ready else 'insufficient','selected_count':len(ready)})
+                report({'status':'completed' if ready else 'insufficient','reason':None if ready else 'no_usable_photos','selected_count':len(ready)})
             try:await asyncio.wait_for(finalize(),timeout=720)
             except Exception as error:
                 logger.warning('%s photo selection failed (%s)',prefix,type(error).__name__)
@@ -684,6 +714,10 @@ async def get_fact_job_status(job_id: str) -> dict:
                 fact_data['fact']['image_credits'] = stored.get('image_credits') or {}
                 fact_data['fact']['country_photo_galleries'] = stored.get('country_photo_galleries') or {}
                 fact_data['fact']['photo_selection']=stored.get('photo_selection') or {}
+                kind={'agriculture_lesson':'agriculture','nature_lesson':'nature'}.get(stored.get('full_response',{}).get('article_type'))
+                if kind:
+                    fact_data['fact'][kind+'_lesson']=stored['full_response'][kind+'_lesson']
+                    fact_data['fact'][kind+'_media']=stored['full_response'].get(kind+'_media',{})
                 fact_data["image_generation"] = image_generation_state(stored, cfg.FACT_IMAGE_TIMEOUT_SECONDS)
         response["data"] = fact_data
     elif job["status"] == "failed":
@@ -737,7 +771,8 @@ async def delete_fact_endpoint(content_hash: str, x_admin_key: str = Header(None
 async def retry_image_generation(
     request: Request,
     background_tasks: BackgroundTasks,
-    content_hash: str
+    content_hash: str,
+    photos_only: bool = False
 ) -> dict:
     """
     Retry image generation for a fact, but only if the previous default run failed
@@ -747,14 +782,19 @@ async def retry_image_generation(
     if not fact_doc:
         raise HTTPException(status_code=404, detail="Fact not found")
         
-    full_response = fact_doc.get("full_response", {})
+    full_response = _with_article_photo_plan(fact_doc.get("full_response", {}),content_hash)
     visual_suggestions = full_response.get("visual_suggestions", {})
-    if not visual_suggestions:
+    if not visual_suggestions and not photos_only:
         raise HTTPException(status_code=400, detail="No visual suggestions available for this fact")
         
     existing_images = fact_doc.get("images", {})
     
     expected_keys = fact_image_keys(full_response)
+    if photos_only:
+        kind={'agriculture_lesson':'agriculture','nature_lesson':'nature'}.get(full_response.get('article_type'))
+        if not kind:
+            raise HTTPException(status_code=400,detail='Photo-only retry is supported for Agriculture and Nature lessons.')
+        expected_keys=[key for key in expected_keys if key.startswith((kind+'_photo_',kind+'_scene_'))]
         
     # Check if we have all expected keys
     missing_keys = [k for k in expected_keys if k not in existing_images]
@@ -773,11 +813,15 @@ async def retry_image_generation(
     logger.info("Retrying image generation for %s. Missing keys: %s", content_hash, missing_keys)
     start_fact_images(content_hash, missing_keys)
     retry_article=full_response
+    if full_response.get('article_type') in ('agriculture_lesson','nature_lesson'):
+        retry_article={**full_response,'image_credits':fact_doc.get('image_credits') or full_response.get('image_credits',{})}
     if full_response.get('article_type')=='india_lesson':
         retry_article={**full_response,'image_credits':fact_doc.get('image_credits') or full_response.get('image_credits',{})}
     if full_response.get('country_media',{}).get('photo_layout') in ('contextual_v1','contextual_v2'):
         retry_article={**retry_article,'country_photo_galleries':fact_doc.get('country_photo_galleries') or full_response.get('country_photo_galleries',{})}
-    background_tasks.add_task(_background_image_task, visual_suggestions, content_hash, existing_images,article=retry_article)
+    options={'article':retry_article}
+    if photos_only:options['photos_only']=True
+    background_tasks.add_task(_background_image_task, visual_suggestions, content_hash, existing_images,**options)
     
     return {
         "success": True,

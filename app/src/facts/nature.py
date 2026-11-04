@@ -44,6 +44,7 @@ NATURE_LESSON_SCHEMA=_object({
     'photos':_items(_object({'id':_TEXT,'section_id':{'type':'STRING','enum':['overview','recognition','explanation','connections','example','observation']},
         'kind':{'type':'STRING','enum':['organism','named_species','feature','material','process','named_place','person','microscopy']},
         'feature_id':NULL_TEXT,'subject':_TEXT,'queries':_strings()}))})
+NATURE_LESSON_SCHEMA['properties']['photos'].update(minItems=1,maxItems=6)
 NATURE_RESPONSE_SCHEMA=deepcopy(PHYSICS_RESPONSE_SCHEMA)
 del NATURE_RESPONSE_SCHEMA['properties']['physics_lesson']
 NATURE_RESPONSE_SCHEMA['required'].remove('physics_lesson')
@@ -80,6 +81,54 @@ def valid_nature_diagram(d,l):
     for _ in nodes:
         reached|={b for a,b in pairs if a in reached}|{a for a,b in pairs if b in reached}
     return reached==set(ids)
+
+def ensure_nature_photo_plan(fact):
+    """Build a missing search plan from named subjects and explicit viewing scales."""
+    if fact.get('article_type')!='nature_lesson':return False
+    lesson=fact.get('nature_lesson')
+    if not isinstance(lesson,dict) or lesson.get('photos'):return False
+    if lesson.get('photos') not in (None,[]):return False
+    def record(value):return value if isinstance(value,dict) else {}
+    def phrase(value):return ' '.join(value.split())[:160].strip() if isinstance(value,str) else ''
+    def queries(*values):
+        result=[]
+        for value in values:
+            value=phrase(value)
+            if value and value.casefold() not in {q.casefold() for q in result}:result.append(value)
+        return result[:2]
+    identity=record(lesson.get('identity'))
+    name=phrase(identity.get('name')) or phrase(fact.get('topic'))
+    scientific=phrase(identity.get('scientific_name'))
+    subject=scientific or name
+    if not subject:return False
+    kind='named_species' if scientific else {'organism':'organism','natural_material':'material'}.get(identity.get('topic_type'),'process')
+    normalized=phrase(re.sub(r'[^\w\s]',' ',subject).replace('_',' '))
+    plan=[dict(id='fallback_overview',section_id='overview',kind=kind,feature_id=None,
+        subject=subject,queries=queries(subject,subject+' '+name if scientific else normalized))]
+    features=lesson.get('recognition_features')
+    features=[f for f in features if isinstance(f,dict) and simple_id(f.get('id'))
+        and phrase(f.get('name')) and f.get('viewing_scale') in ('unaided','close_up','microscopic')] if isinstance(features,list) else []
+    # Prefer an accessible view. Never substitute a macro photo for microscopy.
+    feature=next((f for f in features if f['viewing_scale']!='microscopic'),features[0] if features else None)
+    if feature:
+        microscopic=feature['viewing_scale']=='microscopic'
+        plan.append(dict(id='fallback_feature',section_id='recognition',kind='microscopy' if microscopic else kind,
+            feature_id=feature['id'],subject=subject,queries=queries(
+                subject+' microscopy' if microscopic else subject+' '+feature['name'],
+                subject+' micrograph' if microscopic else subject)))
+    example=record(lesson.get('real_world_example'))
+    place=phrase(example.get('place'));species=phrase(example.get('scientific_name'))
+    if example.get('kind')=='place' and place:
+        plan.append(dict(id='fallback_example',section_id='example',kind='named_place',feature_id=None,
+            subject=place,queries=queries(place+' '+subject,place)))
+    elif example.get('kind')=='organism' and species:
+        plan.append(dict(id='fallback_example',section_id='example',kind='named_species',feature_id=None,
+            subject=species,queries=queries(species,species+' '+phrase(example.get('subject')))))
+    lesson['photos']=plan
+    media=fact.get('nature_media')
+    if not isinstance(media,dict):media={};fact['nature_media']=media
+    media.update(photo_plan_version=1,photo_plan_source='fallback')
+    return True
 
 def nature_photo_entries(fact):
     return [dict(p,key=f'nature_photo_{i}') for i,p in enumerate(fact.get('nature_lesson',{}).get('photos',[])[:6])]
@@ -118,7 +167,7 @@ def validate_nature_content(fact):
         if not 1<=len(l['variation_and_limits'])<=4 or not 1<=len(l['misconceptions'])<=4 or len(l['optional_depth'])>3:return False
         if not 1<=len(l['knowledge_checks'])<=3 or not 2<=len(l['takeaways'])<=5 or not 1<=len(l['related_topics'])<=6:return False
         photos=l['photos'];feature_ids={p['id'] for p in features}
-        if len(photos)>6 or not _unique_ids(photos) or len({p['section_id'] for p in photos})!=len(photos):return False
+        if not 1<=len(photos)<=6 or not _unique_ids(photos) or len({p['section_id'] for p in photos})!=len(photos):return False
         return all(simple_id(p['id']) and 1<=len(p['queries'])<=2 and all(len(q)<=160 for q in p['queries'])
             and (p['feature_id'] is None or (p['section_id']=='recognition' and p['feature_id'] in feature_ids))
             and (p['section_id']!='recognition' or bool(features))
@@ -129,7 +178,8 @@ def validate_nature_content(fact):
 def prepare_nature_media(fact):
     fact['visual_suggestions']={k:v for k,v in fact['visual_suggestions'].items() if k in ('cover','overview')}
     fact['images']={};fact['image_credits']={}
-    fact['nature_media']={'version':1,'generated_limit':2,'generated_slots':['cover','overview'],'photo_timeout_seconds':720}
+    fact['nature_media']={'version':1,'generated_limit':2,'generated_slots':['cover','overview'],'photo_timeout_seconds':720,
+        'photo_plan_version':1,'photo_plan_source':fact.get('nature_media',{}).get('photo_plan_source','model')}
     fact['nature_validation']={'structure_checked':True,'diagram_references_checked':True,'source_verification':'not_performed',
         'species_verification':'not_performed','conservation_verification':'not_performed','measurement_verification':'not_performed'}
 
@@ -138,8 +188,9 @@ Generate exactly TWO conceptual illustrations: cover and overview/card, with one
 record containing placement overview, alt/caption/learning_purpose. Cover has one coherent subject,
 center-right with quiet left for title and mobile-safe crop. No lettering, fake microscopy, fabricated
 field evidence or precise anatomical claims. The overview is a different conceptual summary. Scientific
-diagrams render from structured data, not generated images. Request zero to six relevant documentary
-photos bound to distinct active sections, nullable feature_id and 1-2 concise subject queries.
+diagrams render from structured data, not generated images. Require one to six relevant documentary
+photo-search requests bound to distinct active sections. Never return an empty photos list.
+Use nullable feature_id and 1-2 concise subject queries. Preserve scientific names and viewing scale.
 Named species, places, people and microscopy use Commons only. Microscopy metadata must explicitly
 identify the view and subject; never replace it with a generic close-up. For named_species, subject is the exact scientific name and at least one query includes it.
 For microscopy, subject names only the exact organism or material, and queries also specify microscopy.

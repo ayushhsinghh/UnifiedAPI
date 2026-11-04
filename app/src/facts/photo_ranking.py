@@ -256,11 +256,13 @@ async def select_economics_photos(fact,*,report=lambda state:None,fetch=None,com
     return await _select_editorial_photos(fact,economics_photo_entries(fact),'economics_request_ids',report=report,fetch=fetch,commons=commons,rank=rank,excluded=excluded)
 
 async def select_agriculture_photos(fact,*,report=lambda state:None,fetch=None,commons=None,rank=None,excluded=()):
-    from .agriculture import agriculture_photo_entries
+    from .agriculture import agriculture_photo_entries,ensure_agriculture_photo_plan
+    ensure_agriculture_photo_plan(fact)
     return await _select_editorial_photos(fact,agriculture_photo_entries(fact),'agriculture_request_ids',report=report,fetch=fetch,commons=commons,rank=rank,excluded=excluded)
 
 async def select_nature_photos(fact,*,report=lambda state:None,fetch=None,commons=None,rank=None,excluded=()):
-    from .nature import nature_photo_entries
+    from .nature import nature_photo_entries,ensure_nature_photo_plan
+    ensure_nature_photo_plan(fact)
     return await _select_editorial_photos(fact,nature_photo_entries(fact),'nature_request_ids',report=report,fetch=fetch,commons=commons,rank=rank,excluded=excluded)
 
 async def _select_editorial_photos(fact,entries,request_key,*,report,fetch=None,commons=None,rank=None,excluded=()):

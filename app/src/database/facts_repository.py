@@ -216,6 +216,30 @@ def set_fact_image_state(content_hash: str, key: str, status: str, url=None, cre
         {"content_hash": content_hash}, change)
 
 
+def save_agriculture_photo_plan(content_hash: str, fact: dict) -> bool:
+    """Persist only a missing legacy plan; preserve article text and ready assets."""
+    path='full_response.agriculture_lesson.photos'
+    result=get_db()[cfg.DAILY_FACTS_COLLECTION].update_one({
+        'content_hash':content_hash,'full_response.article_type':'agriculture_lesson',
+        '$or':[{path:[]},{path:None}]}, {'$set':{
+            path:fact['agriculture_lesson']['photos'],
+            'full_response.agriculture_media.photo_plan_version':1,
+            'full_response.agriculture_media.photo_plan_source':'fallback'}})
+    return result.matched_count == 1
+
+
+def save_nature_photo_plan(content_hash: str, fact: dict) -> bool:
+    """Persist only a missing legacy Nature plan; preserve text and ready assets."""
+    path='full_response.nature_lesson.photos'
+    result=get_db()[cfg.DAILY_FACTS_COLLECTION].update_one({
+        'content_hash':content_hash,'full_response.article_type':'nature_lesson',
+        '$or':[{path:[]},{path:None}]}, {'$set':{
+            path:fact['nature_lesson']['photos'],
+            'full_response.nature_media.photo_plan_version':1,
+            'full_response.nature_media.photo_plan_source':'fallback'}})
+    return result.matched_count == 1
+
+
 def set_fact_photo_selection(content_hash: str,state:dict) -> None:
     """Persist progress only, never a cached LLM ranking response."""
     get_db()[cfg.DAILY_FACTS_COLLECTION].update_one({'content_hash':content_hash},{'$set':{'photo_selection':state}})
