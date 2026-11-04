@@ -147,6 +147,14 @@ def build_section_image_context(key, article=None):
             if value:
                 text = value if isinstance(value, str) else json.dumps(value, ensure_ascii=False)
                 excerpt[field] = text[:4000]
+        if article.get('article_type') == 'nature_lesson':
+            lesson=article.get('nature_lesson') or {}
+            excerpt['nature_context']={field:lesson.get(field) for field in ('identity','central_idea','observation_context','recognition_features','explanation_steps')}
+            lines.append('Nature conceptual illustration: preserve the actual phenomenon and setting. No fabricated microscopy, exact anatomy, diagnostic identifiers or documentary evidence.')
+        if article.get('article_type') == 'agriculture_lesson':
+            lesson=article.get('agriculture_lesson') or {}
+            excerpt['agriculture_context']={field:lesson.get(field) for field in ('identity','central_idea','field_context','process_steps')}
+            lines.append('Agriculture conceptual illustration: preserve crop, material and field context. No fabricated trials, numerical charts, disease diagnoses or misleading documentary claims.')
         if article.get('article_type') == 'economics_lesson':
             lesson=article.get('economics_lesson') or {}
             excerpt['economics_context']={field:lesson.get(field) for field in ('identity','central_idea','opening_scenario','mechanism')}

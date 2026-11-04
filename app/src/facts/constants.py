@@ -119,11 +119,10 @@ CATEGORY_HINTS: Dict[str, str] = {
         "Teach ordinary Acts and codes, not constitutional articles; use genuine commentary only for context"
     ),
     "nature": (
-        "Indian tiger conservation (Project Tiger), Western Ghats biodiversity hotspot, "
-        "Sundarbans mangrove ecosystem, Indian national parks (Jim Corbett, Kaziranga), "
-        "Himalayan ecology, Indian monsoon system, Thar Desert ecosystem, "
-        "Andaman & Nicobar marine life, Indian elephants & corridors, "
-        "endemic species of the Eastern Ghats"
+        "Everyday natural observations, organisms, materials, structures and ecological relationships worldwide: "
+        "fallen leaves, seed travel, water on leaves, bird behaviour, tide pools and seasonal changes. "
+        "Teach one clear mechanism with visible features, scale, context and exceptions; "
+        "use Indian examples when useful rather than requiring an India-first wildlife or park roundup"
     ),
     "medicine": (
         "Ayurveda origins & principles, Sushruta (father of surgery), "
@@ -244,12 +243,10 @@ CATEGORY_HINTS: Dict[str, str] = {
         "astronomical references in ancient Indian texts"
     ),
     "agriculture": (
-        "Green Revolution & Norman Borlaug in India, MSP politics & farmer movements, "
-        "Indian spice farming & global trade dominance, organic farming movements, "
-        "traditional irrigation systems (stepwells, tanks, johads), "
-        "India's crop diversity & seed banks, sugarcane & tea plantation history, "
-        "cooperative dairy farming (Amul & Operation Flood), "
-        "millets revival & nutritional security, GM crops debate (Bt cotton)"
+        "One beginner farming concept rooted in India: mulching, crop rotation, intercropping, "
+        "seed selection and storage, water harvesting, farm tools, soil processes or regional farming systems. "
+        "Explain why it works, crop and growing context, one Indian example, tradeoffs and limits; "
+        "avoid broad history/policy roundups or universal yield and input-dose claims"
     ),
     "transport": (
         "Indian Railways engineering marvels & station architecture, "

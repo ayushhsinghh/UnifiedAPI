@@ -1,0 +1,377 @@
+{
+  "category": "nature",
+  "topic": "What happens to fallen leaves?",
+  "schema_version": "2.0",
+  "article_type": "nature_lesson",
+  "headline_fact": "A fallen leaf still takes part in the living world.",
+  "summary": "Decomposing organisms break down dead plant material and help return its nutrients to the surrounding system.",
+  "did_you_know": "Decomposing organisms break down dead plant material and help return its nutrients to the surrounding system.",
+  "core_mechanics": "Decomposing organisms break down dead plant material and help return its nutrients to the surrounding system.",
+  "why_it_matters": "Connect fallen leaves, decomposing organisms and nutrients in the soil.",
+  "in_depth_breakdown": {
+    "detailed_processes": [],
+    "real_world_application": "These fungi are examples of organisms that take part in decomposition.",
+    "fascinating_trivia": []
+  },
+  "common_misconceptions": [],
+  "learning_takeaways": [
+    "Dead leaves remain part of the natural system.",
+    "Decomposition connects dead material with available nutrients.",
+    "Keep observations separate from explanations."
+  ],
+  "emoji_icon": "",
+  "difficulty_level": "beginner",
+  "region": "Global",
+  "fun_rating": 8,
+  "read_time_seconds": 480,
+  "tags": [
+    "nature",
+    "decomposition"
+  ],
+  "related_categories": [
+    "science"
+  ],
+  "visual_suggestions": {
+    "cover": "Conceptual editorial illustration of fallen leaves on a woodland floor, subject center-right, quiet left for title. No text, invented microscopy or scientific evidence.",
+    "overview": "Conceptual illustration of leaf litter and its connection to the soil, no labels, invented measurements or microscopic anatomy."
+  },
+  "share_text": "A fallen leaf still takes part in the living world.",
+  "content_freshness": "evergreen",
+  "sources": [
+    {
+      "id": "s1",
+      "title": "National Park Service \u2014 Biodiversity services",
+      "url": "https://www.nps.gov/subjects/biodiversity/services-provided-by-biodiversity.htm"
+    },
+    {
+      "id": "s2",
+      "title": "USDA NRCS \u2014 Biological underground community",
+      "url": "https://www.nrcs.usda.gov/state-offices/illinois/soil-tech-note-11a-biological-underground-community"
+    },
+    {
+      "id": "s3",
+      "title": "National Park Service \u2014 Decomposing fungi",
+      "url": "https://www.nps.gov/mora/learn/nature/decomposing-fungi.htm"
+    }
+  ],
+  "claim_citations": [],
+  "sources_or_references": [],
+  "generated_at": "2026-11-01T06:00:00Z",
+  "image_details": [
+    {
+      "slot": "overview",
+      "placement": "overview",
+      "alt": "Conceptual illustration of leaf litter above soil",
+      "caption": "Illustration: fallen leaves remain connected to the surrounding system.",
+      "learning_purpose": "Connect dead material with the soil below."
+    }
+  ],
+  "content_hash": "nature-preview",
+  "nature_lesson": {
+    "identity": {
+      "name": "What happens to fallen leaves?",
+      "domain": "Forest-floor ecology",
+      "scope": "A general explanation of leaf-litter decomposition.",
+      "common_names": [
+        "Leaf litter"
+      ],
+      "scientific_name": null,
+      "topic_type": "natural_process",
+      "source_ids": [
+        "s1",
+        "s2",
+        "s3"
+      ]
+    },
+    "conservation_context": null,
+    "hook": "A fallen leaf still takes part in the living world.",
+    "question": "Where do the fallen leaves go?",
+    "learning_goal": "Connect fallen leaves, decomposing organisms and nutrients in the soil.",
+    "opening_observation": {
+      "title": "Look at the ground beneath a tree",
+      "scene": "Fallen leaves collect on the ground. Some remain whole; others appear as fragments.",
+      "question": "What changes this material after it falls?",
+      "source_ids": [
+        "s1",
+        "s2",
+        "s3"
+      ]
+    },
+    "central_idea": "Decomposing organisms break down dead plant material and help return its nutrients to the surrounding system.",
+    "explanation_status": {
+      "level": "well_established",
+      "explanation": "Decomposition is well established. One view of the ground does not reveal its full history.",
+      "source_ids": [
+        "s1",
+        "s2",
+        "s3"
+      ]
+    },
+    "observation_context": {
+      "where": "On ground with fallen leaves, including woodland floors.",
+      "when": null,
+      "conditions": [
+        "Fallen plant material and a soil community are present."
+      ],
+      "size_context": "Whole leaves are visible without tools. Many organisms involved are microscopic.",
+      "time_context": "A single visit cannot establish the rate of decomposition.",
+      "variability": "Different materials and soil communities produce different outcomes.",
+      "source_ids": [
+        "s1",
+        "s2",
+        "s3"
+      ]
+    },
+    "recognition_features": [
+      {
+        "id": "litter",
+        "name": "A layer of fallen leaves",
+        "viewing_scale": "unaided",
+        "what_to_look_for": "Notice the leaves that rest on the ground.",
+        "meaning": "This is leaf litter, a source of dead plant material.",
+        "connection": "It supplies material for decomposing organisms.",
+        "source_ids": [
+          "s1",
+          "s2",
+          "s3"
+        ]
+      },
+      {
+        "id": "fragments",
+        "name": "Leaves in different states",
+        "viewing_scale": "close_up",
+        "what_to_look_for": "Compare whole leaves with smaller fragments in a photograph.",
+        "meaning": "Their condition offers clues, but not a complete explanation.",
+        "connection": "A visible change does not identify its cause by itself.",
+        "source_ids": [
+          "s1",
+          "s2",
+          "s3"
+        ]
+      }
+    ],
+    "key_terms": [
+      {
+        "term": "Decomposition",
+        "meaning": "The breakdown of dead organic material.",
+        "source_ids": [
+          "s1",
+          "s2",
+          "s3"
+        ]
+      }
+    ],
+    "explanation_steps": [
+      {
+        "id": "fallen",
+        "title": "Leaves reach the ground",
+        "explanation": "Dead leaves become part of the leaf litter: plant material on the ground.",
+        "what_changes": "Material moves from the plant to the ground.",
+        "conditions": [
+          "There is fallen plant material."
+        ],
+        "evidence_kind": "established_mechanism",
+        "evidence_note": "This is the starting material, not proof of its decay rate.",
+        "source_ids": [
+          "s1",
+          "s2",
+          "s3"
+        ]
+      },
+      {
+        "id": "breakdown",
+        "title": "Organisms break down the material",
+        "explanation": "Fungi and bacteria digest dead plant material. Other soil organisms also take part in its breakdown.",
+        "what_changes": "The leaf material breaks down into simpler forms.",
+        "conditions": [
+          "Decomposing organisms can reach the material."
+        ],
+        "evidence_kind": "established_mechanism",
+        "evidence_note": "A photograph alone cannot identify all the organisms involved.",
+        "source_ids": [
+          "s1",
+          "s2",
+          "s3"
+        ]
+      },
+      {
+        "id": "nutrients",
+        "title": "Nutrients become available again",
+        "explanation": "Breakdown helps return nutrients to the soil, where plants can use them.",
+        "what_changes": "Nutrients in dead material rejoin the surrounding system.",
+        "conditions": [
+          "Nutrient availability also depends on the local soil community."
+        ],
+        "evidence_kind": "established_mechanism",
+        "evidence_note": "This describes a general process, not a measurement at this site.",
+        "source_ids": [
+          "s1",
+          "s2",
+          "s3"
+        ]
+      }
+    ],
+    "diagram": {
+      "type": "process",
+      "title": "From fallen leaf to available nutrients",
+      "caption": "Follow the material through the process.",
+      "description": "The links describe changes in material. They do not measure a rate.",
+      "assumptions": [
+        "This summary leaves out many organisms and intermediate changes."
+      ],
+      "nodes": [
+        {
+          "id": "n0",
+          "ref_type": "step",
+          "ref_id": "fallen",
+          "explanation": "Material moves from the plant to the ground."
+        },
+        {
+          "id": "n1",
+          "ref_type": "step",
+          "ref_id": "breakdown",
+          "explanation": "The leaf material breaks down into simpler forms."
+        },
+        {
+          "id": "n2",
+          "ref_type": "step",
+          "ref_id": "nutrients",
+          "explanation": "Nutrients in dead material rejoin the surrounding system."
+        }
+      ],
+      "edges": [
+        {
+          "from_id": "n0",
+          "to_id": "n1",
+          "label": "Supplies material",
+          "explanation": "Dead leaves provide material for breakdown."
+        },
+        {
+          "from_id": "n1",
+          "to_id": "n2",
+          "label": "Returns nutrients",
+          "explanation": "Breakdown helps make nutrients available again."
+        }
+      ],
+      "comparison_basis": null,
+      "comparisons": [],
+      "source_ids": [
+        "s1",
+        "s2",
+        "s3"
+      ]
+    },
+    "natural_connections": [
+      {
+        "id": "plants",
+        "title": "The connection to growing plants",
+        "relationship": "Dead material links to new growth.",
+        "explanation": "Plants use nutrients from their surroundings. Decomposition helps replenish that supply.",
+        "scale_or_conditions": "This is a general connection, not a claim about one particular leaf.",
+        "source_ids": [
+          "s1",
+          "s2",
+          "s3"
+        ]
+      }
+    ],
+    "real_world_example": {
+      "title": "Decomposing fungi at Mount Rainier",
+      "kind": "place",
+      "subject": "Fungi that digest dead organic matter",
+      "scientific_name": null,
+      "place": "Mount Rainier National Park, United States",
+      "time_context": null,
+      "observation": "The park describes fungi that obtain nutrients from dead leaves, needles and wood.",
+      "explanation": "These fungi are examples of organisms that take part in decomposition.",
+      "connection": "Their activity connects dead plant material to nutrient cycling.",
+      "limits": "This account does not identify a fungus in your own photograph.",
+      "source_ids": [
+        "s1",
+        "s2",
+        "s3"
+      ]
+    },
+    "notice_it_yourself": {
+      "mode": "photo_comparison",
+      "title": "Compare without disturbing",
+      "setting": "Use a photograph of leaf litter.",
+      "steps": [
+        "Find a whole leaf in the image.",
+        "Compare it with smaller fragments nearby."
+      ],
+      "what_to_notice": "Separate what you can see from what you infer.",
+      "can_conclude": "The photograph contains material in different visible states.",
+      "cannot_conclude": "You cannot infer its age, decay rate or exact decomposing organisms.",
+      "care_note": "Leave living organisms and the leaf layer undisturbed.",
+      "source_ids": [
+        "s1",
+        "s2",
+        "s3"
+      ]
+    },
+    "measurements": [],
+    "variation_and_limits": [
+      {
+        "title": "One photograph has limits",
+        "explanation": "A still image records appearance. It does not establish how fast the material changes.",
+        "source_ids": [
+          "s1",
+          "s2",
+          "s3"
+        ]
+      }
+    ],
+    "misconceptions": [
+      {
+        "belief": "The leaves simply disappear",
+        "correction": "Their material changes and moves through the surrounding system.",
+        "explanation": "Breakdown returns nutrients rather than making matter vanish.",
+        "source_ids": [
+          "s1",
+          "s2",
+          "s3"
+        ]
+      }
+    ],
+    "optional_depth": [
+      {
+        "title": "Why the whole soil community matters",
+        "explanation": "Different soil organisms use different food sources. Their interactions affect nutrient availability.",
+        "source_ids": [
+          "s1",
+          "s2",
+          "s3"
+        ]
+      }
+    ],
+    "knowledge_checks": [
+      {
+        "question": "Does a broken leaf identify the organism that broke it down?",
+        "answer": "No.",
+        "explanation": "The visible fragment is an observation. Its cause needs more evidence."
+      }
+    ],
+    "takeaways": [
+      "Dead leaves remain part of the natural system.",
+      "Decomposition connects dead material with available nutrients.",
+      "Keep observations separate from explanations."
+    ],
+    "related_topics": [
+      "Fungi and dead wood",
+      "The soil food web"
+    ],
+    "photos": [
+      {
+        "id": "leaflitter",
+        "section_id": "recognition",
+        "kind": "material",
+        "feature_id": "litter",
+        "subject": "Leaf litter",
+        "queries": [
+          "leaf litter forest floor"
+        ]
+      }
+    ]
+  }
+}

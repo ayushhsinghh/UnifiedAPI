@@ -79,6 +79,13 @@ and version context in metadata; do not substitute a similar product or generate
 For economics, choose the actual setting or process requested, such as a market, workshop or port.
 Generic money, stock charts and staged business portraits do not explain every economic concept.
 A photograph illustrates a setting; it does not prove a price trend, causal claim or economic outcome.
+For agriculture, require the crop, tool, material or farming process requested. A green field does not
+identify a crop, prove a technique, document a trial or diagnose disease. Keep the Indian and regional
+context where specified. Do not substitute generic farmers for named people or similar crops/processes.
+For nature, require the actual subject and stated viewing scale. Similar-looking species do not identify
+a named species. Microscopy must be explicitly described as microscopy/micrograph/SEM/TEM in metadata;
+a macro photograph is not microscopic evidence. Do not infer invisible features or annotate unsupported
+details. Documentary views illustrate a subject; they do not independently establish a scientific mechanism.
 Return JSON only: {"selected":[{"photo_id":"supplied ID","score":0,"scene":"short scene label",
 "reason":"short metadata-grounded reason"}],"retry_queries":[]}. Scores are integers from 0 to 100.
 Return at most 18 unique photos, most relevant first, with score >=70. Aim for at least 10 when
@@ -119,6 +126,12 @@ def ranking_input(fact,photos):
     if fact.get('article_type')=='technology_lesson':
         technology=fact.get('technology_lesson',{})
         brief={k:technology.get(k) for k in ('subject_type','identity','version_context','central_idea','system_model','walkthrough','photos')}
+    if fact.get('article_type')=='nature_lesson':
+        lesson=fact.get('nature_lesson',{})
+        brief={k:lesson.get(k) for k in ('identity','central_idea','observation_context','recognition_features','explanation_steps','real_world_example','photos')}
+    if fact.get('article_type')=='agriculture_lesson':
+        lesson=fact.get('agriculture_lesson',{})
+        brief={k:lesson.get(k) for k in ('identity','central_idea','field_context','process_steps','indian_case_study','photos')}
     if fact.get('article_type')=='economics_lesson':
         lesson=fact.get('economics_lesson',{})
         brief={k:lesson.get(k) for k in ('identity','central_idea','opening_scenario','mechanism','real_world_case','photos')}
@@ -171,7 +184,7 @@ def validate_ranking(payload,photos,request_ids=None,request_key='food_request_i
 
 async def rank_photos(fact,photos,*,client=None,report=lambda state:None):
     owned=client is None
-    editorial=next((kind for kind in ('food','fashion','geography','technology','economics') if fact.get('article_type')==kind+'_lesson'),None)
+    editorial=next((kind for kind in ('food','fashion','geography','technology','economics','agriculture','nature') if fact.get('article_type')==kind+'_lesson'),None)
     requests={p['id'] for p in fact.get(editorial+'_lesson',{}).get('photos',[])} if editorial else None
     prompt=SYSTEM_PROMPT
     if requests is not None:
@@ -242,6 +255,14 @@ async def select_economics_photos(fact,*,report=lambda state:None,fetch=None,com
     from .economics import economics_photo_entries
     return await _select_editorial_photos(fact,economics_photo_entries(fact),'economics_request_ids',report=report,fetch=fetch,commons=commons,rank=rank,excluded=excluded)
 
+async def select_agriculture_photos(fact,*,report=lambda state:None,fetch=None,commons=None,rank=None,excluded=()):
+    from .agriculture import agriculture_photo_entries
+    return await _select_editorial_photos(fact,agriculture_photo_entries(fact),'agriculture_request_ids',report=report,fetch=fetch,commons=commons,rank=rank,excluded=excluded)
+
+async def select_nature_photos(fact,*,report=lambda state:None,fetch=None,commons=None,rank=None,excluded=()):
+    from .nature import nature_photo_entries
+    return await _select_editorial_photos(fact,nature_photo_entries(fact),'nature_request_ids',report=report,fetch=fetch,commons=commons,rank=rank,excluded=excluded)
+
 async def _select_editorial_photos(fact,entries,request_key,*,report,fetch=None,commons=None,rank=None,excluded=()):
     """Small, scene-bound pool; only Commons may identify historical objects or people."""
     if fetch is None:
@@ -265,7 +286,7 @@ async def _select_editorial_photos(fact,entries,request_key,*,report,fetch=None,
             token=(item['id'],query.casefold())
             if token in searched:continue
             searched.add(token)
-            providers=(commons,) if item.get('kind') in ('historical_object','person','named_place','satellite','named_model','screenshot') else (commons,fetch)
+            providers=(commons,) if item.get('kind') in ('historical_object','person','named_place','satellite','named_model','screenshot','named_species','microscopy') else (commons,fetch)
             searches.extend(collect(item,query,source) for source in providers)
         incoming={};old_sources={p['source_url'] for p in pool.values()}
         for item,photos in await asyncio.gather(*searches):
@@ -286,13 +307,14 @@ async def _select_editorial_photos(fact,entries,request_key,*,report,fetch=None,
     report({'status':'ranking','candidate_count':len(pool),'search_round':1,'popular_count':len(popular.photos)})
     def permitted(photo,request_id):
         item=next((e for e in entries if e['id']==request_id),None)
-        if item is None or (item.get('kind') in ('historical_object','person','named_place','satellite','named_model','screenshot') and photo.get('provider')!='wikimedia'):return False
-        if item.get('kind') in ('named_model','screenshot'):
+        if item is None or (item.get('kind') in ('historical_object','person','named_place','satellite','named_model','screenshot','named_species','microscopy') and photo.get('provider')!='wikimedia'):return False
+        if item.get('kind') in ('named_model','screenshot','named_species','microscopy'):
             import re
             evidence=' '.join(str(photo.get(k) or '') for k in ('title','description','description_text','alt_description')).casefold()
-            if item['kind']=='named_model':
+            if item['kind'] in ('named_model','named_species','microscopy'):
                 wanted=set(re.findall(r'\w+',item['subject'].casefold()))-{'the','a','an','of','and','photo','image','photograph'}
                 if not wanted or not wanted<=set(re.findall(r'\w+',evidence)):return False
+                if item['kind']=='microscopy' and not re.search(r'microscop|micrograph|\bsem\b|\btem\b',evidence):return False
             else:
                 context=fact.get('technology_lesson',{}).get('version_context') or {}
                 if any(not context.get(k) or not re.search(r'(?<![\w.])'+re.escape(context[k].casefold())+r'(?![\w.])',evidence) for k in ('system','version')):return False

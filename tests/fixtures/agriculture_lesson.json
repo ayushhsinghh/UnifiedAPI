@@ -1,0 +1,313 @@
+{
+  "category": "agriculture",
+  "topic": "Mulching: a cover above the soil",
+  "schema_version": "2.0",
+  "article_type": "agriculture_lesson",
+  "headline_fact": "A soil cover can reduce evaporation, helping water remain in the soil.",
+  "summary": "Mulching connects a visible surface cover with water loss from the soil. Its effect depends on the material and growing conditions.",
+  "did_you_know": "A farming method needs to be understood within its crop and field context.",
+  "core_mechanics": "A cover changes the exposure of the soil surface and can reduce evaporation.",
+  "why_it_matters": "The same material or method can behave differently under different growing conditions.",
+  "in_depth_breakdown": {
+    "detailed_processes": [],
+    "real_world_application": "Understand a surface cover through the context of an illustrative Indian vegetable plot.",
+    "fascinating_trivia": []
+  },
+  "common_misconceptions": [],
+  "learning_takeaways": [
+    "Explain what changes, not only the name of a method.",
+    "Keep the material, crop and growing conditions visible.",
+    "Read field results together with their evidence and limits."
+  ],
+  "emoji_icon": "",
+  "difficulty_level": "beginner",
+  "region": "India",
+  "fun_rating": 8,
+  "read_time_seconds": 480,
+  "tags": [
+    "agriculture",
+    "soil",
+    "field context"
+  ],
+  "related_categories": [
+    "science"
+  ],
+  "visual_suggestions": {
+    "cover": "Conceptual editorial illustration of a covered vegetable plot in India, quiet left for title, crop center-right, no lettering or invented field-trial evidence.",
+    "overview": "Conceptual illustration of plant residue above the soil, no measurements, lettering or scientific diagram."
+  },
+  "share_text": "Explore a farming idea through the conditions that shape its result.",
+  "content_freshness": "evergreen",
+  "sources": [
+    {
+      "id": "s1",
+      "title": "Tamil Nadu Agricultural University — Agronomic measures: mulching",
+      "url": "https://agritech.tnau.ac.in/agriculture/agri_majorareas_dryland_agromeasures_mulching.html"
+    },
+    {
+      "id": "s2",
+      "title": "Tamil Nadu Agricultural University — Banana Expert System: soil-moisture conservation",
+      "url": "https://agritech.tnau.ac.in/expert_system/banana/faq%27s.html"
+    }
+  ],
+  "claim_citations": [],
+  "sources_or_references": [],
+  "generated_at": "2026-11-01T06:00:00Z",
+  "image_details": [
+    {
+      "slot": "overview",
+      "placement": "overview",
+      "alt": "Conceptual illustration of a covered soil surface",
+      "caption": "Illustration: a surface cover changes the soil’s immediate surroundings.",
+      "learning_purpose": "Connect the visible cover with the field conditions explained in the lesson."
+    }
+  ],
+  "content_hash": "agriculture-preview",
+  "agriculture_lesson": {
+    "identity": {
+      "name": "Mulching: a cover above the soil",
+      "domain": "Soil and crop management",
+      "scope": "A beginner introduction to crop-residue mulch and soil moisture",
+      "local_names": [],
+      "concept_type": "practice",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "hook": "A soil cover can reduce evaporation, helping water remain in the soil.",
+    "question": "Why would a farmer cover the soil around a crop?",
+    "learning_goal": "Connect a surface cover with the conditions it changes, and explain why the field context matters.",
+    "opening_scenario": {
+      "title": "Two plots, different surfaces",
+      "experience": "Picture two vegetable plots in an illustrative Indian farming setting. One soil surface is exposed. The other has a cover of plant residue. The difference is visible, but its result depends on more than the cover alone.",
+      "question": "What should we notice before judging the result?",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "central_idea": "Mulching means covering the soil surface with a material. The cover can reduce evaporation: water leaving the soil and entering the air. The result still depends on the material and field conditions.",
+    "field_context": {
+      "purpose": "Understand how a surface cover can help conserve soil moisture.",
+      "crops": [
+        "Maize",
+        "Banana"
+      ],
+      "growing_conditions": [
+        {
+          "title": "The material matters",
+          "explanation": "Different covers have different properties. This introduction does not treat every cover as interchangeable."
+        },
+        {
+          "title": "The field matters",
+          "explanation": "Rain, soil, crop stage and the surrounding management form the context for judging a result."
+        }
+      ],
+      "when_it_matters": "At the relevant crop stage, with local growing conditions stated.",
+      "indian_connection": "TNAU explains crop-residue mulching in its dryland farming material and discusses moisture conservation in banana cultivation.",
+      "applicability_limits": "These examples explain a mechanism. They do not establish the same water saving or yield response for every field.",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "key_terms": [
+      {
+        "term": "Mulch",
+        "meaning": "A material used as a cover over the soil surface.",
+        "source_ids": [
+          "s1"
+        ]
+      },
+      {
+        "term": "Evaporation",
+        "meaning": "Water changing into vapour and entering the air.",
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "process_steps": [
+      {
+        "id": "cover",
+        "title": "Notice the cover",
+        "action": "Identify what material sits above the soil and what part of the surface it covers.",
+        "what_changes": "The soil surface is no longer fully exposed to its surroundings.",
+        "why_it_matters": "The material is part of the mechanism. The name of the practice alone does not describe its properties.",
+        "what_to_notice": "The cover’s material and the areas left exposed.",
+        "conditions": [
+          "The material and the covered area are clearly identified."
+        ],
+        "source_ids": [
+          "s1"
+        ]
+      },
+      {
+        "id": "surface",
+        "title": "Reduce exposure at the surface",
+        "action": "A crop-residue cover lies between the soil and its immediate surroundings.",
+        "what_changes": "The cover can reduce water loss through soil evaporation.",
+        "why_it_matters": "Conserving moisture is one reason a farmer may use mulch. This explains a possible effect, not a guaranteed result.",
+        "what_to_notice": "The material and the field conditions stated with the example.",
+        "conditions": [
+          "Compare like conditions rather than assuming two fields are identical."
+        ],
+        "source_ids": [
+          "s1"
+        ]
+      },
+      {
+        "id": "observe",
+        "title": "Judge the result in context",
+        "action": "Read the result alongside the crop, growing conditions and management described in the example.",
+        "what_changes": "A general idea becomes an explanation with a defined scope.",
+        "why_it_matters": "A result from one place does not establish the same outcome everywhere.",
+        "what_to_notice": "The limits of the comparison, including what it does not measure.",
+        "conditions": [
+          "Any measured claim identifies its location, period, unit and basis."
+        ],
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "diagram": {
+      "type": "cross_section",
+      "title": "Three layers, three different roles",
+      "caption": "A conceptual arrangement. The layers have no measured thickness in this diagram.",
+      "description": "Read the cover, soil surface and underlying soil from top to bottom. The labels explain their roles rather than presenting a field measurement.",
+      "assumptions": [
+        "Only the relationships discussed in the lesson are shown.",
+        "The arrangement does not represent a particular field trial."
+      ],
+      "process_step_ids": [],
+      "season_stages": [],
+      "layers": [
+        {
+          "id": "cover",
+          "name": "Surface cover",
+          "material": "Plant residue in this example",
+          "explanation": "The material covers part of the soil surface and changes its exposure."
+        },
+        {
+          "id": "surface",
+          "name": "Soil surface",
+          "material": "The interface beneath the cover",
+          "explanation": "Evaporation is one route by which water leaves the soil. A cover can reduce this loss."
+        },
+        {
+          "id": "soil",
+          "name": "Underlying soil",
+          "material": "The soil below the interface",
+          "explanation": "Its properties remain part of the context; the diagram does not assume all soils behave alike."
+        }
+      ],
+      "connections": [
+        {
+          "from_id": "cover",
+          "to_id": "surface",
+          "label": "Changes exposure",
+          "explanation": "The cover changes which parts of the soil surface remain exposed."
+        }
+      ],
+      "comparison_basis": null,
+      "comparisons": [],
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "indian_case_study": {
+      "title": "An Indian example: moisture conservation in banana",
+      "kind": "documented_practice",
+      "place": "Indian banana cultivation, in TNAU extension guidance",
+      "time_context": "Undated extension guidance; no field-trial period is claimed",
+      "crops": [
+        "Banana"
+      ],
+      "practice": "Crop residues as a soil cover",
+      "explanation": "TNAU’s Banana Expert System discusses sugarcane trash as a mulch for conserving soil moisture. It also describes a different material, polythene mulch, in that context.",
+      "connection": "This connects the surface-cover mechanism with a named crop in Indian agricultural extension material.",
+      "outcome": "The example shows why mulch appears in a discussion about banana moisture management. It does not measure a result for the reader’s farm.",
+      "limits": "Extension guidance is not evidence that every material or field gives the same result. This lesson does not reproduce a field trial or prescribe a mulch rate.",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    "measurements": [],
+    "benefits_and_tradeoffs": [
+      {
+        "benefit": "Conserve soil moisture",
+        "explanation": "Reducing soil evaporation can help retain moisture. The material and setting affect the result.",
+        "requirements": [
+          "A clearly identified cover material.",
+          "Crop and field conditions considered together."
+        ],
+        "costs_and_limits": "Obtaining, placing and managing a cover requires resources. This introduction does not estimate the labour cost or recommend a rate.",
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "conditions_and_limits": [
+      {
+        "title": "A result needs a setting",
+        "explanation": "A field result has a crop, location and set of conditions. Those details define what the result can teach.",
+        "source_ids": [
+          "s1"
+        ]
+      },
+      {
+        "title": "A cover is not a universal solution",
+        "explanation": "The practice’s name alone does not establish its suitability for a particular field.",
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "misconceptions": [
+      {
+        "belief": "The same practice guarantees the same result everywhere",
+        "correction": "The outcome depends on the material and the growing conditions.",
+        "explanation": "An explanation should state its scope instead of turning one example into a universal promise.",
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "optional_depth": [
+      {
+        "title": "What makes a fair field comparison?",
+        "explanation": "Read what stayed the same, what changed and what was measured. This helps separate a useful comparison from an unsupported claim.",
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "knowledge_checks": [
+      {
+        "question": "What information is missing from the statement “this cover improves every field”?",
+        "answer": "The material, crop, growing conditions and evidence for the claimed outcome.",
+        "explanation": "A farming concept needs a clear context before a result can be interpreted."
+      }
+    ],
+    "takeaways": [
+      "Explain what changes, not only the name of a method.",
+      "Keep the material, crop and growing conditions visible.",
+      "Read field results together with their evidence and limits."
+    ],
+    "related_topics": [
+      "Crop rotation",
+      "Seed storage"
+    ],
+    "photos": [
+      {
+        "id": "residue",
+        "section_id": "process",
+        "kind": "material",
+        "step_id": "cover",
+        "subject": "Straw mulch",
+        "queries": [
+          "straw mulch"
+        ]
+      }
+    ]
+  }
+}
