@@ -151,7 +151,12 @@ def build_section_image_context(key, article=None):
             lesson=article.get('drinks_lesson') or {}
             excerpt['drinks_context']={k:lesson.get(k) for k in ('identity','introduction','sensory_profile')}
             if key=='how_it_works':excerpt['science_focus']=next((p for p in lesson.get('science',[]) if p['id']==lesson.get('science_focus_id')),None)
-            lines.append('Drinks illustration: preserve the beverage and its actual ingredients. Scientific explanation is conceptual, not invented molecular evidence. No labels, logos or documents.')
+            if lesson.get('content_version')==2 and key=='how_it_works':
+                lines[1]='Explain the selected mechanism with a clear before/after diagram, arrows and a concise legend.'
+                lines[2]=_VISUAL_RULES.replace('Include no text, letters, numbers, labels, captions, logos, watermarks, or fake writing.', 'Use only short accurate educational labels from the supplied diagram prompt. No logos, watermarks, invented measurements or fake writing.')
+                lines.append('Drinks educational diagram: preserve the actual mechanism. Label conceptual scale. Do not invent molecular bonds or laboratory evidence.')
+            else:
+                lines.append('Drinks illustration: preserve the beverage and its actual ingredients. Scientific explanation is conceptual, not invented molecular evidence. No labels, logos or documents.')
         if article.get('article_type') == 'nature_lesson':
             lesson=article.get('nature_lesson') or {}
             excerpt['nature_context']={field:lesson.get(field) for field in ('identity','central_idea','observation_context','recognition_features','explanation_steps')}

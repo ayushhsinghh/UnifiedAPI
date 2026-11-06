@@ -381,17 +381,20 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
                 selected=await select_photos(article,report=report,excluded=claimed_sources)
                 selected=sorted(selected,key=lambda p:bool(p.get('popular_pick')))
                 popular_slots=min(3,sum(bool(p.get('popular_pick')) for p in selected))
-                used=set();ready={key for key in keys if existing_images.get(key)} if is_agriculture or is_nature or is_drinks else set()
+                used=set();ready={key for key in keys if images.get(key)} if is_agriculture or is_nature or is_drinks else set()
                 extras=[key for key in ready if key.startswith(prefix+'_scene_')]
                 for p in selected:
                     if p['source_url'] in used:continue
-                    item=None if p.get('popular_pick') else next((entry for entry in entries if entry['id'] in p.get(prefix+'_request_ids',[]) and entry['key'] not in ready),None)
+                    item=None if p.get('popular_pick') or p.get('drinks_gallery_only') else next((entry for entry in entries if entry['id'] in p.get(prefix+'_request_ids',[]) and entry['key'] not in ready),None)
+                    if is_drinks and article.get('drinks_lesson',{}).get('content_version')==2:
+                        if item is not None and p.get('provider')!='wikimedia':continue
+                        if item is None and p.get('provider') not in ('unsplash','pixabay'):continue
                     gallery_limit=scene_limit if p.get('popular_pick') else scene_limit-popular_slots
                     if item is None and len(extras)>=gallery_limit:continue
                     if not await _prepare_selected_photo(p):continue
                     used.add(p['source_url'])
                     photo={**{k:v for k,v in p.items() if k!='download_location'},prefix+'_photo':True,
-                        'selection_mode':state.get('mode','text_ranking'),'ranking_model':'gpt-6-luna' if state.get('mode')!='metadata_fallback' else None}
+                        'selection_mode':p.get('selection_mode',state.get('mode','text_ranking')),'ranking_model':'gpt-6-luna' if p.get('selection_mode',state.get('mode'))!='metadata_fallback' else None}
                     if p.get('selection_mode')=='popular_unsplash':
                         photo.update(selection_mode='popular_unsplash',ranking_model=None)
                     if item:

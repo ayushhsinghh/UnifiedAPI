@@ -116,7 +116,7 @@ def ranking_input(fact,photos):
             brief[key]=[{'title':p.get('title'),'explanation':p.get('explanation','')[:600]} for p in profile.get(key,[])[:5]]
     if fact.get('article_type')=='drinks_lesson':
         lesson=fact.get('drinks_lesson',{})
-        brief={k:lesson.get(k) for k in ('identity','introduction','origin','ingredients','production_steps','science','variations','photos')}
+        brief={k:lesson.get(k) for k in ('identity','introduction','origin','production_evolution','ingredients','production_steps','science','variations','photos')}
     if fact.get('article_type')=='food_lesson':
         food=fact.get('food_lesson',{})
         brief={k:food.get(k) for k in ('identity','introduction','sensory_profile','key_ingredients','food_science','photos')}
@@ -273,9 +273,29 @@ async def select_nature_photos(fact,*,report=lambda state:None,fetch=None,common
 async def select_drinks_photos(fact,*,report=lambda state:None,fetch=None,commons=None,rank=None,excluded=()):
     from .drinks import drinks_photo_entries,ensure_drinks_photo_plan
     ensure_drinks_photo_plan(fact)
-    return await _select_editorial_photos(fact,drinks_photo_entries(fact),'drinks_request_ids',report=report,fetch=fetch,commons=commons,rank=rank,excluded=excluded)
+    entries=drinks_photo_entries(fact)
+    if fact.get('drinks_lesson',{}).get('content_version')!=2:
+        return await _select_editorial_photos(fact,entries,'drinks_request_ids',report=report,fetch=fetch,commons=commons,rank=rank,excluded=excluded)
+    # Independent pools: documentary matches cannot consume the stock gallery slots.
+    gallery_entries=[p for p in entries if p['section_id'] in ('overview','modern_making','ingredients','recipe','variations','serving') and p['kind'] not in ('named_place','person','historical_object')]
+    states={'sections':{},'gallery':{}}
+    def progress(flow,value):
+        states[flow].update(value)
+        report({'flows':{name:dict(state) for name,state in states.items()}})
+    async def select(flow,requests,source):
+        try:
+            photos=await _select_editorial_photos(fact,requests,'drinks_request_ids',report=lambda value:progress(flow,value),fetch=fetch,commons=commons,rank=rank,excluded=excluded,photo_sources=source)
+            progress(flow,{'status':'completed' if photos else 'insufficient','selected_count':len(photos)})
+            return [{**p,'selection_mode':p.get('selection_mode',states[flow].get('mode','text_ranking'))} for p in photos]
+        except Exception as error:
+            logger.warning('Drinks %s photo selection failed (%s)',flow,type(error).__name__)
+            progress(flow,{'status':'failed','reason':'photo_lookup_failed'})
+            return []
+    sections,gallery=await asyncio.gather(select('sections',entries,'commons'),select('gallery',gallery_entries,'stock'))
+    # Stock metadata is ranked against the same drink-specific subjects, but it never binds inline.
+    return sections+[{**p,'drinks_request_ids':[],'drinks_gallery_only':True} for p in gallery]
 
-async def _select_editorial_photos(fact,entries,request_key,*,report,fetch=None,commons=None,rank=None,excluded=()):
+async def _select_editorial_photos(fact,entries,request_key,*,report,fetch=None,commons=None,rank=None,excluded=(),photo_sources=None):
     """Small, scene-bound pool; only Commons may identify historical objects or people."""
     if fetch is None:
         from .stock_photos import ranking_candidates as fetch
@@ -283,6 +303,7 @@ async def _select_editorial_photos(fact,entries,request_key,*,report,fetch=None,
         from .country_photos import ranking_candidates as commons
     rank=rank or rank_photos
     drinks=fact.get('article_type')=='drinks_lesson'
+    commons_only=photo_sources=='commons' or (photo_sources is None and drinks and fact.get('drinks_lesson',{}).get('content_version')==2)
     pool={};sources=set(excluded);semaphore=asyncio.Semaphore(6 if drinks else 3);popular=PopularUnsplash(excluded)
     if not entries:return []
     searched=set()
@@ -299,7 +320,7 @@ async def _select_editorial_photos(fact,entries,request_key,*,report,fetch=None,
             token=(item['id'],query.casefold())
             if token in searched:continue
             searched.add(token)
-            providers=(commons,) if item.get('kind') in ('historical_object','person','named_place','satellite','named_model','screenshot','named_species','microscopy') else (commons,fetch)
+            providers=(fetch,) if photo_sources=='stock' else (commons,) if commons_only or item.get('kind') in ('historical_object','person','named_place','satellite','named_model','screenshot','named_species','microscopy') else (commons,fetch)
             searches.extend(collect(item,query,source) for source in providers)
         incoming={};old_sources={p['source_url'] for p in pool.values()}
         for item,photos in await asyncio.gather(*searches):
@@ -324,6 +345,8 @@ async def _select_editorial_photos(fact,entries,request_key,*,report,fetch=None,
             'provider_counts':provider_counts()})
     def permitted(photo,request_id):
         item=next((e for e in entries if e['id']==request_id),None)
+        if commons_only and photo.get('provider')!='wikimedia':return False
+        if photo_sources=='stock' and photo.get('provider') not in ('unsplash','pixabay'):return False
         if item is None or (item.get('kind') in ('historical_object','person','named_place','satellite','named_model','screenshot','named_species','microscopy') and photo.get('provider')!='wikimedia'):return False
         if item.get('kind') in ('named_model','screenshot','named_species','microscopy'):
             import re
