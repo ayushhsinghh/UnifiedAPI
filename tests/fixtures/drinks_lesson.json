@@ -1,0 +1,485 @@
+{
+  "category": "drinks",
+  "topic": "Mojito",
+  "schema_version": "2.0",
+  "article_type": "drinks_lesson",
+  "headline_fact": "Mint, lime and a little fizz: a drink shaped by the way it is mixed.",
+  "summary": "A Mojito combines rum, lime, sugar, mint and soda over ice. Its identity comes from their balance, rather than one ingredient alone.",
+  "did_you_know": "The mint is part of the aromatic base, while the soda lengthens the drink. The finished glass combines citrus, sweetness and a fresh herbal aroma.",
+  "core_mechanics": "Soda contains dissolved carbon dioxide. Opening the container lowers the pressure above it, allowing gas to leave the liquid. Temperature also affects how much remains dissolved.",
+  "why_it_matters": "Understand its ingredients, separate origin stories from evidence, and make a practical alcohol-free interpretation.",
+  "in_depth_breakdown": {
+    "detailed_processes": [],
+    "real_world_application": "A trolley carrying more mass needs more net force to achieve the same acceleration.",
+    "fascinating_trivia": []
+  },
+  "common_misconceptions": [],
+  "learning_takeaways": [
+    "Name adaptations honestly.",
+    "Mixing order changes the finished glass.",
+    "Keep origin stories separate from established evidence."
+  ],
+  "emoji_icon": "",
+  "difficulty_level": "beginner",
+  "region": "Cuba",
+  "fun_rating": 8,
+  "read_time_seconds": 480,
+  "tags": [
+    "drinks",
+    "mixing",
+    "Cuba"
+  ],
+  "related_categories": [
+    "food",
+    "science"
+  ],
+  "visual_suggestions": {
+    "cover": "Conceptual editorial illustration of a Mojito in a tall glass with lime and mint, subject center-right, quiet left for title, no text.",
+    "overview": "Conceptual illustration of mint, lime and a tall sparkling drink, no labels or invented evidence.",
+    "how_it_works": "Conceptual close view of bubbles leaving an open glass of soda, no lettering, equations or fabricated molecular structures."
+  },
+  "share_text": "Mint, lime and a little fizz: a drink shaped by the way it is mixed.",
+  "content_freshness": "evergreen",
+  "sources": [
+    {
+      "id": "s1",
+      "title": "International Bartenders Association \u2014 Mojito",
+      "url": "https://iba-world.com/iba-cocktail/mojito/"
+    },
+    {
+      "id": "s2",
+      "title": "American Chemical Society \u2014 Can gases dissolve in water?",
+      "url": "https://www.acs.org/middleschoolchemistry/lessonplans/chapter5/lesson8.html"
+    },
+    {
+      "id": "s3",
+      "title": "Oxford Companion to Spirits & Cocktails \u2014 The Mojito",
+      "url": "https://www.spiritsanddistilling.com/dictionary/acref-9780199311132-e-369"
+    }
+  ],
+  "claim_citations": [],
+  "sources_or_references": [],
+  "generated_at": "2026-11-06T06:00:00Z",
+  "image_details": [
+    {
+      "slot": "overview",
+      "placement": "overview",
+      "alt": "Illustration of the drink and its ingredients",
+      "caption": "Illustration: a drink built around citrus, mint and soda.",
+      "learning_purpose": "Connect the ingredients with the finished glass."
+    },
+    {
+      "slot": "how_it_works",
+      "placement": "explanation",
+      "alt": "Conceptual illustration of gas bubbles leaving a drink",
+      "caption": "Illustration: dissolved gas leaves an open drink.",
+      "learning_purpose": "Explain carbonation without inventing measured evidence."
+    }
+  ],
+  "content_hash": "drinks-preview",
+  "drinks_lesson": {
+    "identity": {
+      "name": "Mojito",
+      "local_names": [
+        "Mojito"
+      ],
+      "drink_type": "cocktail",
+      "country_names": [
+        "Cuba"
+      ],
+      "region": "Cuban cocktail tradition",
+      "alcohol_status": "alcoholic",
+      "strength_context": "The classic includes rum. Strength varies with the rum, proportions and dilution; the recipe below is an alcohol-free interpretation.",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "hook": "Mint, lime and a little fizz: a drink shaped by the way it is mixed.",
+    "question": "What makes a Mojito more than lime-flavoured soda?",
+    "learning_goal": "Understand its ingredients, separate origin stories from evidence, and make a practical alcohol-free interpretation.",
+    "introduction": {
+      "explanation": "A Mojito combines rum, lime, sugar, mint and soda over ice. Its identity comes from their balance, rather than one ingredient alone.",
+      "what_makes_it_unique": "The mint is part of the aromatic base, while the soda lengthens the drink. The finished glass combines citrus, sweetness and a fresh herbal aroma.",
+      "cultural_role": "The drink belongs to Cuban cocktail culture. Its international popularity also produces adaptations that deserve their own names and context.",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "origin": {
+      "account": "The Mojito is associated with Cuba. Accounts of its predecessors connect lime, sugar, mint and a cane spirit.",
+      "evidence_and_uncertainty": "The exact invention story is disputed. A story about a precursor is not proof of one inventor or a single creation date.",
+      "source_ids": [
+        "s3"
+      ]
+    },
+    "history": [
+      {
+        "id": "precursors",
+        "period": "Earlier accounts",
+        "event": "A family of related mixtures",
+        "why_it_changed": "Historical accounts describe earlier combinations, but the connection to the modern recipe needs careful qualification.",
+        "source_ids": [
+          "s3"
+        ]
+      },
+      {
+        "id": "codified",
+        "period": "The modern recipe",
+        "event": "A recognisable mixing method",
+        "why_it_changed": "The IBA recipe specifies the ingredients and order. It provides a contemporary reference point without settling every historical claim.",
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "then_and_now": {
+      "earlier_method": "Accounts of predecessors describe mint, lime, sugar and a cane spirit. The evidence does not establish one universal early recipe.",
+      "modern_method": "The IBA method mixes mint, sugar and lime, adds soda and ice, then rum and more soda with a light stir.",
+      "what_changed": "The documented contemporary recipe gives bartenders a shared reference. Local ingredients and personal methods still vary.",
+      "what_remains": "The combination of citrus, sweetness, mint and a cane-spirit base remains central to the classic.",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "sensory_profile": {
+      "flavour": "Sweet and citrus-led, with the rum present in the classic.",
+      "aroma": "Fresh mint at the glass.",
+      "texture": "Cold, light and sparkling.",
+      "finish": "Citrus and mint remain after the sip.",
+      "serving_temperature": "Served over ice.",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "ingredients": [
+      {
+        "id": "mint",
+        "name": "Mint",
+        "role": "An aromatic ingredient in the mixed base.",
+        "effect": "Different mint varieties can change the aroma.",
+        "source_ids": [
+          "s1"
+        ]
+      },
+      {
+        "id": "lime",
+        "name": "Lime",
+        "role": "Provides the citrus part of the balance.",
+        "effect": "Fresh juice brings acidity alongside the sugar.",
+        "source_ids": [
+          "s1"
+        ]
+      },
+      {
+        "id": "soda",
+        "name": "Soda water",
+        "role": "Adds water and carbonation.",
+        "effect": "It makes the drink longer and sparkling.",
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "production_steps": [
+      {
+        "id": "base",
+        "title": "Build the base",
+        "explanation": "Mix mint with sugar and lime juice. These ingredients form the starting balance.",
+        "what_to_notice": "The mint is mixed into the drink, rather than serving only as decoration.",
+        "source_ids": [
+          "s1"
+        ]
+      },
+      {
+        "id": "finish",
+        "title": "Finish over ice",
+        "explanation": "The IBA method adds soda and ice, then rum and more soda. A light stir brings the ingredients together.",
+        "what_to_notice": "The final mixing is light, rather than a vigorous shake of the carbonated drink.",
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "science": [
+      {
+        "id": "carbonation",
+        "title": "Why the soda releases bubbles",
+        "mechanism": "Carbon dioxide leaves the liquid when conditions change.",
+        "explanation": "Soda contains dissolved carbon dioxide. Opening the container lowers the pressure above it, allowing gas to leave the liquid. Temperature also affects how much remains dissolved.",
+        "observable_cue": "Freshly opened soda bubbles; a glass left standing gradually loses fizz.",
+        "limits": "The exact bubble rate also depends on the liquid, container and other conditions. This explanation does not calculate an exact carbonation level.",
+        "source_ids": [
+          "s2"
+        ]
+      }
+    ],
+    "science_focus_id": "carbonation",
+    "recipe": {
+      "title": "A lime-and-pudina cooler",
+      "servings": 1,
+      "prep_minutes": 5,
+      "cook_minutes": 0,
+      "rest_minutes": 0,
+      "equipment": [
+        "Tall glass",
+        "Measuring spoon",
+        "Long spoon"
+      ],
+      "traditional_preparation": "The IBA Mojito includes white rum. This home version leaves it out and sets explicit soda and ice amounts for a repeatable example.",
+      "adaptation_notes": "Use fresh pudina and locally available lime. This is an alcohol-free interpretation, rather than an exact copy of the Cuban cocktail.",
+      "ingredients": [
+        {
+          "id": "lime",
+          "name": "Fresh lime juice",
+          "amount": 20,
+          "unit": "ml",
+          "household_measure": "20 ml",
+          "preparation": "Ready to use",
+          "role": "Provides acidity",
+          "contains_alcohol": false
+        },
+        {
+          "id": "mint",
+          "name": "Fresh mint sprigs",
+          "amount": 6,
+          "unit": "sprigs",
+          "household_measure": "6 sprigs",
+          "preparation": "Ready to use",
+          "role": "Provides aroma",
+          "contains_alcohol": false
+        },
+        {
+          "id": "sugar",
+          "name": "White sugar",
+          "amount": 2,
+          "unit": "tsp",
+          "household_measure": "2 tsp",
+          "preparation": "Ready to use",
+          "role": "Balances acidity",
+          "contains_alcohol": false
+        },
+        {
+          "id": "soda",
+          "name": "Chilled soda water",
+          "amount": 100,
+          "unit": "ml",
+          "household_measure": "100 ml",
+          "preparation": "Ready to use",
+          "role": "Lengthens the drink and adds fizz",
+          "contains_alcohol": false
+        },
+        {
+          "id": "ice",
+          "name": "Ice",
+          "amount": 120,
+          "unit": "g",
+          "household_measure": "120 g",
+          "preparation": "Ready to use",
+          "role": "Keeps the glass cold",
+          "contains_alcohol": false
+        }
+      ],
+      "substitutions": [
+        {
+          "ingredient_id": "mint",
+          "substitute": "Fresh local pudina",
+          "quantity": "Use the listed six sprigs, then adjust aroma to taste.",
+          "effect": "Mint varieties differ, so the aroma can change."
+        }
+      ],
+      "steps": [
+        {
+          "title": "Mix the aromatic base",
+          "instruction": "Mix the lime juice, sugar and mint in the glass.",
+          "time_guidance": "Until the sugar disperses.",
+          "doneness_cue": "The ingredients form an even base.",
+          "ingredient_ids": [
+            "lime",
+            "sugar",
+            "mint"
+          ]
+        },
+        {
+          "title": "Add ice and chilled soda",
+          "instruction": "Add the ice, then pour in the soda water. Stir lightly to combine.",
+          "time_guidance": "Mix briefly and serve promptly.",
+          "doneness_cue": "The glass is cold and the soda still bubbles.",
+          "ingredient_ids": [
+            "ice",
+            "soda"
+          ]
+        }
+      ],
+      "allergens": [],
+      "safety_notes": [],
+      "preparation_type": "alcohol_free_interpretation",
+      "alcohol_status": "non_alcoholic",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "variations": [
+      {
+        "id": "zero",
+        "name": "An alcohol-free interpretation",
+        "place": "Contemporary home and bar adaptations",
+        "difference": "The rum is omitted, so the result has a different flavour balance.",
+        "how_it_developed": "It adapts the mint, lime and soda combination for a different preference. No single birthplace is claimed here.",
+        "evidence_and_uncertainty": "This is the adaptation used in the local recipe, not a claim about a documented invention.",
+        "source_ids": [
+          "s1"
+        ]
+      },
+      {
+        "id": "mint_choice",
+        "name": "A local-mint adaptation",
+        "place": "An Indian home kitchen",
+        "difference": "Locally available pudina replaces a specified Cuban mint.",
+        "how_it_developed": "Ingredient access shapes the preparation. The substitution changes aroma, so it is stated explicitly.",
+        "evidence_and_uncertainty": "This is an illustrative kitchen adaptation, not a named historical regional cocktail.",
+        "source_ids": [
+          "s1"
+        ]
+      }
+    ],
+    "serving_context": {
+      "glassware": "A tall glass provides room for the ice and soda.",
+      "pairing_and_customs": "The IBA garnish uses mint and a lime slice. Serving choices can vary with the setting.",
+      "alcohol_free_option": "Follow the measured pudina-and-lime recipe on this page for an alcohol-free interpretation.",
+      "practical_notes": "Use fresh ingredients and chilled soda. If making the classic, use a commercially produced rum that is legally available to you.",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "troubleshooting": [
+      {
+        "problem": "The glass loses its fizz",
+        "cause": "The dissolved gas leaves the liquid after opening.",
+        "fix": "Add chilled soda near serving time and mix lightly."
+      }
+    ],
+    "knowledge_checks": [
+      {
+        "question": "Does removing rum leave the classic unchanged?",
+        "answer": "No. It creates an alcohol-free interpretation.",
+        "explanation": "The spirit contributes flavour as well as alcohol. A useful adaptation makes that change clear."
+      }
+    ],
+    "takeaways": [
+      "Name adaptations honestly.",
+      "Mixing order changes the finished glass.",
+      "Keep origin stories separate from established evidence."
+    ],
+    "related_drinks": [
+      "Daiquiri",
+      "Nimbu soda"
+    ],
+    "photos": [
+      {
+        "id": "fallback_0",
+        "section_id": "overview",
+        "entry_id": null,
+        "kind": "drink",
+        "subject": "Mojito",
+        "queries": [
+          "Mojito",
+          "Mojito drink",
+          "Mojito cocktail"
+        ]
+      },
+      {
+        "id": "fallback_1",
+        "section_id": "recipe",
+        "entry_id": null,
+        "kind": "drink",
+        "subject": "Mojito",
+        "queries": [
+          "Mojito preparation",
+          "Mojito ingredients"
+        ]
+      },
+      {
+        "id": "fallback_2",
+        "section_id": "ingredients",
+        "entry_id": "mint",
+        "kind": "ingredient",
+        "subject": "Mint",
+        "queries": [
+          "Mojito Mint",
+          "Mint"
+        ]
+      },
+      {
+        "id": "fallback_3",
+        "section_id": "ingredients",
+        "entry_id": "lime",
+        "kind": "ingredient",
+        "subject": "Lime",
+        "queries": [
+          "Mojito Lime",
+          "Lime"
+        ]
+      },
+      {
+        "id": "fallback_4",
+        "section_id": "ingredients",
+        "entry_id": "soda",
+        "kind": "ingredient",
+        "subject": "Soda water",
+        "queries": [
+          "Mojito Soda water",
+          "Soda water"
+        ]
+      },
+      {
+        "id": "fallback_5",
+        "section_id": "method",
+        "entry_id": "base",
+        "kind": "process",
+        "subject": "Mojito Build the base",
+        "queries": [
+          "Mojito Build the base",
+          "Mojito preparation"
+        ]
+      },
+      {
+        "id": "fallback_6",
+        "section_id": "method",
+        "entry_id": "finish",
+        "kind": "process",
+        "subject": "Mojito Finish over ice",
+        "queries": [
+          "Mojito Finish over ice",
+          "Mojito preparation"
+        ]
+      },
+      {
+        "id": "fallback_7",
+        "section_id": "variations",
+        "entry_id": "zero",
+        "kind": "drink",
+        "subject": "Mojito An alcohol-free interpretation",
+        "queries": [
+          "Mojito An alcohol-free interpretation",
+          "Mojito preparation"
+        ]
+      },
+      {
+        "id": "fallback_8",
+        "section_id": "variations",
+        "entry_id": "mint_choice",
+        "kind": "drink",
+        "subject": "Mojito A local-mint adaptation",
+        "queries": [
+          "Mojito A local-mint adaptation",
+          "Mojito preparation"
+        ]
+      }
+    ]
+  },
+  "images": {},
+  "drinks_media": {
+    "photo_plan_source": "fallback",
+    "photo_plan_version": 1
+  }
+}

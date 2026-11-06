@@ -54,6 +54,8 @@ CATEGORY_HINTS: Dict[str, str] = {
         "akhara-style circuits, quiet low-impact apartment workouts, resistance bands and minimal equipment; "
         "beginner regressions, safe technique, progressive overload, warm-up and recovery"
     ),
+    "drinks": ("Global cocktails, mocktails, wines, spirits and regional drinks; documented origins, "
+        "historical and modern methods, mixing science, India-accessible recipes and global variations"),
     "food": (
         "Global dishes, ingredients, flavour, texture, culinary traditions and food science; "
         "complete recipes adapted to ingredients available in India, honest substitutions, "

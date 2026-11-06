@@ -118,6 +118,8 @@ def _shape(value, schema):
         return type(value) in (int, float) and math.isfinite(value)
     if kind == 'INTEGER':
         return type(value) is int
+    if kind == 'BOOLEAN':
+        return type(value) is bool
     return isinstance(value, str) and len(value) <= 12000 and value in schema.get('enum', [value])
 
 

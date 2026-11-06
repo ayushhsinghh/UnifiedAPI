@@ -114,6 +114,9 @@ def ranking_input(fact,photos):
             'places':[p.get('name') for p in profile.get('notable_places',[])[:5]]}
         for key in ('everyday_life','products_and_industries','global_contributions'):
             brief[key]=[{'title':p.get('title'),'explanation':p.get('explanation','')[:600]} for p in profile.get(key,[])[:5]]
+    if fact.get('article_type')=='drinks_lesson':
+        lesson=fact.get('drinks_lesson',{})
+        brief={k:lesson.get(k) for k in ('identity','introduction','origin','ingredients','production_steps','science','variations','photos')}
     if fact.get('article_type')=='food_lesson':
         food=fact.get('food_lesson',{})
         brief={k:food.get(k) for k in ('identity','introduction','sensory_profile','key_ingredients','food_science','photos')}
@@ -136,6 +139,7 @@ def ranking_input(fact,photos):
         lesson=fact.get('economics_lesson',{})
         brief={k:lesson.get(k) for k in ('identity','central_idea','opening_scenario','mechanism','real_world_case','photos')}
     return {'topic':fact.get('topic'),'lesson':brief,'photos':[{'photo_id':p['provider_id'],
+        **({'provider':p.get('provider'),'title':p.get('title','')[:160]} if fact.get('article_type')=='drinks_lesson' else {}),
         'description':p.get('description_text',p.get('description',''))[:600],'alt_description':p.get('alt_description','')[:300]}
         for p in photos[:240]]}
 
@@ -184,11 +188,12 @@ def validate_ranking(payload,photos,request_ids=None,request_key='food_request_i
 
 async def rank_photos(fact,photos,*,client=None,report=lambda state:None):
     owned=client is None
-    editorial=next((kind for kind in ('food','fashion','geography','technology','economics','agriculture','nature') if fact.get('article_type')==kind+'_lesson'),None)
+    editorial=next((kind for kind in ('food','fashion','geography','technology','economics','agriculture','nature','drinks') if fact.get('article_type')==kind+'_lesson'),None)
     requests={p['id'] for p in fact.get(editorial+'_lesson',{}).get('photos',[])} if editorial else None
     prompt=SYSTEM_PROMPT
     if requests is not None:
         prompt+='\nFor this editorial lesson, scene MUST be one exact photos request id from the brief. Select a photo only for that requested subject and section. Cover complementary requests when metadata supports them. Return fewer than ten freely; there is no minimum for this lesson.'
+    if editorial=='drinks':prompt+='\nPrefer Wikimedia when equally relevant. Match exact named drinks, ingredients and tools, not just a similar glass. Variations must match their own request. Preserve caption truth; a generic preparation image does not document an historical era.'
     if owned:
         import openai
         from configs.config import get_config
@@ -265,14 +270,20 @@ async def select_nature_photos(fact,*,report=lambda state:None,fetch=None,common
     ensure_nature_photo_plan(fact)
     return await _select_editorial_photos(fact,nature_photo_entries(fact),'nature_request_ids',report=report,fetch=fetch,commons=commons,rank=rank,excluded=excluded)
 
+async def select_drinks_photos(fact,*,report=lambda state:None,fetch=None,commons=None,rank=None,excluded=()):
+    from .drinks import drinks_photo_entries,ensure_drinks_photo_plan
+    ensure_drinks_photo_plan(fact)
+    return await _select_editorial_photos(fact,drinks_photo_entries(fact),'drinks_request_ids',report=report,fetch=fetch,commons=commons,rank=rank,excluded=excluded)
+
 async def _select_editorial_photos(fact,entries,request_key,*,report,fetch=None,commons=None,rank=None,excluded=()):
     """Small, scene-bound pool; only Commons may identify historical objects or people."""
     if fetch is None:
-        from .unsplash_photos import ranking_candidates as fetch
+        from .stock_photos import ranking_candidates as fetch
     if commons is None:
         from .country_photos import ranking_candidates as commons
     rank=rank or rank_photos
-    pool={};sources=set(excluded);semaphore=asyncio.Semaphore(3);popular=PopularUnsplash(excluded)
+    drinks=fact.get('article_type')=='drinks_lesson'
+    pool={};sources=set(excluded);semaphore=asyncio.Semaphore(6 if drinks else 3);popular=PopularUnsplash(excluded)
     if not entries:return []
     searched=set()
     async def collect(item,query,source):
@@ -305,8 +316,12 @@ async def _select_editorial_photos(fact,entries,request_key,*,report,fetch=None,
         # New search results get room even when the first pool reached its cap.
         pool=dict(list({**incoming,**pool}.items())[:240])
         return len({p['source_url'] for p in pool.values()}-old_sources)
-    await search([(item,query) for item in entries for query in item['queries'][:2]])
-    report({'status':'ranking','candidate_count':len(pool),'search_round':1,'popular_count':len(popular.photos)})
+    await search([(item,query) for item in entries for query in item['queries'][:4 if drinks else 2]])
+    def provider_counts():
+        return {provider:sum(photo.get('provider')==provider for photo in pool.values())
+                for provider in ('unsplash','pixabay','wikimedia')}
+    report({'status':'ranking','candidate_count':len(pool),'search_round':1,'popular_count':len(popular.photos),
+            'provider_counts':provider_counts()})
     def permitted(photo,request_id):
         item=next((e for e in entries if e['id']==request_id),None)
         if item is None or (item.get('kind') in ('historical_object','person','named_place','satellite','named_model','screenshot','named_species','microscopy') and photo.get('provider')!='wikimedia'):return False
@@ -323,9 +338,12 @@ async def _select_editorial_photos(fact,entries,request_key,*,report,fetch=None,
         return True
     try:
         def usable(selected):
-            return [{**p,request_key:ids} for p in selected if (ids:=[i for i in p.get(request_key,[]) if permitted(p,i)])][:18]
+            rows=[{**p,request_key:ids} for p in selected if (ids:=[i for i in p.get(request_key,[]) if permitted(p,i)])]
+            if drinks:rows.sort(key=lambda p:p.get('provider')!='wikimedia')
+            return rows[:18]
         selected=await rank(fact,list(pool.values()),report=lambda value:report({**value,'search_round':1}))
         accepted=usable(selected)
+        if drinks:accepted.sort(key=lambda p:p.get('provider')!='wikimedia')
         if accepted:return popular.include(accepted,request_key)
         queries=getattr(selected,'retry_queries',[])
         # Only one new search/ranking round. A second empty result never loops.
@@ -337,7 +355,8 @@ async def _select_editorial_photos(fact,entries,request_key,*,report,fetch=None,
         report({'status':'searching_again','search_round':2,'recovery_used':True,
                 'recovery_queries':queries,'initial_candidate_count':len(pool)})
         count=await search(plans)
-        report({'status':'ranking','search_round':2,'candidate_count':len(pool),'new_candidate_count':count,'popular_count':len(popular.photos)})
+        report({'status':'ranking','search_round':2,'candidate_count':len(pool),'new_candidate_count':count,'popular_count':len(popular.photos),
+                'provider_counts':provider_counts()})
         selected=await rank(fact,list(pool.values()),report=lambda value:report({**value,'search_round':2}))
         accepted=usable(selected)
         if not accepted:report({'reason':'empty_after_search_recovery','qualified_count':0})
@@ -353,7 +372,7 @@ async def _select_editorial_photos(fact,entries,request_key,*,report,fetch=None,
 
 async def _select_photos(fact,queries,*,report,fetch=None,rank=None,excluded=(),fallback_fetch=None,fallback_queries=()):
     if fetch is None:
-        from .unsplash_photos import ranking_candidates
+        from .stock_photos import ranking_candidates
         fetch=ranking_candidates
     rank=rank or rank_photos
     pool={};sources=set(excluded);searched=set();popular=PopularUnsplash(excluded)
@@ -376,7 +395,7 @@ async def _select_photos(fact,queries,*,report,fetch=None,rank=None,excluded=(),
         pool=dict(list(({**incoming,**pool} if prioritize else {**pool,**incoming}).items())[:240])
     def progress(status,**extra):
         report({'status':status,'candidate_count':len(pool),'popular_count':len(popular.photos),
-            'provider_counts':{p:sum(v.get('provider')==p for v in pool.values()) for p in ('unsplash','wikimedia')},**extra})
+            'provider_counts':{p:sum(v.get('provider')==p for v in pool.values()) for p in ('unsplash','pixabay','wikimedia')},**extra})
     # Collect the planned searches first. Never rank each widening batch separately.
     progress('collecting',search_round=1)
     merge(await asyncio.gather(*(collect(q,fetch) for q in queries[:12])))

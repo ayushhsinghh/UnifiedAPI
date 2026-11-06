@@ -147,6 +147,11 @@ def build_section_image_context(key, article=None):
             if value:
                 text = value if isinstance(value, str) else json.dumps(value, ensure_ascii=False)
                 excerpt[field] = text[:4000]
+        if article.get('article_type') == 'drinks_lesson':
+            lesson=article.get('drinks_lesson') or {}
+            excerpt['drinks_context']={k:lesson.get(k) for k in ('identity','introduction','sensory_profile')}
+            if key=='how_it_works':excerpt['science_focus']=next((p for p in lesson.get('science',[]) if p['id']==lesson.get('science_focus_id')),None)
+            lines.append('Drinks illustration: preserve the beverage and its actual ingredients. Scientific explanation is conceptual, not invented molecular evidence. No labels, logos or documents.')
         if article.get('article_type') == 'nature_lesson':
             lesson=article.get('nature_lesson') or {}
             excerpt['nature_context']={field:lesson.get(field) for field in ('identity','central_idea','observation_context','recognition_features','explanation_steps')}

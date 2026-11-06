@@ -240,6 +240,15 @@ def save_nature_photo_plan(content_hash: str, fact: dict) -> bool:
     return result.matched_count == 1
 
 
+def save_drinks_photo_plan(content_hash: str, fact: dict) -> bool:
+    path='full_response.drinks_lesson.photos'
+    result=get_db()[cfg.DAILY_FACTS_COLLECTION].update_one({'content_hash':content_hash,
+        'full_response.article_type':'drinks_lesson','$or':[{path:[]},{path:None}]}, {'$set':{
+        path:fact['drinks_lesson']['photos'],'full_response.drinks_media.photo_plan_version':1,
+        'full_response.drinks_media.photo_plan_source':'fallback'}})
+    return result.matched_count==1
+
+
 def set_fact_photo_selection(content_hash: str,state:dict) -> None:
     """Persist progress only, never a cached LLM ranking response."""
     get_db()[cfg.DAILY_FACTS_COLLECTION].update_one({'content_hash':content_hash},{'$set':{'photo_selection':state}})

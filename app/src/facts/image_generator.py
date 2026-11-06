@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 cfg = get_config()
 
 
-def _upload_to_oci_and_get_par(image_bytes: bytes, image_filename: str) -> Optional[str]:
+def _upload_to_oci_and_get_par(image_bytes: bytes, image_filename: str, content_type: str = 'image/jpeg') -> Optional[str]:
     if not oci:
         logger.error("oci package is not installed.")
         return None
@@ -33,7 +33,7 @@ def _upload_to_oci_and_get_par(image_bytes: bytes, image_filename: str) -> Optio
             bucket_name,
             image_filename,
             image_bytes,
-            content_type="image/jpeg"
+            content_type=content_type
         )
         
         # 2. Create PAR (5 years)

@@ -79,7 +79,7 @@ def _lookup(country, query):
 
 async def find_country_photos(country, query, protected_names=(), scene_only=False, scene_fallback=False):
     if scene_only:
-        from .unsplash_photos import search
+        from .stock_photos import search
         themes = {'landscape nature':r'forest|mountain|beach|coast|lake|river|landscape|volcano|valley|desert|nature',
             'local market daily life':r'market|vendor|food|shop|people|festival|daily',
             'traditional architecture countryside':r'architect|building|temple|house|village|rural|countryside',
@@ -107,7 +107,7 @@ async def find_country_photos(country, query, protected_names=(), scene_only=Fal
         photos = await asyncio.to_thread(_lookup, country, query)
         return [p for p in photos if any(name.casefold() in
             (p['title'] + ' ' + p['description']).casefold() for name in protected_names if name)]
-    from .unsplash_photos import search
+    from .stock_photos import search
     commons, stock = await asyncio.gather(asyncio.to_thread(_lookup, country, query), search(country, query))
     # Preserve documentary coverage while admitting up to two contemporary photos per subject.
     subject = re.sub(re.escape(country), '', query, flags=re.I)

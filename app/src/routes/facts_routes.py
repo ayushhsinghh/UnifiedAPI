@@ -41,6 +41,7 @@ from src.database.facts_repository import (
     set_fact_photo_selection,
     save_agriculture_photo_plan,
     save_nature_photo_plan,
+    save_drinks_photo_plan,
 )
 from src.facts.fact_generator import (
     SUPPORTED_CATEGORIES,
@@ -51,7 +52,7 @@ from src.facts.visual_prompts import IMAGE_SECTION_BRIEFS, build_section_image_c
 from src.facts.country_photos import find_country_photos, find_subject_photo, country_scene_queries, country_scene_plan
 from src.facts.country_media_plan import country_photo_entries
 from src.facts.unsplash_photos import track_selection
-from src.facts.photo_ranking import select_india_photos,select_country_photos,select_food_photos,select_fashion_photos,select_geography_photos,select_technology_photos,select_economics_photos,select_agriculture_photos,select_nature_photos,PhotoRankingUnavailable
+from src.facts.photo_ranking import select_india_photos,select_country_photos,select_food_photos,select_fashion_photos,select_geography_photos,select_technology_photos,select_economics_photos,select_agriculture_photos,select_nature_photos,select_drinks_photos,PhotoRankingUnavailable
 from src.facts.image_generator import generate_and_save_image
 
 logger = logging.getLogger(__name__)
@@ -62,6 +63,18 @@ cfg = get_config()
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────
+
+
+async def _prepare_selected_photo(photo):
+    """Finish provider requirements before an article publishes an image URL."""
+    if photo.get('provider') == 'pixabay':
+        from src.facts.pixabay_photos import persist_selected
+        url = await persist_selected(photo)
+        if not url:
+            return False
+        photo.update(url=url, stored_locally=True)
+        return True
+    return photo.get('provider') != 'unsplash' or await track_selection(photo)
 
 
 def _has_valid_bypass_key(request: Request) -> bool:
@@ -178,13 +191,14 @@ async def process_fact_generation_task(
 
 def _with_article_photo_plan(article, content_hash):
     """Repair legacy plans before scheduling so history and job polling can bind photos."""
-    category={'agriculture_lesson':'agriculture','nature_lesson':'nature'}.get(article.get('article_type'))
+    category={'agriculture_lesson':'agriculture','nature_lesson':'nature','drinks_lesson':'drinks'}.get(article.get('article_type'))
     if not category:return article
     from copy import deepcopy
     from src.facts.agriculture import ensure_agriculture_photo_plan
+    from src.facts.drinks import ensure_drinks_photo_plan
     from src.facts.nature import ensure_nature_photo_plan
-    ensure={'agriculture':ensure_agriculture_photo_plan,'nature':ensure_nature_photo_plan}[category]
-    save={'agriculture':save_agriculture_photo_plan,'nature':save_nature_photo_plan}[category]
+    ensure={'agriculture':ensure_agriculture_photo_plan,'nature':ensure_nature_photo_plan,'drinks':ensure_drinks_photo_plan}[category]
+    save={'agriculture':save_agriculture_photo_plan,'nature':save_nature_photo_plan,'drinks':save_drinks_photo_plan}[category]
     prepared=deepcopy(article)
     if not ensure(prepared):return article
     if save(content_hash,prepared):return prepared
@@ -205,6 +219,7 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
     is_food = (article or {}).get('article_type') == 'food_lesson'
     is_fashion = (article or {}).get('article_type') == 'fashion_lesson'
     is_geography = (article or {}).get('article_type') == 'geography_lesson'
+    is_drinks = (article or {}).get('article_type') == 'drinks_lesson'
     is_nature = (article or {}).get('article_type') == 'nature_lesson'
     is_agriculture = (article or {}).get('article_type') == 'agriculture_lesson'
     is_economics = (article or {}).get('article_type') == 'economics_lesson'
@@ -220,7 +235,7 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
     previous_photos=[photo for group in (article or {}).get('country_photo_galleries',{}).values() if isinstance(group,list) for photo in group if isinstance(photo,dict)]
     claimed_sources = {p.get('source_url') for p in previous_photos if p.get('source_url')}
     if ranked_country:claimed_sources={p.get('source_url') for p in previous_photos if p.get('subject_kind') and p.get('source_url')}
-    if is_india or is_agriculture or is_nature:
+    if is_india or is_agriculture or is_nature or is_drinks:
         claimed_sources.update(p.get('source_url') for p in (article or {}).get('image_credits',{}).values() if isinstance(p,dict) and p.get('source_url'))
     claimed_photographers = {p.get('author') for p in previous_photos if p.get('provider')=='unsplash'}
     claimed_descriptions = [set(p.get('description','').casefold().split()) for p in previous_photos if p.get('provider')=='unsplash']
@@ -244,7 +259,7 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
                     if any(len(words & other)/max(1,len(words | other))>.55 for other in claimed_descriptions):continue
                     # Reserve before yielding so concurrent topics cannot select the same photo.
                     claimed.add(item['url']);claimed_sources.add(item['source_url']);claimed_descriptions.append(words)
-                    if item.get('provider')=='unsplash' and not await track_selection(item):continue
+                    if not await _prepare_selected_photo(item):continue
                     gallery.append({**{k:v for k,v in item.items() if k!='download_location'},'scene_query':query})
             photo=gallery[0] if gallery else None
             legacy_scene_counts[key]=len(gallery)
@@ -275,9 +290,8 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
                         claimed_photographers.add(item.get('author'));claimed_descriptions.append(words)
                     if len(gallery)>=(1 if contextual else 2 if hybrid else 6):break
                 # Track only selected article assets, never previews or every page render.
-                tracked = await asyncio.gather(*(track_selection(item) for item in gallery if item.get('provider')=='unsplash'))
-                outcomes = iter(tracked)
-                gallery = [item for item in gallery if item.get('provider')!='unsplash' or next(outcomes)]
+                tracked = await asyncio.gather(*(_prepare_selected_photo(item) for item in gallery))
+                gallery = [item for item, ready in zip(gallery, tracked) if ready]
                 gallery = [{k:v for k,v in item.items() if k!='download_location'} for item in gallery]
                 if hybrid:
                     gallery = [{**item,'scene_query':scenes.get(key,prompt)} for item in gallery]
@@ -292,7 +306,7 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
             )
             if url:
                 images[key] = url
-            if hybrid or is_india or is_food or is_fashion or is_geography or is_technology or is_economics or is_agriculture or is_nature:
+            if hybrid or is_india or is_food or is_fashion or is_geography or is_technology or is_economics or is_agriculture or is_nature or is_drinks:
                 detail=next((d for d in (article or {}).get('image_details',[]) if d.get('slot')==key),{})
                 subject=(article or {}).get('topic') or (country or {}).get('identity',{}).get('name','the topic')
                 credit={'kind':'generated','url':url,'title':detail.get('caption') or f"Illustration of {subject}",
@@ -325,6 +339,7 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
     tasks = []
     for key, brief in IMAGE_SECTION_BRIEFS.items():
         if photos_only:continue
+        if is_drinks and key not in ('cover','overview','how_it_works'):continue
         if (is_india or is_food or is_fashion or is_geography or is_technology or is_economics or is_agriculture or is_nature) and key not in ('cover','overview'):continue
         if key in expanded_scenes:continue
         if is_country and key not in {'cover','overview','how_it_works','explanation_2','explanation_3','explanation_4','explanation_5','explanation_6'}:
@@ -338,20 +353,22 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
                 build_section_image_context(key, article),
             ))
 
-    if is_food or is_fashion or is_geography or is_technology or is_economics or is_agriculture or is_nature:
+    if is_food or is_fashion or is_geography or is_technology or is_economics or is_agriculture or is_nature or is_drinks:
         from src.facts.food import food_photo_entries
         from src.facts.fashion import fashion_photo_entries
         from src.facts.geography import geography_photo_entries
         from src.facts.technology import technology_photo_entries
         from src.facts.economics import economics_photo_entries
         from src.facts.agriculture import agriculture_photo_entries
+        from src.facts.drinks import drinks_photo_entries
         from src.facts.nature import nature_photo_entries
-        prefix='nature' if is_nature else 'agriculture' if is_agriculture else 'economics' if is_economics else 'technology' if is_technology else 'geography' if is_geography else 'fashion' if is_fashion else 'food'
-        select_photos={'food':select_food_photos,'fashion':select_fashion_photos,'geography':select_geography_photos,'technology':select_technology_photos,'economics':select_economics_photos,'agriculture':select_agriculture_photos,'nature':select_nature_photos}[prefix]
+        prefix='drinks' if is_drinks else 'nature' if is_nature else 'agriculture' if is_agriculture else 'economics' if is_economics else 'technology' if is_technology else 'geography' if is_geography else 'fashion' if is_fashion else 'food'
+        select_photos={'food':select_food_photos,'fashion':select_fashion_photos,'geography':select_geography_photos,'technology':select_technology_photos,'economics':select_economics_photos,'agriculture':select_agriculture_photos,'nature':select_nature_photos,'drinks':select_drinks_photos}[prefix]
         async def process_editorial_photos():
-            entries={'food':food_photo_entries,'fashion':fashion_photo_entries,'geography':geography_photo_entries,'technology':technology_photo_entries,'economics':economics_photo_entries,'agriculture':agriculture_photo_entries,'nature':nature_photo_entries}[prefix](article)
-            keys=[p['key'] for p in entries]+[f'{prefix}_scene_{n}' for n in range(6)]
-            state={'plan_source':article.get(prefix+'_media',{}).get('photo_plan_source','model')} if is_agriculture or is_nature else {}
+            entries={'food':food_photo_entries,'fashion':fashion_photo_entries,'geography':geography_photo_entries,'technology':technology_photo_entries,'economics':economics_photo_entries,'agriculture':agriculture_photo_entries,'nature':nature_photo_entries,'drinks':drinks_photo_entries}[prefix](article)
+            scene_limit=12 if is_drinks else 6
+            keys=[p['key'] for p in entries]+[f'{prefix}_scene_{n}' for n in range(scene_limit)]
+            state={'plan_source':article.get(prefix+'_media',{}).get('photo_plan_source','model')} if is_agriculture or is_nature or is_drinks else {}
             def report(value):
                 state.update(value);set_fact_photo_selection(content_hash,dict(state))
             async def finalize():
@@ -364,14 +381,14 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
                 selected=await select_photos(article,report=report,excluded=claimed_sources)
                 selected=sorted(selected,key=lambda p:bool(p.get('popular_pick')))
                 popular_slots=min(3,sum(bool(p.get('popular_pick')) for p in selected))
-                used=set();ready={key for key in keys if existing_images.get(key)} if is_agriculture or is_nature else set()
+                used=set();ready={key for key in keys if existing_images.get(key)} if is_agriculture or is_nature or is_drinks else set()
                 extras=[key for key in ready if key.startswith(prefix+'_scene_')]
                 for p in selected:
                     if p['source_url'] in used:continue
                     item=None if p.get('popular_pick') else next((entry for entry in entries if entry['id'] in p.get(prefix+'_request_ids',[]) and entry['key'] not in ready),None)
-                    gallery_limit=6 if p.get('popular_pick') else 6-popular_slots
+                    gallery_limit=scene_limit if p.get('popular_pick') else scene_limit-popular_slots
                     if item is None and len(extras)>=gallery_limit:continue
-                    if p.get('provider')=='unsplash' and not await track_selection(p):continue
+                    if not await _prepare_selected_photo(p):continue
                     used.add(p['source_url'])
                     photo={**{k:v for k,v in p.items() if k!='download_location'},prefix+'_photo':True,
                         'selection_mode':state.get('mode','text_ranking'),'ranking_model':'gpt-6-luna' if state.get('mode')!='metadata_fallback' else None}
@@ -384,8 +401,9 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
                         if is_technology:photo['component_id']=item.get('component_id')
                         if is_agriculture:photo['step_id']=item.get('step_id')
                         if is_nature:photo['feature_id']=item.get('feature_id')
-                    elif len(extras)<6:
-                        key=next(f'{prefix}_scene_{n}' for n in range(6) if f'{prefix}_scene_{n}' not in ready);photo[prefix+'_carousel']=True;extras.append(photo)
+                        if is_drinks:photo['entry_id']=item.get('entry_id')
+                    elif len(extras)<scene_limit:
+                        key=next(f'{prefix}_scene_{n}' for n in range(scene_limit) if f'{prefix}_scene_{n}' not in ready);photo[prefix+'_carousel']=True;extras.append(photo)
                     else:continue
                     ready.add(key);images[key]=photo['url']
                     set_fact_image_state(content_hash,key,'ready',photo['url'],credit=photo)
@@ -419,7 +437,7 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
                     for candidate in candidates:
                         if candidate['url'] in claimed or candidate.get('source_url') in claimed_sources:continue
                         claimed.add(candidate['url']);claimed_sources.add(candidate.get('source_url'))
-                        if candidate.get('provider')=='unsplash' and not await track_selection(candidate):continue
+                        if not await _prepare_selected_photo(candidate):continue
                         photo={**{k:v for k,v in candidate.items() if k!='download_location'},
                             'section_id':item['section_id'],'subject':item['subject'],'photo_id':item['id']}
                         break
@@ -433,7 +451,7 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
         async def process_india_carousel():
             """Subject-matched documentary carousel. No image-generation fallback."""
             from src.facts.india import india_carousel_queries,india_carousel_keys,india_carousel_matches,india_carousel_searches,india_carousel_per_query,india_carousel_tag_matches,india_carousel_accepted
-            from src.facts.unsplash_photos import search
+            from src.facts.stock_photos import search
             keys=india_carousel_keys(article)
             per_query=india_carousel_per_query(article)
             retained=set(existing_images)
@@ -470,7 +488,7 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
                         for p in eligible:
                             if p['url'] in claimed or p['source_url'] in claimed_sources:continue
                             claimed.add(p['url']);claimed_sources.add(p['source_url'])
-                            if p.get('provider')=='unsplash' and not await track_selection(p):continue
+                            if not await _prepare_selected_photo(p):continue
                             photo={**{k:v for k,v in p.items() if k!='download_location'},'india_carousel':True,'scene_query':p.get('matched_query',query)}
                             break
                         if photo:images[key]=photo['url']
@@ -505,7 +523,7 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
                             async with subject_semaphore:
                                 if photo['source_url'] in claimed_sources:return None
                                 claimed_sources.add(photo['source_url'])
-                                return photo if photo.get('provider')!='unsplash' or await track_selection(photo) else None
+                                return photo if await _prepare_selected_photo(photo) else None
                         photos=[p for p in await asyncio.gather(*(track(p) for p in selected)) if p]
                         keys=india_carousel_keys(article)
                         if len(photos)<10 and not any(p.get('popular_pick') for p in photos):
@@ -558,7 +576,7 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
                 async with scene_semaphore:
                     if photo['source_url'] in claimed_sources:return None
                     claimed_sources.add(photo['source_url'])
-                    return photo if await track_selection(photo) else None
+                    return photo if await _prepare_selected_photo(photo) else None
             photos=[p for p in await asyncio.gather(*(track(p) for p in selected)) if p]
             if len(photos)<10 and not any(p.get('popular_pick') for p in photos):
                 for key in keys:set_fact_image_state(content_hash,key,'failed',clear=True,gallery=[])
@@ -714,7 +732,7 @@ async def get_fact_job_status(job_id: str) -> dict:
                 fact_data['fact']['image_credits'] = stored.get('image_credits') or {}
                 fact_data['fact']['country_photo_galleries'] = stored.get('country_photo_galleries') or {}
                 fact_data['fact']['photo_selection']=stored.get('photo_selection') or {}
-                kind={'agriculture_lesson':'agriculture','nature_lesson':'nature'}.get(stored.get('full_response',{}).get('article_type'))
+                kind={'agriculture_lesson':'agriculture','nature_lesson':'nature','drinks_lesson':'drinks'}.get(stored.get('full_response',{}).get('article_type'))
                 if kind:
                     fact_data['fact'][kind+'_lesson']=stored['full_response'][kind+'_lesson']
                     fact_data['fact'][kind+'_media']=stored['full_response'].get(kind+'_media',{})
@@ -791,9 +809,9 @@ async def retry_image_generation(
     
     expected_keys = fact_image_keys(full_response)
     if photos_only:
-        kind={'agriculture_lesson':'agriculture','nature_lesson':'nature'}.get(full_response.get('article_type'))
+        kind={'agriculture_lesson':'agriculture','nature_lesson':'nature','drinks_lesson':'drinks'}.get(full_response.get('article_type'))
         if not kind:
-            raise HTTPException(status_code=400,detail='Photo-only retry is supported for Agriculture and Nature lessons.')
+            raise HTTPException(status_code=400,detail='Photo-only retry is supported for Agriculture, Nature and Drinks lessons.')
         expected_keys=[key for key in expected_keys if key.startswith((kind+'_photo_',kind+'_scene_'))]
         
     # Check if we have all expected keys
@@ -813,7 +831,7 @@ async def retry_image_generation(
     logger.info("Retrying image generation for %s. Missing keys: %s", content_hash, missing_keys)
     start_fact_images(content_hash, missing_keys)
     retry_article=full_response
-    if full_response.get('article_type') in ('agriculture_lesson','nature_lesson'):
+    if full_response.get('article_type') in ('agriculture_lesson','nature_lesson','drinks_lesson'):
         retry_article={**full_response,'image_credits':fact_doc.get('image_credits') or full_response.get('image_credits',{})}
     if full_response.get('article_type')=='india_lesson':
         retry_article={**full_response,'image_credits':fact_doc.get('image_credits') or full_response.get('image_credits',{})}
