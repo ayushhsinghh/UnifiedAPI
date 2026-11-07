@@ -48,13 +48,15 @@ AGRICULTURE_LESSON_SCHEMA = _object({
     'photos':_items(_object({'id':_TEXT,'section_id':{'type':'STRING','enum':['overview','context','process','case','tradeoffs','limits']},
         'kind':{'type':'STRING','enum':['crop','tool','material','process','named_place','person','historical_object']},
         'step_id':{**_TEXT,'nullable':True},'subject':_TEXT,'queries':_strings()}))})
-AGRICULTURE_LESSON_SCHEMA['properties']['photos'].update(minItems=1,maxItems=6)
+AGRICULTURE_LESSON_SCHEMA['properties']['photos'].update(minItems=1,maxItems=18)
 AGRICULTURE_RESPONSE_SCHEMA = deepcopy(PHYSICS_RESPONSE_SCHEMA)
 del AGRICULTURE_RESPONSE_SCHEMA['properties']['physics_lesson']
 AGRICULTURE_RESPONSE_SCHEMA['required'].remove('physics_lesson')
 AGRICULTURE_RESPONSE_SCHEMA['properties'].update({'article_type':{'type':'STRING','enum':['agriculture_lesson']},'agriculture_lesson':AGRICULTURE_LESSON_SCHEMA})
 AGRICULTURE_RESPONSE_SCHEMA['required'].append('agriculture_lesson')
-AGRICULTURE_RESPONSE_SCHEMA['properties']['visual_suggestions']=_object({'cover':_TEXT,'overview':_TEXT})
+LEGACY_AGRICULTURE_RESPONSE_SCHEMA=deepcopy(AGRICULTURE_RESPONSE_SCHEMA)
+LEGACY_AGRICULTURE_RESPONSE_SCHEMA['properties']['visual_suggestions']=_object({'cover':_TEXT,'overview':_TEXT})
+AGRICULTURE_RESPONSE_SCHEMA['properties']['visual_suggestions']=_object({'cover':_TEXT,'overview':_TEXT,'how_it_works':_TEXT})
 
 def simple_id(value):
     return isinstance(value,str) and bool(re.fullmatch('[a-z][a-z0-9_-]{0,47}',value))
@@ -88,55 +90,89 @@ def valid_agriculture_diagram(d,steps):
     return (not(d['process_step_ids'] or d['season_stages'] or d['layers'] or d['connections'])
             and bool(d['comparison_basis']) and 2<=len(d['comparisons'])<=3)
 
-def ensure_agriculture_photo_plan(fact):
-    """Fill an omitted search plan from article fields, without inventing subjects.
-
-    Keep nonempty model plans intact. These are search requests, not assertions that
-    a provider has an exact photograph of this practice or place.
-    """
-    if fact.get('article_type') != 'agriculture_lesson':return False
+def ensure_agriculture_photo_plan(fact,expand=False):
+    """Append subject-derived requests; existing indexes and ready credits remain stable."""
+    if fact.get('article_type')!='agriculture_lesson':return False
     lesson=fact.get('agriculture_lesson')
-    if not isinstance(lesson,dict) or lesson.get('photos'):return False
-    if lesson.get('photos') not in (None,[]):return False
-    def phrase(value):
-        return ' '.join(value.split())[:160].strip() if isinstance(value,str) else ''
+    if not isinstance(lesson,dict):return False
+    old=lesson.get('photos')
+    if old not in (None,[]) and (not expand or not isinstance(old,list)):return False
+    if old and any(not isinstance(p,dict) or not simple_id(p.get('id')) or not p.get('section_id') for p in old):return False
+    media=fact.get('agriculture_media') or {}
+    if old and media.get('photo_plan_version')==2:return False
+    def phrase(value):return ' '.join(value.split())[:160].strip() if isinstance(value,str) else ''
     identity=lesson.get('identity') if isinstance(lesson.get('identity'),dict) else {}
     subject=phrase(identity.get('name')) or phrase(fact.get('topic'))
     if not subject:return False
-    def queries(*values):
-        result=[]
-        for value in values:
-            value=phrase(value)
-            if value and value.casefold() not in {q.casefold() for q in result}:result.append(value)
-        return result[:2]
+    plan=list(old or []);seen={(p.get('section_id'),p.get('step_id'),p.get('subject','').casefold()) for p in plan if isinstance(p,dict)}
+    def add(section,kind,label,queries,step=None):
+        label=phrase(label);key=(section,step,label.casefold())
+        if not label or key in seen or len(plan)>=18:return
+        q=list(dict.fromkeys(phrase(v) for v in queries if phrase(v)))[:3]
+        if not q:return
+        name='fallback_'+section+'_'+str(len(plan))
+        while any(p.get('id')==name for p in plan):name+='x'
+        plan.append(dict(id=name,section_id=section,kind=kind,step_id=step,subject=label,queries=q));seen.add(key)
     plain=phrase(re.sub(r'[^\w\s]',' ',subject).replace('_',' '))
-    plan=[dict(id='fallback_overview',section_id='overview',kind='process',step_id=None,
-        subject=subject,queries=queries(subject,plain))]
+    simpler=[]
+    terms=set(plain.casefold().split())
+    if 'rice' in terms and any(word.startswith('fish') for word in terms):simpler=['rice fish culture','paddy fish farming']
+    add('overview','process',subject,[subject,plain,*simpler][-3:] if simpler else [subject,plain])
     context=lesson.get('field_context') if isinstance(lesson.get('field_context'),dict) else {}
-    crops=context.get('crops') if isinstance(context.get('crops'),list) else []
-    crops=[phrase(c) for c in crops if phrase(c)]
-    if crops:
-        # Crop images illustrate the context, never impersonate the named practice.
-        crop=crops[0]
-        plan.append(dict(id='fallback_crop',section_id='context',kind='crop',step_id=None,
-            subject=crop,queries=queries(crop+' farming',crop+' crop')))
+    for crop in (context.get('crops') or [])[:4]:
+        if phrase(crop):add('context','crop',crop,[crop+' farming',crop+' crop',crop])
+    for step in (lesson.get('process_steps') or [])[:6]:
+        if isinstance(step,dict) and simple_id(step.get('id')):
+            title=phrase(step.get('title'))
+            add('process','process',subject+' '+title,[plain+' '+title,title+' farming',simpler[0] if simpler else plain],step['id'])
     case=lesson.get('indian_case_study') if isinstance(lesson.get('indian_case_study'),dict) else {}
     place=phrase(case.get('place'))
-    if place:
-        plan.append(dict(id='fallback_place',section_id='case',kind='named_place',step_id=None,
-            subject=place,queries=queries(place,phrase(re.sub(r'[^\w\s]',' ',place)))))
+    if place:add('case','named_place',place,[place,phrase(re.sub(r'[^\w\s]',' ',place))])
+    # Explain the supported practice in these sections; do not invent a photograph of a claimed outcome.
+    add('tradeoffs','process',subject,[plain,plain+' farming'])
+    add('limits','process',subject,[plain,plain+' field'])
+    if plan==old:return False
     lesson['photos']=plan
-    media=fact.get('agriculture_media')
-    if not isinstance(media,dict):media={};fact['agriculture_media']=media
-    media.update(photo_plan_version=1,photo_plan_source='fallback')
+    if not isinstance(fact.get('agriculture_media'),dict):fact['agriculture_media']={}
+    fact['agriculture_media'].update(photo_plan_version=2,photo_plan_source='expanded' if old else 'fallback')
     return True
 
+
+def ensure_agriculture_science_image(fact):
+    """Add one conceptual mechanism illustration to explicit legacy media retries."""
+    if fact.get('article_type')!='agriculture_lesson':return False
+    visuals=fact.setdefault('visual_suggestions',{})
+    if visuals.get('how_it_works'):return False
+    l=fact.get('agriculture_lesson') or {}
+    idea=l.get('central_idea') or fact.get('core_mechanics')
+    if not isinstance(idea,str) or not idea.strip():return False
+    visuals['how_it_works']=('Create one educational conceptual diagram explaining this farming mechanism: '+idea[:1800]+
+        '. Show the relevant materials and organisms, with clear arrows for actual movements and relationships. '
+        'Use before/after panels or a cross-section only where appropriate. Do not invent chemical bonds, numerical '
+        'measurements, yield claims or laboratory evidence. Use accurate short labels and a concise legend. Conceptual scale.')
+    details=fact.setdefault('image_details',[])
+    if not any(p.get('slot')=='how_it_works' for p in details):details.append(dict(slot='how_it_works',placement='explanation',
+        alt='Conceptual illustration of the farming mechanism',caption='How the farming system works — conceptual illustration.',learning_purpose=idea[:600]))
+    fact.setdefault('agriculture_media',{}).update(version=2,generated_limit=3,generated_slots=['cover','overview','how_it_works'])
+    return True
+
+
+def validate_agriculture_images(fact):
+    visuals=fact.get('visual_suggestions',{})
+    if not visuals.get('how_it_works'):return validate_india_images(fact)
+    expected={'cover','overview','how_it_works'}
+    if set(visuals)!=expected or any(not isinstance(visuals[k],str) or not visuals[k].strip() for k in expected):return False
+    details=fact.get('image_details',[])
+    return len(details)==2 and {d.get('slot') for d in details}=={'overview','how_it_works'} and all(
+        d.get('placement')==('overview' if d.get('slot')=='overview' else 'explanation') and all(isinstance(d.get(k),str) and d[k].strip() for k in ('alt','caption','learning_purpose')) for d in details)
+
 def agriculture_photo_entries(fact):
-    return [dict(p,key=f'agriculture_photo_{i}') for i,p in enumerate(fact.get('agriculture_lesson',{}).get('photos',[])[:6])]
+    return [dict(p,key=f'agriculture_photo_{i}') for i,p in enumerate(fact.get('agriculture_lesson',{}).get('photos',[])[:18])]
 
 def validate_agriculture_content(fact):
     try:
-        if not _shape(fact,AGRICULTURE_RESPONSE_SCHEMA) or not validate_india_images(fact):return False
+        schema=AGRICULTURE_RESPONSE_SCHEMA if fact.get('visual_suggestions',{}).get('how_it_works') else LEGACY_AGRICULTURE_RESPONSE_SCHEMA
+        if not _shape(fact,schema) or not validate_agriculture_images(fact):return False
         l=fact['agriculture_lesson'];sources=fact['sources']
         if not sources or not _unique_ids(sources):return False
         ids={s['id'] for s in sources}
@@ -161,33 +197,24 @@ def validate_agriculture_content(fact):
             if m['kind']=='reported' and any(m[k] is None for k in ('place','period','as_of')):return False
             if m['as_of'] is not None and (not re.fullmatch(r'\d{4}-\d{2}-\d{2}',m['as_of']) or date.fromisoformat(m['as_of'])>date.today()):return False
         photos=l['photos'];step_ids={s['id'] for s in steps}
-        if not 1<=len(photos)<=6 or not _unique_ids(photos) or len({p['section_id'] for p in photos})!=len(photos):return False
-        return all(simple_id(p['id']) and 1<=len(p['queries'])<=2 and all(len(q)<=160 for q in p['queries'])
+        if not 1<=len(photos)<=18 or not _unique_ids(photos):return False
+        if fact.get('visual_suggestions',{}).get('how_it_works'):
+            if not {'overview','context','process','case','tradeoffs','limits'}<={p['section_id'] for p in photos}:return False
+            if not step_ids<={p['step_id'] for p in photos if p['section_id']=='process'}:return False
+        return all(simple_id(p['id']) and 1<=len(p['queries'])<=3 and all(len(q)<=160 for q in p['queries'])
             and (p['step_id'] is None or (p['section_id']=='process' and p['step_id'] in step_ids)) for p in photos)
     except (KeyError,TypeError,ValueError,OverflowError):return False
 
 def prepare_agriculture_media(fact):
-    fact['visual_suggestions']={k:v for k,v in fact['visual_suggestions'].items() if k in ('cover','overview')}
+    fact['visual_suggestions']={k:v for k,v in fact['visual_suggestions'].items() if k in ('cover','overview','how_it_works')}
     fact['images']={};fact['image_credits']={}
-    fact['agriculture_media']={'version':1,'generated_limit':2,'generated_slots':['cover','overview'],'photo_timeout_seconds':720,
-        'photo_plan_version':1,'photo_plan_source':fact.get('agriculture_media',{}).get('photo_plan_source','model')}
+    slots=['cover','overview']+(['how_it_works'] if fact['visual_suggestions'].get('how_it_works') else [])
+    fact['agriculture_media']={'version':2,'generated_limit':len(slots),'generated_slots':slots,'photo_timeout_seconds':720,
+        'photo_plan_version':2,'photo_plan_source':fact.get('agriculture_media',{}).get('photo_plan_source','model')}
     fact['agriculture_validation']={'structure_checked':True,'diagram_references_checked':True,
         'source_verification':'not_performed','agronomic_verification':'not_performed','measurement_verification':'not_performed'}
 
-AGRICULTURE_IMAGE_INSTRUCTIONS='''AGRICULTURE IMAGE PLAN overrides the ordinary generated-image plan.
-Generate exactly TWO conceptual illustrations: cover and overview/card. Return one image_details record
-for overview with placement overview, caption, alt and learning_purpose. Cover: coherent farming scene,
-subject center-right, quiet left for title, mobile-safe crop, no lettering or fabricated documentary claims.
-Overview gives a different conceptual summary. Do not generate fake field trials, numerical charts,
-diagnostic disease photographs or precise agronomic diagrams; the UI renders structured diagrams.
-Require one to six useful documentary photo-search requests, each bound to one section. Never return
-an empty photos list. Include the main practice, relevant crop/material/tool and a named case location
-when useful; each request must teach a distinct part of the lesson. Provide kind, subject,
-nullable step_id and 1-2 exact concise queries. Only process photos may reference a process step.
-Named people, named places and historical objects use Commons only. Do not use stock portraits for named
-farmers or researchers. Popular Unsplash picks remain at the END of the existing carousel, never inline.
-Photos never trigger extra generated images. Omit irrelevant stock photography.
-'''
+AGRICULTURE_IMAGE_INSTRUCTIONS='AGRICULTURE IMAGE PLAN overrides the ordinary generated-image plan.\nGenerate exactly THREE conceptual illustrations: cover, overview/card and how_it_works.\nCover: one coherent farming scene with a mobile-safe subject centre-right and quiet space for the title.\nOverview: a distinct visual summary legible as a discovery card. Science/how_it_works: explain ONE actual\nmechanism from the lesson using an accurate cross-section, before/after states or material/organism flows.\nWrite a detailed standalone prompt naming the mechanism, components, causal relationships, flow arrows,\nshort accurate labels and a legend. State conceptual scale. No invented bonds, measured results, yield\nclaims, fake field trials or diagnostic evidence. Keep geographical and historical article claims truthful.\nimage_details has overview/placement overview and how_it_works/placement explanation, with alt, caption\nand learning_purpose. Illustrations are labelled conceptual and do not replace sourced explanation.\nRequest 8-18 documentary photographs across overview, context, process, case, tradeoffs and limits.\nAllow multiple requests per section. Give each key process step its own photo request bound by step_id;\ninclude relevant crops, tools, materials and an exact case location. Each request has 2-3 distinct concise\nqueries: precise/local subject, crop or equipment term, and a simpler factual search. Do not invent names.\nNamed places, people and historical objects use Wikimedia only. Sections use Wikimedia photos;\na separate Unsplash/Pixabay pool supplies the end carousel, with text-only AI relevance ranking.\nNever use generic portraits to represent named farmers. Photos cannot prove outcomes, trial data or\nlocal applicability. Show relevant materials/practices, never unrelated agricultural stock filler.\n'
 
 def build_agriculture_prompt(blocklist):
     return f'''Create ONE agriculture_lesson, category agriculture, schema_version 2.0.

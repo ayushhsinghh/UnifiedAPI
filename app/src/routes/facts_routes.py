@@ -189,23 +189,27 @@ async def process_fact_generation_task(
         asyncio.create_task(_background_image_task(visuals,stored_hash,article=article))
 
 
-def _with_article_photo_plan(article, content_hash):
+def _with_article_photo_plan(article, content_hash, repair_generated=False):
     """Repair legacy plans before scheduling so history and job polling can bind photos."""
     category={'agriculture_lesson':'agriculture','nature_lesson':'nature','drinks_lesson':'drinks'}.get(article.get('article_type'))
     if not category:return article
     from copy import deepcopy
-    from src.facts.agriculture import ensure_agriculture_photo_plan
+    from src.facts.agriculture import ensure_agriculture_photo_plan,ensure_agriculture_science_image
     from src.facts.drinks import ensure_drinks_photo_plan
     from src.facts.nature import ensure_nature_photo_plan
     ensure={'agriculture':ensure_agriculture_photo_plan,'nature':ensure_nature_photo_plan,'drinks':ensure_drinks_photo_plan}[category]
     save={'agriculture':save_agriculture_photo_plan,'nature':save_nature_photo_plan,'drinks':save_drinks_photo_plan}[category]
     prepared=deepcopy(article)
-    if not ensure(prepared):return article
-    if save(content_hash,prepared):return prepared
+    changed=ensure(prepared,expand=True) if category=='agriculture' else ensure(prepared)
+    if category=='agriculture' and repair_generated:changed=ensure_agriculture_science_image(prepared) or changed
+    if not changed:return article
+    saved=save(content_hash,prepared,previous_photos=article.get('agriculture_lesson',{}).get('photos')) if category=='agriculture' else save(content_hash,prepared)
+    if saved:return prepared
     # Another retry may have installed its plan first. Use that exact persisted plan.
     stored=get_fact_by_hash(content_hash) or {}
     current=stored.get('full_response',{})
-    if current.get('article_type')==category+'_lesson' and current.get(category+'_lesson',{}).get('photos'):return current
+    if current.get('article_type')==category+'_lesson' and current.get(category+'_lesson',{}).get('photos'):
+        if category!='agriculture' or not repair_generated or current.get('visual_suggestions',{}).get('how_it_works'):return current
     raise HTTPException(status_code=503,detail='Could not save the photo-search plan. Please retry.')
 
 
@@ -340,7 +344,8 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
     for key, brief in IMAGE_SECTION_BRIEFS.items():
         if photos_only:continue
         if is_drinks and key not in ('cover','overview','how_it_works'):continue
-        if (is_india or is_food or is_fashion or is_geography or is_technology or is_economics or is_agriculture or is_nature) and key not in ('cover','overview'):continue
+        if is_agriculture and key not in ('cover','overview','how_it_works'):continue
+        if (is_india or is_food or is_fashion or is_geography or is_technology or is_economics or is_nature) and key not in ('cover','overview'):continue
         if key in expanded_scenes:continue
         if is_country and key not in {'cover','overview','how_it_works','explanation_2','explanation_3','explanation_4','explanation_5','explanation_6'}:
             continue
@@ -366,7 +371,7 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
         select_photos={'food':select_food_photos,'fashion':select_fashion_photos,'geography':select_geography_photos,'technology':select_technology_photos,'economics':select_economics_photos,'agriculture':select_agriculture_photos,'nature':select_nature_photos,'drinks':select_drinks_photos}[prefix]
         async def process_editorial_photos():
             entries={'food':food_photo_entries,'fashion':fashion_photo_entries,'geography':geography_photo_entries,'technology':technology_photo_entries,'economics':economics_photo_entries,'agriculture':agriculture_photo_entries,'nature':nature_photo_entries,'drinks':drinks_photo_entries}[prefix](article)
-            scene_limit=12 if is_drinks else 6
+            scene_limit=12 if is_drinks or is_agriculture else 6
             keys=[p['key'] for p in entries]+[f'{prefix}_scene_{n}' for n in range(scene_limit)]
             state={'plan_source':article.get(prefix+'_media',{}).get('photo_plan_source','model')} if is_agriculture or is_nature or is_drinks else {}
             def report(value):
@@ -385,8 +390,8 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
                 extras=[key for key in ready if key.startswith(prefix+'_scene_')]
                 for p in selected:
                     if p['source_url'] in used:continue
-                    item=None if p.get('popular_pick') or p.get('drinks_gallery_only') else next((entry for entry in entries if entry['id'] in p.get(prefix+'_request_ids',[]) and entry['key'] not in ready),None)
-                    if is_drinks and article.get('drinks_lesson',{}).get('content_version')==2:
+                    item=None if p.get('popular_pick') or p.get('drinks_gallery_only') or p.get('agriculture_gallery_only') else next((entry for entry in entries if entry['id'] in p.get(prefix+'_request_ids',[]) and entry['key'] not in ready),None)
+                    if is_agriculture or is_drinks and article.get('drinks_lesson',{}).get('content_version')==2:
                         if item is not None and p.get('provider')!='wikimedia':continue
                         if item is None and p.get('provider') not in ('unsplash','pixabay'):continue
                     gallery_limit=scene_limit if p.get('popular_pick') else scene_limit-popular_slots
@@ -803,7 +808,7 @@ async def retry_image_generation(
     if not fact_doc:
         raise HTTPException(status_code=404, detail="Fact not found")
         
-    full_response = _with_article_photo_plan(fact_doc.get("full_response", {}),content_hash)
+    full_response = _with_article_photo_plan(fact_doc.get("full_response", {}),content_hash,repair_generated=not photos_only)
     visual_suggestions = full_response.get("visual_suggestions", {})
     if not visual_suggestions and not photos_only:
         raise HTTPException(status_code=400, detail="No visual suggestions available for this fact")

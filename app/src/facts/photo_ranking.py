@@ -194,6 +194,7 @@ async def rank_photos(fact,photos,*,client=None,report=lambda state:None):
     if requests is not None:
         prompt+='\nFor this editorial lesson, scene MUST be one exact photos request id from the brief. Select a photo only for that requested subject and section. Cover complementary requests when metadata supports them. Return fewer than ten freely; there is no minimum for this lesson.'
     if editorial=='drinks':prompt+='\nPrefer Wikimedia when equally relevant. Match exact named drinks, ingredients and tools, not just a similar glass. Variations must match their own request. Preserve caption truth; a generic preparation image does not document an historical era.'
+    if editorial=='agriculture':prompt+='\nA crop, material or process photograph may illustrate the explained general farming mechanism when its metadata supports it. It need not be from the named case location unless the request kind is named_place. Keep captions truthful: never present a general rice-fish field as verified Apatani documentary evidence, and never infer trial outcomes or measured benefits from a photograph.'
     if owned:
         import openai
         from configs.config import get_config
@@ -262,8 +263,8 @@ async def select_economics_photos(fact,*,report=lambda state:None,fetch=None,com
 
 async def select_agriculture_photos(fact,*,report=lambda state:None,fetch=None,commons=None,rank=None,excluded=()):
     from .agriculture import agriculture_photo_entries,ensure_agriculture_photo_plan
-    ensure_agriculture_photo_plan(fact)
-    return await _select_editorial_photos(fact,agriculture_photo_entries(fact),'agriculture_request_ids',report=report,fetch=fetch,commons=commons,rank=rank,excluded=excluded)
+    ensure_agriculture_photo_plan(fact,expand=True)
+    return await _select_split_editorial_photos(fact,agriculture_photo_entries(fact),'agriculture',report=report,fetch=fetch,commons=commons,rank=rank,excluded=excluded)
 
 async def select_nature_photos(fact,*,report=lambda state:None,fetch=None,commons=None,rank=None,excluded=()):
     from .nature import nature_photo_entries,ensure_nature_photo_plan
@@ -276,24 +277,27 @@ async def select_drinks_photos(fact,*,report=lambda state:None,fetch=None,common
     entries=drinks_photo_entries(fact)
     if fact.get('drinks_lesson',{}).get('content_version')!=2:
         return await _select_editorial_photos(fact,entries,'drinks_request_ids',report=report,fetch=fetch,commons=commons,rank=rank,excluded=excluded)
+    return await _select_split_editorial_photos(fact,entries,'drinks',report=report,fetch=fetch,commons=commons,rank=rank,excluded=excluded)
+
+async def _select_split_editorial_photos(fact,entries,category,*,report,fetch=None,commons=None,rank=None,excluded=()):
     # Independent pools: documentary matches cannot consume the stock gallery slots.
-    gallery_entries=[p for p in entries if p['section_id'] in ('overview','modern_making','ingredients','recipe','variations','serving') and p['kind'] not in ('named_place','person','historical_object')]
+    gallery_entries=[p for p in entries if p['section_id'] in ('overview','context','process','tradeoffs','limits','modern_making','ingredients','recipe','variations','serving') and p['kind'] not in ('named_place','person','historical_object')]
     states={'sections':{},'gallery':{}}
     def progress(flow,value):
         states[flow].update(value)
         report({'flows':{name:dict(state) for name,state in states.items()}})
     async def select(flow,requests,source):
         try:
-            photos=await _select_editorial_photos(fact,requests,'drinks_request_ids',report=lambda value:progress(flow,value),fetch=fetch,commons=commons,rank=rank,excluded=excluded,photo_sources=source)
+            photos=await _select_editorial_photos(fact,requests,category+'_request_ids',report=lambda value:progress(flow,value),fetch=fetch,commons=commons,rank=rank,excluded=excluded,photo_sources=source)
             progress(flow,{'status':'completed' if photos else 'insufficient','selected_count':len(photos)})
             return [{**p,'selection_mode':p.get('selection_mode',states[flow].get('mode','text_ranking'))} for p in photos]
         except Exception as error:
-            logger.warning('Drinks %s photo selection failed (%s)',flow,type(error).__name__)
+            logger.warning('%s %s photo selection failed (%s)',category,flow,type(error).__name__)
             progress(flow,{'status':'failed','reason':'photo_lookup_failed'})
             return []
     sections,gallery=await asyncio.gather(select('sections',entries,'commons'),select('gallery',gallery_entries,'stock'))
     # Stock metadata is ranked against the same drink-specific subjects, but it never binds inline.
-    return sections+[{**p,'drinks_request_ids':[],'drinks_gallery_only':True} for p in gallery]
+    return sections+[{**p,category+'_request_ids':[],category+'_gallery_only':True} for p in gallery]
 
 async def _select_editorial_photos(fact,entries,request_key,*,report,fetch=None,commons=None,rank=None,excluded=(),photo_sources=None):
     """Small, scene-bound pool; only Commons may identify historical objects or people."""
@@ -304,7 +308,7 @@ async def _select_editorial_photos(fact,entries,request_key,*,report,fetch=None,
     rank=rank or rank_photos
     drinks=fact.get('article_type')=='drinks_lesson'
     commons_only=photo_sources=='commons' or (photo_sources is None and drinks and fact.get('drinks_lesson',{}).get('content_version')==2)
-    pool={};sources=set(excluded);semaphore=asyncio.Semaphore(6 if drinks else 3);popular=PopularUnsplash(excluded)
+    pool={};sources=set(excluded);semaphore=asyncio.Semaphore(6 if drinks or fact.get('article_type')=='agriculture_lesson' else 3);popular=PopularUnsplash(excluded)
     if not entries:return []
     searched=set()
     async def collect(item,query,source):
@@ -323,9 +327,12 @@ async def _select_editorial_photos(fact,entries,request_key,*,report,fetch=None,
             providers=(fetch,) if photo_sources=='stock' else (commons,) if commons_only or item.get('kind') in ('historical_object','person','named_place','satellite','named_model','screenshot','named_species','microscopy') else (commons,fetch)
             searches.extend(collect(item,query,source) for source in providers)
         incoming={};old_sources={p['source_url'] for p in pool.values()}
-        for item,photos in await asyncio.gather(*searches):
-            popular.add(photos)
-            for photo in photos:
+        batches=await asyncio.gather(*searches)
+        for _,photos in batches:popular.add(photos)
+        # Give every Agriculture request candidates before the 240-photo cap is reached.
+        records=([(item,photo) for n in range(max((len(photos) for _,photos in batches),default=0)) for item,photos in batches for photo in photos[n:n+1]]
+                 if fact.get('article_type')=='agriculture_lesson' else [(item,photo) for item,photos in batches for photo in photos])
+        for item,photo in records:
                 if photo['source_url'] in sources:continue
                 photo_id=by_source.get(photo['source_url'],photo['provider_id'])
                 prior=incoming.get(photo_id,pool.get(photo_id,photo))
@@ -337,7 +344,7 @@ async def _select_editorial_photos(fact,entries,request_key,*,report,fetch=None,
         # New search results get room even when the first pool reached its cap.
         pool=dict(list({**incoming,**pool}.items())[:240])
         return len({p['source_url'] for p in pool.values()}-old_sources)
-    await search([(item,query) for item in entries for query in item['queries'][:4 if drinks else 2]])
+    await search([(item,query) for item in entries for query in item['queries'][:4 if drinks else 3 if fact.get('article_type')=='agriculture_lesson' else 2]])
     def provider_counts():
         return {provider:sum(photo.get('provider')==provider for photo in pool.values())
                 for provider in ('unsplash','pixabay','wikimedia')}

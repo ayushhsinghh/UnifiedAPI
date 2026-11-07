@@ -21,7 +21,7 @@ def fact_image_keys(fact):
         return [key for key in ('cover','overview') if fact.get('visual_suggestions',{}).get(key)]+[p['key'] for p in nature_photo_entries(fact)]+[f'nature_scene_{n}' for n in range(6)]
     if fact.get('article_type')=='agriculture_lesson':
         from src.facts.agriculture import agriculture_photo_entries
-        return [key for key in ('cover','overview') if fact.get('visual_suggestions',{}).get(key)]+[p['key'] for p in agriculture_photo_entries(fact)]+[f'agriculture_scene_{n}' for n in range(6)]
+        return expected_image_keys(fact.get('visual_suggestions',{}))+[p['key'] for p in agriculture_photo_entries(fact)]+[f'agriculture_scene_{n}' for n in range(12)]
     if fact.get('article_type')=='economics_lesson':
         from src.facts.economics import economics_photo_entries
         return [key for key in ('cover','overview') if fact.get('visual_suggestions',{}).get(key)]+[p['key'] for p in economics_photo_entries(fact)]+[f'economics_scene_{n}' for n in range(6)]

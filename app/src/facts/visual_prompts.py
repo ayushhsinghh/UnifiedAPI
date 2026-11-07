@@ -165,6 +165,9 @@ def build_section_image_context(key, article=None):
             lesson=article.get('agriculture_lesson') or {}
             excerpt['agriculture_context']={field:lesson.get(field) for field in ('identity','central_idea','field_context','process_steps')}
             lines.append('Agriculture conceptual illustration: preserve crop, material and field context. No fabricated trials, numerical charts, disease diagnoses or misleading documentary claims.')
+            if key=='how_it_works':
+                lines[1]='Explain the actual farming mechanism with clear labelled relationships and a conceptual cross-section or before/after view.'
+                lines[2]=_VISUAL_RULES.replace('Include no text, letters, numbers, labels, captions, logos, watermarks, or fake writing.', 'Use only short accurate educational labels and a concise legend. No invented numerical data, logos or documentary evidence.')
         if article.get('article_type') == 'economics_lesson':
             lesson=article.get('economics_lesson') or {}
             excerpt['economics_context']={field:lesson.get(field) for field in ('identity','central_idea','opening_scenario','mechanism')}

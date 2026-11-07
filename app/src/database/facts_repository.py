@@ -216,16 +216,18 @@ def set_fact_image_state(content_hash: str, key: str, status: str, url=None, cre
         {"content_hash": content_hash}, change)
 
 
-def save_agriculture_photo_plan(content_hash: str, fact: dict) -> bool:
-    """Persist only a missing legacy plan; preserve article text and ready assets."""
+def save_agriculture_photo_plan(content_hash: str, fact: dict, previous_photos=None) -> bool:
+    """Compare-and-set a repaired/expanded plan; preserve every ready asset."""
     path='full_response.agriculture_lesson.photos'
-    result=get_db()[cfg.DAILY_FACTS_COLLECTION].update_one({
-        'content_hash':content_hash,'full_response.article_type':'agriculture_lesson',
-        '$or':[{path:[]},{path:None}]}, {'$set':{
-            path:fact['agriculture_lesson']['photos'],
-            'full_response.agriculture_media.photo_plan_version':1,
-            'full_response.agriculture_media.photo_plan_source':'fallback'}})
-    return result.matched_count == 1
+    query={'content_hash':content_hash,'full_response.article_type':'agriculture_lesson'}
+    if previous_photos is None:query['$or']=[{path:[]},{path:None}]
+    else:query[path]=previous_photos
+    updates={path:fact['agriculture_lesson']['photos'],'full_response.agriculture_media':fact['agriculture_media']}
+    if fact.get('visual_suggestions',{}).get('how_it_works'):
+        updates['full_response.visual_suggestions']=fact['visual_suggestions']
+        updates['full_response.image_details']=fact['image_details']
+    result=get_db()[cfg.DAILY_FACTS_COLLECTION].update_one(query,{'$set':updates})
+    return result.matched_count==1
 
 
 def save_nature_photo_plan(content_hash: str, fact: dict) -> bool:
