@@ -3,7 +3,7 @@ from pathlib import Path
 from unittest.mock import AsyncMock,Mock
 APP=Path(__file__).resolve().parents[1]/'app';sys.path.insert(0,str(APP))
 pkg=types.ModuleType('src.facts');pkg.__path__=[str(APP/'src/facts')];sys.modules.setdefault('src.facts',pkg)
-from src.facts.drinks import validate_drinks_content,ensure_drinks_photo_plan,prepare_drinks_media
+from src.facts.drinks import validate_drinks_content,ensure_drinks_photo_plan,prepare_drinks_media,DRINKS_LESSON_SCHEMA,build_drinks_prompt
 from src.facts.photo_ranking import select_drinks_photos,rank_photos,PhotoRankingResult
 from src.facts.lifecycle import fact_image_keys
 from test_fact_evidence_lifecycle import routes_module,generator_module
@@ -13,6 +13,24 @@ from test_photo_ranking import photo as stock
 def fixture():return json.loads((Path(__file__).parent/'fixtures/drinks_lesson.json').read_text())
 def fixture_v2():return json.loads((Path(__file__).parent/'fixtures/drinks_lesson_v2.json').read_text())
 class DrinksTests(unittest.TestCase):
+ def test_optional_editorial_notes_do_not_require_filler_or_break_saved_lessons(self):
+  for factory in (fixture,fixture_v2):
+   for value in (None,'omitted'):
+    f=factory();l=f['drinks_lesson']
+    blocks=[(l['identity'],'strength_context'),(l['origin'],'evidence_and_uncertainty'),*[(p,'limits') for p in l['science']],*[(p,'evidence_and_uncertainty') for p in l['variations']]]
+    for block,key in blocks:
+     if value=='omitted':block.pop(key,None)
+     else:block[key]=value
+    self.assertTrue(validate_drinks_content(f))
+   bad=factory();bad['drinks_lesson']['science'][0]['limits']=123;self.assertFalse(validate_drinks_content(bad))
+  for block,key in [(DRINKS_LESSON_SCHEMA['properties']['origin'],'evidence_and_uncertainty'),(DRINKS_LESSON_SCHEMA['properties']['science']['items'],'limits')]:
+   self.assertNotIn(key,block['required']);self.assertTrue(block['properties'][key]['nullable'])
+ def test_editorial_prompt_preserves_accuracy_and_visible_preparation_cautions(self):
+  prompt=build_drinks_prompt([])
+  self.assertIn('Omit them or return null',prompt)
+  self.assertIn('Do not hide relevant uncertainty or make unsupported positive claims',prompt)
+  self.assertIn('Keep actual allergen, alcohol-content and preparation cautions',prompt)
+  self.assertIn('keep the primary India recipe alcoholic',prompt)
  def test_opening_hook_requires_complete_fields_and_resolving_sources(self):
   f=fixture_v2();self.assertTrue(validate_drinks_content(f))
   f['drinks_lesson']['opening_hook']={'heading':'Why does this glass lose its fizz?','introduction':'A Mojito combines citrus, mint and soda.','intriguing_detail':'Soda releases dissolved carbon dioxide after opening.','bridge_question':'How does gentle mixing help preserve bubbles?','source_ids':[f['sources'][0]['id']]}

@@ -34,6 +34,13 @@ DRINKS_LESSON_SCHEMA=_object({
  'takeaways':_strings(),'related_drinks':_strings(),
  'photos':{**_items(_object({'id':_TEXT,'section_id':{'type':'STRING','enum':list(SECTIONS)},'entry_id':NULL_TEXT,
      'kind':{'type':'STRING','enum':['drink','ingredient','process','named_place','person','historical_object']},'subject':_TEXT,'queries':_strings()})),'minItems':4,'maxItems':18}})
+# Notes are optional so the model never has to invent a caveat to fill a field.
+for block,key in [(DRINKS_LESSON_SCHEMA['properties']['identity'],'strength_context'),
+                  (DRINKS_LESSON_SCHEMA['properties']['origin'],'evidence_and_uncertainty'),
+                  (DRINKS_LESSON_SCHEMA['properties']['science']['items'],'limits'),
+                  (DRINKS_LESSON_SCHEMA['properties']['variations']['items'],'evidence_and_uncertainty')]:
+ block['properties'][key]=NULL_TEXT
+ block['required'].remove(key)
 DRINKS_RESPONSE_SCHEMA=deepcopy(PHYSICS_RESPONSE_SCHEMA)
 del DRINKS_RESPONSE_SCHEMA['properties']['physics_lesson'];DRINKS_RESPONSE_SCHEMA['required'].remove('physics_lesson')
 DRINKS_RESPONSE_SCHEMA['properties'].update(article_type={'type':'STRING','enum':['drinks_lesson']},drinks_lesson=DRINKS_LESSON_SCHEMA,
@@ -157,19 +164,19 @@ concrete supported detail. End with a short bridge_question answered explicitly 
 Do not repeat the cover hook, overview question or introduction. No clickbait, invented surprise or
 unsupported sensory/health claims. Resolve source_ids for factual statements. No image for this section.
 Use concrete drink-specific detail, not generic filler or repeated summaries. Explain cultural significance,
-country and region, invention story and competing accounts. Keep documented evidence separate from lore.
+country and region and the documented development of the drink. Include an invention story only when supported.
 production_evolution has historical and modern objects, each with context, equipment (1-8 names),
 steps (2-6 complete explanations), result, source_ids. Compare historical tools, ingredients and constraints
 with contemporary craft or commercial techniques and explain their effect on the finished drink.
 Retain then_and_now as a short comparison summary, not duplicated paragraphs. Production steps teach
-key controls rather than repeat the recipe. Historical gaps must be acknowledged, never filled with guesses.
+key controls rather than repeat the recipe. Omit unsupported historical details instead of filling paragraphs with what is unknown.
 For Indian adaptation prefer the requested drink with accessible local spirits/mixers when alcoholic;
 also explain a separately labelled alcohol-free direction. Include practical Desi substitutions, exact amounts,
 where the ingredient is commonly available, flavour tradeoffs and equipment alternatives without brand endorsements.
 Teach one accessible global cocktail, mocktail, wine, spirit, beer, fermented drink or regional beverage.
 Vary continents, alcoholic and non-alcoholic drinks. Use simple language and easy-to-medium depth.
 identity gives name/local_names/drink_type/country_names/region/alcohol_status/strength_context.
-Distinguish documented origin from disputed stories; never invent an inventor, date or national claim.
+Use supported origin information; never invent an inventor, date or national claim. One useful historical qualification is enough.
 Start hook/question/learning_goal, introduction explanation/what_makes_it_unique/cultural_role, origin
 account/evidence_and_uncertainty, then 2-6 history records id/period/event/why_it_changed. Explain the
 historical development, not just dates. then_and_now has earlier_method/modern_method/what_changed/
@@ -186,12 +193,11 @@ preparation/role/contains_alcohol boolean, substitutions ingredient_id/substitut
 with title/instruction/time_guidance/doneness_cue/ingredient_ids, allergens and relevant safety_notes.
 Give 2-20 measured ingredients and 2-12 steps using every ingredient. Include ice/water/soda quantities
 when used. Use Indian-available ingredients and practical household equipment; explain substitutions
-and their effect rather than claiming exact equivalence. preparation_type is home_mixed, serving_adaptation
+with the concrete change in acidity, sweetness, aroma or texture. preparation_type is home_mixed, serving_adaptation
 or alcohol_free_interpretation. recipe.alcohol_status must agree with its ingredients. Non-alcoholic
-recipes cannot use rum, wine, alcoholic bitters or other alcohol-containing ingredients. Explicitly label
-an alcohol-free interpretation rather than silently changing a classic. Do not claim bitters or fermented
+recipes cannot use rum, wine, alcoholic bitters or other alcohol-containing ingredients. Label a zero-proof recipe simply Alcohol-free version once; explain what ingredients it uses. Do not claim bitters or fermented
 products are alcohol-free without evidence. No invented ABV, health benefits, current prices or local
-legal drinking ages. strength_context explains recipe/brand variation. Do not encourage excessive intake.
+legal drinking ages. strength_context is optional: use it only for material alcohol-strength information the reader needs. Do not encourage excessive intake.
 Variations:1-6 id/name/place/difference/how_it_developed/evidence_and_uncertainty, explain transmission,
 local ingredients and cultural adaptation only when sourced. serving_context:glassware/pairing_and_customs/
 nullable alcohol_free_option/practical_notes. Give1-5 troubleshooting,1-3 knowledge_checks with answers,
@@ -199,4 +205,31 @@ nullable alcohol_free_option/practical_notes. Give1-5 troubleshooting,1-3 knowle
 producers for methods, museums/archives for history and scientific sources for mechanisms. No invented
 sources, quotations or claims of independent verification. Source lists only at the bottom. Root fields
 agree with the lesson. Photos never replace complete explanations; every section needs connected prose.
+
+READER-READY EDITORIAL RULES (apply throughout this response, including root compatibility fields):
+Write a finished beginner article that teaches the drink. Lead with what happens, how it tastes, how to
+make it and why the method works. Every sentence must add a concrete fact, useful explanation or action.
+Do not fill required prose with disclaimers, generic variability or statements about missing evidence.
+Keep internal source/structure verification separate from article prose; never claim verification you did not perform.
+origin.evidence_and_uncertainty, variations[].evidence_and_uncertainty, science[].limits and
+identity.strength_context are OPTIONAL and nullable. Omit them or return null when they add nothing useful.
+When the origin is genuinely disputed and this changes the story, add one short specific note in origin;
+do not repeat it in the timeline, earlier method, variations, recipe or takeaways. Do not manufacture a
+first recipe, ratio or inventor to sound certain. If historical preparation is poorly documented, describe
+a supported early published preparation, with its period/source, rather than guessing or listing unknowns.
+For product differences explain their direction and practical effect: which ingredient adds sweetness,
+bitterness, citrus aroma or body, and how the reader can adjust it. Avoid bare 'varies by gin' or
+'formulations vary'. For substitutions state the amount and actual taste effect, not 'not an exact match'.
+Explain science with observable cause and effect and an action when useful. Do not append artificial
+limitations such as 'not a prediction of exact bubble counts'. Use science.limits only for a specific
+condition that changes the explanation or a preparation choice; keep relevant handling guidance in the main text.
+For an alcoholic requested drink, keep the primary India recipe alcoholic with accessible commercial
+spirits and mixers. Offer an alcohol-free version separately; do not default to replacing the main drink.
+Use the label Alcohol-free version once, without repeatedly comparing it negatively with the classic.
+Keep actual allergen, alcohol-content and preparation cautions where they affect use. Do not insert
+unsolicited medicine comparisons such as 'modern tonic is a mixer, not medicine' into an ordinary recipe;
+if historical medicinal use is central, explain it accurately in its historical context, without health claims.
+Do not hide relevant uncertainty or make unsupported positive claims. Omit a weak, nonessential claim
+rather than replacing it with generic hedging. End with an editorial pass to remove repeated caveats,
+negative comparisons, filler and duplicated explanations. This review must not appear in the response.
 '''
