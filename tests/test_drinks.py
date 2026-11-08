@@ -14,6 +14,24 @@ def fixture():return json.loads((Path(__file__).parent/'fixtures/drinks_lesson.j
 def fixture_v2():return json.loads((Path(__file__).parent/'fixtures/drinks_lesson_v2.json').read_text())
 def fixture_v3():return json.loads((Path(__file__).parent/'fixtures/drinks_lesson_v3.json').read_text())
 class DrinksTests(unittest.TestCase):
+ def test_partial_photo_plan_repairs_missing_method_bindings_without_replacing_queries(self):
+  f=fixture_v3();l=f['drinks_lesson']
+  l['photos']=[p for p in l['photos'] if p['section_id']!='method']
+  retained=json.loads(json.dumps(l['photos']))
+  self.assertTrue(ensure_drinks_photo_plan(f));self.assertTrue(validate_drinks_content(f))
+  self.assertEqual(l['photos'][:len(retained)],retained)
+  self.assertEqual({p['id'] for p in l['making']['stages']},{p['entry_id'] for p in l['photos'] if p['section_id']=='method'})
+  self.assertEqual(f['drinks_media']['photo_plan_source'],'repaired')
+  self.assertFalse(ensure_drinks_photo_plan(f))
+ def test_full_photo_plan_reserves_missing_bindings_with_unique_request_ids(self):
+  f=fixture_v3();l=f['drinks_lesson']
+  l['photos']=[p for p in l['photos'] if p['section_id']!='method']
+  p=l['photos'][0]
+  while len(l['photos'])<30:l['photos'].append({**p,'id':'fallback_'+str(len(l['photos']))})
+  self.assertTrue(ensure_drinks_photo_plan(f));self.assertTrue(validate_drinks_content(f))
+  self.assertEqual(len(l['photos']),30)
+  self.assertEqual(len({p['id'] for p in l['photos']}),30)
+  self.assertFalse(ensure_drinks_photo_plan(f))
  def test_provider_schema_has_no_numeric_enums_and_keeps_integer_version(self):
   from src.facts.drinks import DRINKS_RESPONSE_SCHEMA,VERSION2_DRINKS_RESPONSE_SCHEMA
   def check(schema):
@@ -95,6 +113,28 @@ class DrinksTests(unittest.TestCase):
   f=fixture();f['drinks_lesson']['photos']=[];self.assertTrue(ensure_drinks_photo_plan(f));self.assertTrue(validate_drinks_content(f));plan=f['drinks_lesson']['photos']
   self.assertGreaterEqual(len({p['section_id'] for p in plan}),3);self.assertFalse(ensure_drinks_photo_plan(f));self.assertIs(plan,f['drinks_lesson']['photos'])
 class DrinksAsyncTests(unittest.IsolatedAsyncioTestCase):
+ async def test_gemini_drinks_json_mode_repairs_partial_plan_and_validates_content(self):
+  r=generator_module();f=fixture_v3()
+  f['drinks_lesson']['photos']=[p for p in f['drinks_lesson']['photos'] if p['section_id']!='method']
+  generate=AsyncMock(return_value=types.SimpleNamespace(parsed=None,text=json.dumps(f)))
+  r.genai.Client.return_value.aio.models.generate_content=generate
+  result=await r.generate_daily_fact('drinks',[])
+  self.assertIsNotNone(result);self.assertTrue(validate_drinks_content(result))
+  request=generate.call_args.kwargs
+  self.assertNotIn('response_schema',request['config'])
+  self.assertEqual(request['config']['response_mime_type'],'application/json')
+  self.assertIn('"drinks_lesson"',request['contents'])
+  self.assertIn('"content_version"',request['contents'])
+ async def test_openai_valid_article_survives_missing_method_photo_bindings(self):
+  from unittest.mock import patch
+  r=generator_module();f=fixture_v3()
+  f['drinks_lesson']['photos']=[p for p in f['drinks_lesson']['photos'] if p['section_id']!='method']
+  r.genai.Client.return_value.aio.models.generate_content=AsyncMock(side_effect=ValueError('provider unavailable'))
+  response=types.SimpleNamespace(choices=[types.SimpleNamespace(finish_reason='stop',message=types.SimpleNamespace(content=json.dumps(f),refusal=None))])
+  r.openai.AsyncOpenAI.return_value.chat.completions.create=AsyncMock(return_value=response)
+  with patch.object(r.asyncio,'sleep',new=AsyncMock()):
+   result=await r.generate_daily_fact('drinks',[])
+  self.assertIsNotNone(result);self.assertTrue(validate_drinks_content(result))
  async def test_openai_incomplete_response_is_not_accepted_as_a_fact(self):
   from unittest.mock import patch
   r=generator_module()

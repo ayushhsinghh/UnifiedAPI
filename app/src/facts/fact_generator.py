@@ -158,18 +158,27 @@ async def generate_daily_fact(
                     attempt + 1, model_name, category,
                 )
 
+                gemini_config = {
+                    "temperature": 0.9,
+                    "top_p": 0.95,
+                    "top_k": 40,
+                    "response_mime_type": "application/json",
+                }
+                gemini_prompt = prompt
+                if category == 'drinks':
+                    # Avoid schema-compilation failures for the large Drinks contract.
+                    # JSON mode avoids schema compilation; local validation still enforces it.
+                    gemini_prompt += "\n\nRETURN A VALID JSON OBJECT MATCHING THIS SCHEMA EXACTLY:\n" + json.dumps(response_schema)
+                else:
+                    gemini_config['response_schema'] = response_schema
                 response = await asyncio.wait_for(client.aio.models.generate_content(
                     model=model_name,
-                    contents=prompt,
-                    config={
-                        "temperature": 0.9,
-                        "top_p": 0.95,
-                        "top_k": 40,
-                        "response_mime_type": "application/json",
-                        "response_schema": response_schema,
-                    },
+                    contents=gemini_prompt,
+                    config=gemini_config,
                 ), timeout=_REQUEST_TIMEOUT_SECONDS)
                 fact = response.parsed
+                if fact is None:
+                    fact = json.loads(response.text) if response.text else None
             else:
                 openai_client = openai.AsyncOpenAI(api_key=cfg.OPENAI_API_KEY)
                 logger.debug(

@@ -113,10 +113,11 @@ def validate_drinks_images(f):
 def ensure_drinks_photo_plan(f):
  if f.get('article_type')!='drinks_lesson':return False
  l=f.get('drinks_lesson')
- if not isinstance(l,dict) or l.get('photos') not in (None,[]):return False
+ if not isinstance(l,dict):return False
  name=(l.get('identity') or {}).get('name') or f.get('topic')
  if not isinstance(name,str) or not name.strip():return False
  if l.get('content_version')==3:return _ensure_v3_photo_plan(f,name)
+ if l.get('photos') not in (None,[]):return False
  name=' '.join(name.split())[:100];plan=[]
  def add(section,entry,kind,subject,queries):
   q=list(dict.fromkeys(' '.join(v.split())[:160] for v in queries if isinstance(v,str) and v.strip()))[:4]
@@ -140,6 +141,9 @@ def ensure_drinks_photo_plan(f):
 
 
 def _ensure_v3_photo_plan(f,name):
+ existing=f['drinks_lesson'].get('photos')
+ if existing is None:existing=[]
+ if not isinstance(existing,list) or len(existing)>30 or any(not isinstance(p,dict) for p in existing):return False
  l=f['drinks_lesson'];name=' '.join(name.split())[:100];plan=[]
  def add(section,entry,kind,subject,queries):
   if len(plan)>=30:return
@@ -149,12 +153,37 @@ def _ensure_v3_photo_plan(f,name):
  add('overview',None,'drink',name,[name,name+' drink'])
  add('overview',None,'drink',name+' ingredients',[name+' ingredients',name+' glass'])
  add('recipe',None,'drink',name,[name+' preparation',name+' ingredients'])
- region=l['identity']['region'];add('origin',None,'named_place',region,[region,region+' '+name])
+ region=l.get('identity',{}).get('region') or name;add('origin',None,'named_place',region,[region,region+' '+name])
  add('serving',None,'drink',name,[name+' serving',name+' glass'])
  for p in l.get('ingredients',[]):add('ingredients',p['id'],'ingredient',p['name'],[p['name'],p['name']+' ingredient'])
  for p in l.get('making',{}).get('stages',[]):add('method',p['id'],'process',name+' '+p['title'],[name+' '+p['title'],name+' preparation'])
  for p in l.get('explore_drinks',[]):add('explore',p['id'],'drink',p['name'],[p['name'],p['name']+' drink'])
- l['photos']=plan;f.setdefault('drinks_media',{}).update(photo_plan_source='fallback',photo_plan_version=3)
+ # Repair partial plans too. Keep model queries and bindings; add only missing coverage.
+ key=lambda p:(p.get('section_id'),p.get('entry_id'))
+ merged=list(existing);covered={key(p) for p in merged}
+ ids={p.get('id') for p in merged};defaults=plan
+ def append(p):
+  p=dict(p);base=p['id'];suffix=1
+  while p['id'] in ids:
+   p['id']=base+'_'+str(suffix);suffix+=1
+  ids.add(p['id']);merged.append(p);covered.add(key(p))
+ for p in defaults:
+  if key(p) not in covered:append(p)
+ for p in defaults:
+  if len(merged)>=12:break
+  append(p)
+ if len(merged)>30:
+  # Reserve one request for every required subject before retaining optional extras.
+  required={key(p) for p in defaults};reserved=[]
+  for i,p in enumerate(merged):
+   if key(p) in required:reserved.append(i);required.remove(key(p))
+  keep=set(reserved)
+  for i in range(len(merged)):
+   if len(keep)>=30:break
+   keep.add(i)
+  merged=[p for i,p in enumerate(merged) if i in keep]
+ if merged==existing:return False
+ l['photos']=merged;f.setdefault('drinks_media',{}).update(photo_plan_source='repaired' if existing else 'fallback',photo_plan_version=3)
  return True
 
 def drinks_photo_entries(f):return [dict(p,key=f'drinks_photo_{i}') for i,p in enumerate(f.get('drinks_lesson',{}).get('photos',[])[:30])]
