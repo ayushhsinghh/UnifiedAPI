@@ -12,7 +12,24 @@ from test_photo_ranking import photo as stock
 
 def fixture():return json.loads((Path(__file__).parent/'fixtures/drinks_lesson.json').read_text())
 def fixture_v2():return json.loads((Path(__file__).parent/'fixtures/drinks_lesson_v2.json').read_text())
+def fixture_v3():return json.loads((Path(__file__).parent/'fixtures/drinks_lesson_v3.json').read_text())
 class DrinksTests(unittest.TestCase):
+ def test_third_edition_has_distinct_content_and_one_science_image(self):
+  f=fixture_v3();self.assertTrue(validate_drinks_content(f));prepare_drinks_media(f)
+  self.assertEqual(f['drinks_media']['version'],3);self.assertEqual(f['drinks_media']['generated_limit'],3)
+  l=f['drinks_lesson'];self.assertEqual(len(l['explore_drinks']),6);self.assertEqual(len(l['science']),1)
+  self.assertNotIn('production_evolution',l);self.assertNotIn('introduction',l)
+  for mutate in [lambda l:l['making']['stages'][0].update(id='missing'),lambda l:l['making'].update(evolution_kind='progress'),lambda l:l['explore_drinks'][0].update(source_ids=['missing']),lambda l:l['explore_drinks'][0].update(relationship='descendant'),lambda l:l['explore_drinks'][1].update(name=l['explore_drinks'][0]['name']),lambda l:l['photos'][0].update(entry_id='missing')]:
+   bad=fixture_v3();mutate(bad['drinks_lesson']);self.assertFalse(validate_drinks_content(bad))
+ def test_third_edition_repairs_photos_for_every_ingredient_stage_and_related_drink(self):
+  f=fixture_v3();f['drinks_lesson']['photos']=[];self.assertTrue(ensure_drinks_photo_plan(f));self.assertTrue(validate_drinks_content(f))
+  l=f['drinks_lesson']
+  for section,records in [('ingredients',l['ingredients']),('method',l['making']['stages']),('explore',l['explore_drinks'])]:
+   self.assertEqual({p['id'] for p in records},{p['entry_id'] for p in l['photos'] if p['section_id']==section})
+  p=l['photos'][0]
+  while len(l['photos'])<30:l['photos'].append({**p,'id':'extra_'+str(len(l['photos']))})
+  self.assertTrue(validate_drinks_content(f));self.assertIn('drinks_photo_29',fact_image_keys(f))
+  l['photos'].append({**p,'id':'overflow'});self.assertFalse(validate_drinks_content(f))
  def test_optional_editorial_notes_do_not_require_filler_or_break_saved_lessons(self):
   for factory in (fixture,fixture_v2):
    for value in (None,'omitted'):
@@ -61,6 +78,25 @@ class DrinksTests(unittest.TestCase):
   f=fixture();f['drinks_lesson']['photos']=[];self.assertTrue(ensure_drinks_photo_plan(f));self.assertTrue(validate_drinks_content(f));plan=f['drinks_lesson']['photos']
   self.assertGreaterEqual(len({p['section_id'] for p in plan}),3);self.assertFalse(ensure_drinks_photo_plan(f));self.assertIs(plan,f['drinks_lesson']['photos'])
 class DrinksAsyncTests(unittest.IsolatedAsyncioTestCase):
+ async def test_third_edition_ranker_accepts_thirty_metadata_matches(self):
+  f=fixture_v3();request=f['drinks_lesson']['photos'][0]['id'];photos=[photo(i) for i in range(30)]
+  payload={'selected':[dict(photo_id=p['provider_id'],score=90,scene=request,reason='Metadata matches the requested subject.') for p in photos],'retry_queries':[]}
+  create=AsyncMock(return_value=types.SimpleNamespace(choices=[types.SimpleNamespace(message=types.SimpleNamespace(content=json.dumps(payload)))]))
+  result=await rank_photos(f,photos,client=types.SimpleNamespace(chat=types.SimpleNamespace(completions=types.SimpleNamespace(create=create))))
+  self.assertEqual(len(result),30)
+ async def test_third_edition_generation_uses_new_contract_without_paid_calls(self):
+  r=generator_module();r.genai.Client.return_value.aio.models.generate_content=AsyncMock(return_value=types.SimpleNamespace(parsed=fixture_v3()))
+  f=await r.generate_daily_fact('drinks',[]);self.assertIsNotNone(f);self.assertEqual(f['drinks_media']['generated_limit'],3)
+  self.assertEqual(f['drinks_lesson']['content_version'],3)
+ async def test_third_edition_selects_thirty_commons_without_stock_consuming_slots(self):
+  f=fixture_v3();request=f['drinks_lesson']['photos'][0]['id']
+  async def rank(fact,pool,**kwargs):return [{**p,'drinks_request_ids':[request]} for p in pool]
+  commons=AsyncMock(return_value=[photo(i) for i in range(30)]);stock_fetch=AsyncMock(return_value=[stock(1)])
+  selected=await select_drinks_photos(f,commons=commons,fetch=stock_fetch,rank=rank)
+  self.assertEqual(len([p for p in selected if p.get('provider')=='wikimedia']),30)
+  self.assertTrue(any(p.get('drinks_gallery_only') for p in selected))
+  queries={q.casefold() for p in f['drinks_lesson']['photos'] for q in p['queries']}
+  self.assertEqual(commons.await_count,len(queries))
  async def test_new_edition_searches_commons_sections_and_separate_stock_gallery(self):
   f=fixture_v2();commons=AsyncMock(return_value=[]);fetch=AsyncMock(return_value=[])
   await select_drinks_photos(f,commons=commons,fetch=fetch,rank=AsyncMock(return_value=[]))

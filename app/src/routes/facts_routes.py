@@ -391,7 +391,7 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
                 for p in selected:
                     if p['source_url'] in used:continue
                     item=None if p.get('popular_pick') or p.get('drinks_gallery_only') or p.get('agriculture_gallery_only') else next((entry for entry in entries if entry['id'] in p.get(prefix+'_request_ids',[]) and entry['key'] not in ready),None)
-                    if is_agriculture or is_drinks and article.get('drinks_lesson',{}).get('content_version')==2:
+                    if is_agriculture or is_drinks and article.get('drinks_lesson',{}).get('content_version') in (2,3):
                         if item is not None and p.get('provider')!='wikimedia':continue
                         if item is None and p.get('provider') not in ('unsplash','pixabay'):continue
                     gallery_limit=scene_limit if p.get('popular_pick') else scene_limit-popular_slots

@@ -149,9 +149,9 @@ def build_section_image_context(key, article=None):
                 excerpt[field] = text[:4000]
         if article.get('article_type') == 'drinks_lesson':
             lesson=article.get('drinks_lesson') or {}
-            excerpt['drinks_context']={k:lesson.get(k) for k in ('identity','introduction','sensory_profile')}
+            excerpt['drinks_context']={k:lesson.get(k) for k in ('identity','opening','signature','introduction','sensory_profile','making')}
             if key=='how_it_works':excerpt['science_focus']=next((p for p in lesson.get('science',[]) if p['id']==lesson.get('science_focus_id')),None)
-            if lesson.get('content_version')==2 and key=='how_it_works':
+            if lesson.get('content_version') in (2,3) and key=='how_it_works':
                 lines[1]='Explain the selected mechanism with a clear before/after diagram, arrows and a concise legend.'
                 lines[2]=_VISUAL_RULES.replace('Include no text, letters, numbers, labels, captions, logos, watermarks, or fake writing.', 'Use only short accurate educational labels from the supplied diagram prompt. No logos, watermarks, invented measurements or fake writing.')
                 lines.append('Drinks educational diagram: preserve the actual mechanism. Label conceptual scale. Do not invent molecular bonds or laboratory evidence.')

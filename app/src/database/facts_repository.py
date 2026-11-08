@@ -246,7 +246,7 @@ def save_drinks_photo_plan(content_hash: str, fact: dict) -> bool:
     path='full_response.drinks_lesson.photos'
     result=get_db()[cfg.DAILY_FACTS_COLLECTION].update_one({'content_hash':content_hash,
         'full_response.article_type':'drinks_lesson','$or':[{path:[]},{path:None}]}, {'$set':{
-        path:fact['drinks_lesson']['photos'],'full_response.drinks_media.photo_plan_version':1,
+        path:fact['drinks_lesson']['photos'],'full_response.drinks_media.photo_plan_version':fact.get('drinks_media',{}).get('photo_plan_version',1),
         'full_response.drinks_media.photo_plan_source':'fallback'}})
     return result.matched_count==1
 

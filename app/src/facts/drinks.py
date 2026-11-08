@@ -60,13 +60,44 @@ DRINKS_RESPONSE_SCHEMA['properties']['visual_suggestions']=_object({'cover':_TEX
 PRE_HOOK_DRINKS_RESPONSE_SCHEMA=deepcopy(DRINKS_RESPONSE_SCHEMA)
 DRINKS_LESSON_SCHEMA['properties']['opening_hook']=sourced({'heading':_TEXT,'introduction':_TEXT,'intriguing_detail':_TEXT,'bridge_question':_TEXT})
 DRINKS_LESSON_SCHEMA['required'].append('opening_hook')
+# Third edition gives each section a single teaching purpose; saved editions remain valid.
+VERSION2_DRINKS_RESPONSE_SCHEMA=deepcopy(DRINKS_RESPONSE_SCHEMA)
+DRINKS_LESSON_SCHEMA=deepcopy(DRINKS_LESSON_SCHEMA)
+for key in ('opening_hook','question','learning_goal','introduction','then_and_now','production_evolution','production_steps','variations','related_drinks'):
+ DRINKS_LESSON_SCHEMA['properties'].pop(key,None)
+ if key in DRINKS_LESSON_SCHEMA['required']:DRINKS_LESSON_SCHEMA['required'].remove(key)
+DRINKS_LESSON_SCHEMA['properties']['content_version']={'type':'INTEGER','enum':[3]}
+DRINKS_LESSON_SCHEMA['properties']['identity']['properties']['drink_type']['enum']+=['coffee','tea','cocoa','juice','soft_drink']
+DRINKS_LESSON_SCHEMA['properties']['opening']=sourced({'heading':_TEXT,'introduction':_TEXT,'question':_TEXT})
+DRINKS_LESSON_SCHEMA['properties']['origin']['properties']['cultural_role']=_TEXT
+DRINKS_LESSON_SCHEMA['properties']['origin']['required'].append('cultural_role')
+CHANGE_KINDS=['documented_change','continuing_tradition','contemporary_alternative']
+DRINKS_LESSON_SCHEMA['properties']['making']=sourced({
+ 'introduction':_TEXT,'evolution_kind':{'type':'STRING','enum':CHANGE_KINDS},
+ 'stages':_items(sourced({'id':_TEXT,'title':_TEXT,'action':_TEXT,'why_it_matters':_TEXT,'what_to_notice':_TEXT})),
+ 'comparisons':_items(sourced({'id':_TEXT,'aspect':_TEXT,'earlier_or_standard':_TEXT,'today_or_alternative':_TEXT,'effect':_TEXT,'relationship':{'type':'STRING','enum':CHANGE_KINDS}})),
+ 'defining_features':_strings()})
+DRINKS_LESSON_SCHEMA['properties']['explore_drinks']=_items(sourced({
+ 'id':_TEXT,'name':_TEXT,'place':_TEXT,'relationship':{'type':'STRING','enum':['variation','related_drink','documented_influence']},
+ 'description':_TEXT,'ingredients':_strings(),'preparation':_TEXT,'taste_difference':_TEXT,'connection':_TEXT,
+ 'development':NULL_TEXT}))
+DRINKS_LESSON_SCHEMA['required']+=['opening','making','explore_drinks']
+DRINKS_LESSON_SCHEMA['properties']['photos']['maxItems']=30
+DRINKS_LESSON_SCHEMA['properties']['photos']['minItems']=12
+DRINKS_LESSON_SCHEMA['properties']['photos']['items']['properties']['section_id']['enum']=['overview','origin','history','ingredients','method','science','recipe','explore','serving']
+DRINKS_RESPONSE_SCHEMA['properties']['drinks_lesson']=DRINKS_LESSON_SCHEMA
+V3_PHOTO_SECTIONS={'overview','origin','method','ingredients','recipe','explore','serving'}
+
 REQUIRED_PHOTO_SECTIONS={'overview','origin','historical_making','modern_making','ingredients','recipe','variations','serving'}
 
 def modern_drinks(f):
- return f.get('drinks_lesson',{}).get('content_version')==2
+ return f.get('drinks_lesson',{}).get('content_version') in (2,3)
 
 def simple_id(v):return isinstance(v,str) and bool(re.fullmatch('[a-z][a-z0-9_-]{0,47}',v))
-def drink_refs(l):return {s:{p['id'] for p in l[k]} for s,k in [('ingredients','ingredients'),('method','production_steps'),('science','science'),('variations','variations')]}
+def drink_refs(l):
+ refs={s:{p['id'] for p in l.get(k,[])} for s,k in [('ingredients','ingredients'),('method','production_steps'),('science','science'),('variations','variations'),('explore','explore_drinks')]}
+ if l.get('content_version')==3:refs['method']={p['id'] for p in l['making']['stages']}
+ return refs
 def validate_drinks_images(f):
  try:
   l=f['drinks_lesson'];v=f['visual_suggestions'];focus=l['science_focus_id']
@@ -85,6 +116,7 @@ def ensure_drinks_photo_plan(f):
  if not isinstance(l,dict) or l.get('photos') not in (None,[]):return False
  name=(l.get('identity') or {}).get('name') or f.get('topic')
  if not isinstance(name,str) or not name.strip():return False
+ if l.get('content_version')==3:return _ensure_v3_photo_plan(f,name)
  name=' '.join(name.split())[:100];plan=[]
  def add(section,entry,kind,subject,queries):
   q=list(dict.fromkeys(' '.join(v.split())[:160] for v in queries if isinstance(v,str) and v.strip()))[:4]
@@ -106,12 +138,32 @@ def ensure_drinks_photo_plan(f):
  l['photos']=plan;f.setdefault('drinks_media',{}).update(photo_plan_source='fallback',photo_plan_version=1)
  return True
 
-def drinks_photo_entries(f):return [dict(p,key=f'drinks_photo_{i}') for i,p in enumerate(f.get('drinks_lesson',{}).get('photos',[])[:18])]
+
+def _ensure_v3_photo_plan(f,name):
+ l=f['drinks_lesson'];name=' '.join(name.split())[:100];plan=[]
+ def add(section,entry,kind,subject,queries):
+  if len(plan)>=30:return
+  q=list(dict.fromkeys(' '.join(v.split())[:160] for v in queries if isinstance(v,str) and v.strip()))[:3]
+  if len(q)<2:q.append(subject+' drink')
+  plan.append(dict(id='fallback_'+str(len(plan)),section_id=section,entry_id=entry,kind=kind,subject=subject[:160],queries=q))
+ add('overview',None,'drink',name,[name,name+' drink'])
+ add('overview',None,'drink',name+' ingredients',[name+' ingredients',name+' glass'])
+ add('recipe',None,'drink',name,[name+' preparation',name+' ingredients'])
+ region=l['identity']['region'];add('origin',None,'named_place',region,[region,region+' '+name])
+ add('serving',None,'drink',name,[name+' serving',name+' glass'])
+ for p in l.get('ingredients',[]):add('ingredients',p['id'],'ingredient',p['name'],[p['name'],p['name']+' ingredient'])
+ for p in l.get('making',{}).get('stages',[]):add('method',p['id'],'process',name+' '+p['title'],[name+' '+p['title'],name+' preparation'])
+ for p in l.get('explore_drinks',[]):add('explore',p['id'],'drink',p['name'],[p['name'],p['name']+' drink'])
+ l['photos']=plan;f.setdefault('drinks_media',{}).update(photo_plan_source='fallback',photo_plan_version=3)
+ return True
+
+def drinks_photo_entries(f):return [dict(p,key=f'drinks_photo_{i}') for i,p in enumerate(f.get('drinks_lesson',{}).get('photos',[])[:30])]
 
 def validate_drinks_content(f):
  try:
-  if f.get('drinks_lesson',{}).get('content_version') not in (None,2):return False
-  schema=(DRINKS_RESPONSE_SCHEMA if 'opening_hook' in f.get('drinks_lesson',{}) else PRE_HOOK_DRINKS_RESPONSE_SCHEMA) if modern_drinks(f) else LEGACY_DRINKS_RESPONSE_SCHEMA
+  if f.get('drinks_lesson',{}).get('content_version') not in (None,2,3):return False
+  schema=(VERSION2_DRINKS_RESPONSE_SCHEMA if 'opening_hook' in f.get('drinks_lesson',{}) else PRE_HOOK_DRINKS_RESPONSE_SCHEMA) if modern_drinks(f) else LEGACY_DRINKS_RESPONSE_SCHEMA
+  if f.get('drinks_lesson',{}).get('content_version')==3:schema=DRINKS_RESPONSE_SCHEMA
   if not _shape(f,schema) or not validate_drinks_images(f):return False
   l=f['drinks_lesson'];sources=f['sources'];ids={s['id'] for s in sources}
   if not sources or not _unique_ids(sources):return False
@@ -120,9 +172,23 @@ def validate_drinks_content(f):
    if isinstance(v,list):return all(check(x) for x in v)
    return not isinstance(v,str) or bool(v.strip())
   if not check(l):return False
-  for key,low,high in [('history',2,6),('ingredients',2,10),('production_steps',2,6),('science',0,3),('variations',1,6),('photos',4,18)]:
+  third=l.get('content_version')==3
+  bounds=[('history',0 if third else 2,6),('ingredients',2,10),('science',1 if third else 0,1 if third else 3),('photos',12 if third else 4,30 if third else 18)]
+  if third:bounds+=[('explore_drinks',2,8)]
+  else:bounds+=[('production_steps',2,6),('variations',1,6)]
+  for key,low,high in bounds:
    rows=l[key]
    if not low<=len(rows)<=high or not _unique_ids(rows) or any(not simple_id(p['id']) for p in rows):return False
+  if third:
+   m=l['making']
+   if not 3<=len(m['stages'])<=5 or not _unique_ids(m['stages']) or any(not simple_id(p['id']) for p in m['stages']):return False
+   if len(m['comparisons'])>4 or not _unique_ids(m['comparisons']) or any(not simple_id(p['id']) for p in m['comparisons']):return False
+   if not 2<=len(m['defining_features'])<=4:return False
+   names=[p['name'].strip().casefold() for p in l['explore_drinks']]
+   if len(set(names))!=len(names) or l['identity']['name'].strip().casefold() in names:return False
+   if any(not 1<=len(p['ingredients'])<=8 for p in l['explore_drinks']):return False
+   for section,entries in [('ingredients',l['ingredients']),('method',m['stages']),('explore',l['explore_drinks'])]:
+    if not {p['id'] for p in entries}<={p['entry_id'] for p in l['photos'] if p['section_id']==section}:return False
   if not 1<=len(l['identity']['country_names'])<=6 or len(l['identity']['local_names'])>5:return False
   r=l['recipe'];ingredients=r['ingredients'];used={i for s in r['steps'] for i in s['ingredient_ids']}
   finite=lambda v:type(v) in (int,float) and math.isfinite(v)
@@ -139,82 +205,92 @@ def validate_drinks_content(f):
   if any((p['section_id']=='science' and not l['science']) or not 1<=len(p['queries'])<=4 or any(len(q)>160 for q in p['queries']) or (p['entry_id'] is not None and p['entry_id'] not in refs.get(p['section_id'],set())) for p in l['photos']):return False
   if len({p['section_id'] for p in l['photos']})<3:return False
   if modern_drinks(f):
-   if not REQUIRED_PHOTO_SECTIONS<={p['section_id'] for p in l['photos']}:return False
+   if not (V3_PHOTO_SECTIONS if third else REQUIRED_PHOTO_SECTIONS)<={p['section_id'] for p in l['photos']}:return False
    if any(not 2<=len(p['queries'])<=3 or len(set(q.casefold() for q in p['queries']))!=len(p['queries']) for p in l['photos']):return False
    if not 1<=len(l['science'])<=3:return False
-   for era in l['production_evolution'].values():
+   for era in ([] if third else l['production_evolution'].values()):
     if not 2<=len(era['steps'])<=6 or not 1<=len(era['equipment'])<=8:return False
-  return 1<=len(l['troubleshooting'])<=5 and 1<=len(l['knowledge_checks'])<=3 and 2<=len(l['takeaways'])<=5 and 1<=len(l['related_drinks'])<=6
+  return 1<=len(l['troubleshooting'])<=5 and 1<=len(l['knowledge_checks'])<=3 and 2<=len(l['takeaways'])<=5 and (third or 1<=len(l['related_drinks'])<=6)
  except (KeyError,ValueError,TypeError,OverflowError):return False
 
 def prepare_drinks_media(f):
  f['images']={};f['image_credits']={};slots=['cover','overview']+(['how_it_works'] if f['drinks_lesson']['science_focus_id'] is not None else [])
- f['drinks_media']={'version':2 if modern_drinks(f) else 1,'generated_limit':len(slots),'generated_slots':slots,'photo_timeout_seconds':720,'photo_plan_source':f.get('drinks_media',{}).get('photo_plan_source','model'),'photo_plan_version':1}
+ f['drinks_media']={'version':f['drinks_lesson'].get('content_version',1),'generated_limit':len(slots),'generated_slots':slots,'photo_timeout_seconds':720,'photo_plan_source':f.get('drinks_media',{}).get('photo_plan_source','model'),'photo_plan_version':3 if f['drinks_lesson'].get('content_version')==3 else 1}
  f['drinks_validation']={'structure_checked':True,'recipe_tested':False,'source_verification':'not_performed'}
 
-DRINKS_IMAGE_INSTRUCTIONS='DRINKS IMAGE PLAN overrides all other image instructions. content_version is 2.\nGenerate exactly THREE AI images: cover, overview and ONE Science of Mixing diagram.\nCover: show the exact drink in its appropriate glassware, a coherent scene with quiet space on the left\nfor the title and a mobile-safe subject near the centre-right. No text or invented historical evidence.\nOverview: a distinct educational composition showing the finished drink and its key ingredients;\nkeep it legible at card size. Label both as illustrations, not documentary photographs. Set how_it_works to a detailed standalone educational diagram prompt\nfor the science_focus_id mechanism. Specify subject, before/after states, physical relationships,\nflow arrows, short accurate labels, composition, colour legend and what must NOT be implied.\nDo not invent molecular bonds, numerical data or laboratory evidence. Explicitly label conceptual scale.\nimage_details contains overview with placement overview and how_it_works with placement explanation;\nboth have alt/caption/learning_purpose. Cover and overview/card use the AI-generated assets.\nWikimedia photographs supplement the article sections and must never overwrite those AI slots.\nProvide 8-18 documentary requests. REQUIRED sections: overview, origin, historical_making,\nmodern_making, ingredients, recipe, variations, serving. Each request has exactly 2-3 DISTINCT\nWikimedia Commons search queries. Include precise regional/local drink names, documented historical\nterms, verified botanical ingredient names, equipment and glassware types where appropriate. Do not\ninvent Latin names. Progress from exact subject to a simpler factual synonym. Avoid long sentences.\nGive each major ingredient and regional variation its own request where possible. entry_id binds only\ningredients/method/science/variations records; all other requests have null entry_id. Use relevant\nhistorical-object queries only for actual documented objects. Never caption a modern photograph as\nhistorical evidence. A search plan is not a guarantee of a relevant photograph. No unrelated filler.\n'
+DRINKS_IMAGE_INSTRUCTIONS='DRINKS IMAGE PLAN overrides the ordinary image plan. content_version is 3.\nGenerate exactly THREE AI illustrations: cover, overview and one how_it_works science diagram.\nCover: exact drink, appropriate glassware, coherent scene, quiet left title space, centre-right mobile-safe\nsubject. Overview: a distinct visual summary with key ingredients, legible at card size. Never fabricate\nhistorical evidence. Science: one detailed standalone mechanism prompt, accurate components and causal\nrelationships, arrows, short accurate labels, legend and conceptual scale. No invented molecular bonds,\nmeasurements, medical claims or laboratory evidence. image_details has overview/placement overview and\nhow_it_works/placement explanation with alt/caption/learning_purpose labelled as illustrations.\nRequest 12-30 section photographs from Wikimedia. Cover overview, origin, ingredients, method, recipe,\nexplore and serving. Give EACH main ingredient a photo request bound to its ingredient ID and EACH\nexplore drink its own photo request bound to that entry ID. Include process stages, equipment, cultural\nsettings, named origin places and glassware where useful. Multiple photos can bind one subject.\nEach request has 2-3 distinct concise Commons queries: exact/local name, specific botanical/equipment\nterm when verified, and a simpler factual synonym. Never invent scientific names. entry_id binds only\ningredients, method (making.stages), science or explore; other sections use null entry_id.\nSmall ingredient photos are thumbnails beside their explanations. Methods, settings and drinks can use\nlarger photographs. Keep original truthful captions: a modern photo cannot document historical events.\nA separate Unsplash/Pixabay pool provides the end carousel with text-only AI ranking. It never replaces\nsection photographs or the three AI slots. No unrelated stock filler. No extra AI-generated images.\n'
 
 def build_drinks_prompt(blocklist):
- return f'''Create ONE drinks_lesson, category drinks, schema_version 2.0. Avoid recent topics: {blocklist}.
-Set drinks_lesson.content_version=2. Expand each main explanation into 2-3 complete short paragraphs.
-Begin with opening_hook: heading, introduction, intriguing_detail, bridge_question, source_ids.
-This open section appears before the overview. Write a curiosity-led heading, then 60-90 words total
-across introduction and intriguing_detail: identify the drink, describe its character and explain one
-concrete supported detail. End with a short bridge_question answered explicitly later in this lesson.
-Do not repeat the cover hook, overview question or introduction. No clickbait, invented surprise or
-unsupported sensory/health claims. Resolve source_ids for factual statements. No image for this section.
-Use concrete drink-specific detail, not generic filler or repeated summaries. Explain cultural significance,
-country and region and the documented development of the drink. Include an invention story only when supported.
-production_evolution has historical and modern objects, each with context, equipment (1-8 names),
-steps (2-6 complete explanations), result, source_ids. Compare historical tools, ingredients and constraints
-with contemporary craft or commercial techniques and explain their effect on the finished drink.
-Retain then_and_now as a short comparison summary, not duplicated paragraphs. Production steps teach
-key controls rather than repeat the recipe. Omit unsupported historical details instead of filling paragraphs with what is unknown.
-For Indian adaptation prefer the requested drink with accessible local spirits/mixers when alcoholic;
-also explain a separately labelled alcohol-free direction. Include practical Desi substitutions, exact amounts,
-where the ingredient is commonly available, flavour tradeoffs and equipment alternatives without brand endorsements.
-Teach one accessible global cocktail, mocktail, wine, spirit, beer, fermented drink or regional beverage.
-Vary continents, alcoholic and non-alcoholic drinks. Use simple language and easy-to-medium depth.
-identity gives name/local_names/drink_type/country_names/region/alcohol_status/strength_context.
-Use supported origin information; never invent an inventor, date or national claim. One useful historical qualification is enough.
-Start hook/question/learning_goal, introduction explanation/what_makes_it_unique/cultural_role, origin
-account/evidence_and_uncertainty, then 2-6 history records id/period/event/why_it_changed. Explain the
-historical development, not just dates. then_and_now has earlier_method/modern_method/what_changed/
-what_remains. production_steps has 2-6 id/title/explanation/what_to_notice. For wine/spirits explain
-commercial production conceptually, then give a practical serving or mixing adaptation using a legally
-obtained commercial base. Do not instruct home distillation or invent safe fermentation procedures.
-Sensory_profile: flavour/aroma/texture/finish/serving_temperature. Ingredients: 2-10 id/name/role/effect.
-Science is required, 1-3 id/title/mechanism/explanation/observable_cue/limits: e.g. dilution and cooling,
-emulsions, aromatic oils, carbonation or solubility. Avoid forcing a mechanism or pseudo-scientific health
-claims. Explain why shaking or stirring matters only when relevant. science_focus_id must identify the one mechanism illustrated by how_it_works. Explain cause, observable effect and practical control, defining technical words. Use only mechanisms relevant to this drink; never force clarify-washing or molecular binding where unsupported.
+ return f'''Create ONE drinks_lesson, category drinks, schema_version 2.0, content_version 3.
+Avoid recent topics: {blocklist}. Teach one accessible global drink to curious beginners, with simple
+language and easy-to-medium detail. Cover cocktails, mocktails, coffee, tea, wine, spirits, beer and
+regional beverages. Each section has ONE purpose. Do not repeat the same definition, ingredient list,
+origin date, method or science explanation in several sections.
+READING ORDER: cover; opening; Meet the drink; story; making and meaningful changes; one science
+explanation; India recipe; variations and related drinks; serving; documentary carousel; recall; sources.
+identity: name/local_names/drink_type/country_names/region/alcohol_status and optional strength_context.
+hook is a short cover subtitle. opening has heading, introduction, question, source_ids. Write ONE
+50-70 word introduction with a specific intriguing detail, not an overview repeated under two headings.
+The closing question must remain UNANSWERED there; a later section answers it. No learning-goal paragraph.
+Meet the drink uses identity, sensory_profile and ingredients, without a second introductory paragraph.
+sensory_profile teaches flavour/aroma/texture/finish/serving_temperature. ingredients has
+2-10 id/name/role/effect/source_ids entries: explain each ingredient's contribution and observable effect.
+origin has account, cultural_role, optional evidence_and_uncertainty and source_ids. Tell a connected
+supported story and explain its social setting. history has 0-6 id/period/event/why_it_changed/source_ids
+records ONLY for meaningful milestones; avoid a forced timeline or repeating the origin prose.
+making has introduction, evolution_kind, stages, comparisons, defining_features, source_ids.
+evolution_kind is documented_change, continuing_tradition or contemporary_alternative. For coffee,
+a traditional filter still used today is continuity; a pour-over option is an alternative, not proof of
+historical progress. For wine/spirits explain commercial production conceptually and use a commercial
+base for the practical recipe. Never instruct home distillation or invent safe fermentation procedures.
+stages has 3-5 sourced id/title/action/why_it_matters/what_to_notice entries that teach what happens
+and why. Do NOT give three separate historical, modern and process step lists. Put measured quantities
+and full instructions only in recipe. comparisons has 0-4 sourced id/aspect/earlier_or_standard/
+today_or_alternative/effect/relationship records, with relationship using the same three evolution kinds.
+Compare specific tools, ingredients, technique or service and explain the resulting difference. Never
+present a predecessor as the same named cocktail or make up historical methods. defining_features has
+2-4 short features that identify the drink today; no generic What changed/What remains repetition.
+science has EXACTLY ONE id/title/mechanism/explanation/observable_cue/optional limits/source_ids block.
+science_focus_id resolves it. Teach cause and effect with observable examples, not the recipe again.
 Recipe follows the shared food recipe shape: title, servings integer1-20, prep/cook/rest_minutes,
 equipment, traditional_preparation, adaptation_notes, ingredients id/name/amount/unit/household_measure/
 preparation/role/contains_alcohol boolean, substitutions ingredient_id/substitute/quantity/effect, steps
 with title/instruction/time_guidance/doneness_cue/ingredient_ids, allergens and relevant safety_notes.
-Give 2-20 measured ingredients and 2-12 steps using every ingredient. Include ice/water/soda quantities
-when used. Use Indian-available ingredients and practical household equipment; explain substitutions
-with the concrete change in acidity, sweetness, aroma or texture. preparation_type is home_mixed, serving_adaptation
-or alcohol_free_interpretation. recipe.alcohol_status must agree with its ingredients. Non-alcoholic
-recipes cannot use rum, wine, alcoholic bitters or other alcohol-containing ingredients. Label a zero-proof recipe simply Alcohol-free version once; explain what ingredients it uses. Do not claim bitters or fermented
-products are alcohol-free without evidence. No invented ABV, health benefits, current prices or local
-legal drinking ages. strength_context is optional: use it only for material alcohol-strength information the reader needs. Do not encourage excessive intake.
-Variations:1-6 id/name/place/difference/how_it_developed/evidence_and_uncertainty, explain transmission,
-local ingredients and cultural adaptation only when sourced. serving_context:glassware/pairing_and_customs/
-nullable alcohol_free_option/practical_notes. Give1-5 troubleshooting,1-3 knowledge_checks with answers,
-2-5 takeaways and1-6 related_drinks. Factual blocks resolve source_ids. Use credible culinary associations,
-producers for methods, museums/archives for history and scientific sources for mechanisms. No invented
-sources, quotations or claims of independent verification. Source lists only at the bottom. Root fields
-agree with the lesson. Photos never replace complete explanations; every section needs connected prose.
+Give 2-20 measured ingredients and 2-12 steps using every ingredient, including measured ice/water/soda
+when used. Use Indian-available ingredients, local spirits/mixers and household equipment; explain exact
+substitution amounts and taste effects. preparation_type is home_mixed, serving_adaptation or
+alcohol_free_interpretation. recipe.alcohol_status must match its ingredients. Non-alcoholic recipes
+cannot contain alcoholic bitters or fermented products assumed to be alcohol-free. Label alcohol clearly.
+explore_drinks has 2-8 sourced entries; AIM FOR SIX TO EIGHT useful, distinct entries when supported.
+Each has id/name/place/relationship/description/ingredients/preparation/taste_difference/connection/
+nullable development/source_ids. relationship is variation, related_drink or documented_influence.
+Group genuine versions in Variations; use Related drinks for other traditions and comparisons. Similarity
+is not evidence of descent. Explain each drink in 40-70 useful words across its fields: what it is,
+how made, what tastes different and why it is worth comparing. Explain historical/cultural development
+ONLY when supported; otherwise development is null, not invented lineage or caveats. Do not list the
+main drink itself, duplicate versions, garnish-only filler or names with no explanation. Do not force
+six entries if sources cannot support them. Each has its own Wikimedia photo-search request.
+serving_context has glassware/pairing_and_customs/nullable alcohol_free_option/practical_notes/source_ids.
+For naturally non-alcoholic coffee, tea or other drinks, alcohol_free_option is null: do not add a redundant
+section explaining that the drink is already alcohol-free. Use the specific drink_type coffee/tea/cocoa/
+juice/soft_drink where appropriate, rather than using non_alcoholic as its only identity.
+Explain service rituals, suitable pairings and how to adjust the result, without repeating recipe steps.
+Give 1-5 troubleshooting entries, 1-3 knowledge_checks with answers, and 2-5 takeaways.
+All factual blocks resolve source_ids. Sources stay at the bottom. Use credible culinary associations,
+producers for methods, archives for history and primary scientific sources. No invented sources, quotes,
+ABV, prices, legal ages, health benefits or claims of independent verification. Root compatibility fields
+agree with the lesson, but do not emit the old opening_hook/introduction/production_evolution/
+then_and_now/production_steps/variations/related_drinks lesson fields in this version.
 
 READER-READY EDITORIAL RULES (apply throughout this response, including root compatibility fields):
 Write a finished beginner article that teaches the drink. Lead with what happens, how it tastes, how to
 make it and why the method works. Every sentence must add a concrete fact, useful explanation or action.
 Do not fill required prose with disclaimers, generic variability or statements about missing evidence.
 Keep internal source/structure verification separate from article prose; never claim verification you did not perform.
-origin.evidence_and_uncertainty, variations[].evidence_and_uncertainty, science[].limits and
+origin.evidence_and_uncertainty, science[].limits and
 identity.strength_context are OPTIONAL and nullable. Omit them or return null when they add nothing useful.
 When the origin is genuinely disputed and this changes the story, add one short specific note in origin;
-do not repeat it in the timeline, earlier method, variations, recipe or takeaways. Do not manufacture a
+do not repeat it in the timeline, making, comparisons, recipe or takeaways. Do not manufacture a
 first recipe, ratio or inventor to sound certain. If historical preparation is poorly documented, describe
 a supported early published preparation, with its period/source, rather than guessing or listing unknowns.
 For product differences explain their direction and practical effect: which ingredient adds sweetness,
