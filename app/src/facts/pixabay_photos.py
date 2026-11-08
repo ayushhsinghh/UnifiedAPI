@@ -15,6 +15,7 @@ from .country_photos import allowed_url, plain
 
 logger = logging.getLogger(__name__)
 _LOCK = threading.Lock()
+_DOWNLOAD_LOCK = threading.Lock()
 TTL = 24 * 60 * 60
 IMAGE_HOSTS = {'pixabay.com', 'cdn.pixabay.com'}
 
@@ -160,7 +161,57 @@ async def search(country, query, *, match=None, exact_query=False, popular_fallb
     return photos
 
 
+def _retry_after(headers):
+    from email.utils import parsedate_to_datetime
+    value = headers.get('Retry-After') or headers.get('X-RateLimit-Reset')
+    try:
+        delay = float(value)
+    except (ValueError, TypeError):
+        try:delay = parsedate_to_datetime(value).timestamp() - time.time()
+        except (ValueError, TypeError, OverflowError):delay = 60
+    return max(1, min(3600, delay)) if 0 <= delay < float('inf') else 60
+
+
+def _download_selected_bytes(photo, root):
+    """Caller holds the cross-process lock; never burst after a download 429."""
+    import requests
+    state_path = root / 'download-cooldown.json'
+    wait_budget = 10
+    for attempt in range(3):
+        state = _read(state_path)
+        delay = max(0, state.get('until', 0) - time.time(), state.get('next_at', 0) - time.time())
+        if delay > wait_budget:
+            logger.warning('Pixabay download cooldown active: id=%s retry_in=%ds', photo['provider_id'], int(delay)+1)
+            return None
+        if delay:
+            time.sleep(delay)
+            wait_budget -= delay
+        # Space all selected downloads, including attempts from other worker processes.
+        _write(state_path, {'until': 0, 'next_at': time.time() + 1})
+        with requests.get(photo['url'], timeout=(3, 10), allow_redirects=False, stream=True) as response:
+            status = response.status_code
+            if status == 429:
+                retry = _retry_after(response.headers)
+                _write(state_path, {'until': time.time() + retry, 'next_at': time.time() + retry})
+                logger.warning('Pixabay selected download rate limited: id=%s retry_after=%ds attempt=%d/3',
+                               photo['provider_id'], int(retry), attempt+1)
+                continue
+            if status in (500, 502, 503, 504):
+                _write(state_path, {'until': 0, 'next_at': time.time() + 2**attempt})
+                continue
+            if status != 200:
+                logger.warning('Pixabay selected download rejected: id=%s status=%s', photo['provider_id'], status)
+                return None
+            data = bytearray()
+            for chunk in response.iter_content(65536):
+                data.extend(chunk)
+                if len(data) > 12 * 1024 * 1024:return None
+            return data
+    return None
+
+
 def _persist_selected(photo):
+    import fcntl
     import requests
     identity = photo.get('provider_id', '')
     if not re.fullmatch(r'pixabay_[1-9][0-9]*', identity) or not allowed_url(photo.get('url'), IMAGE_HOSTS):
@@ -169,31 +220,25 @@ def _persist_selected(photo):
         root = cache_directory()
         root.mkdir(parents=True, exist_ok=True)
         path = root / f'{identity}-stored.json'
-        cached = _read(path)
-        if cached.get('expires_at', 0) > time.time():
-            return cached.get('url')
-        with requests.get(photo['url'], timeout=(3, 10), allow_redirects=False, stream=True) as response:
-            if response.status_code != 200:
-                logger.warning('Pixabay selected download rejected: id=%s status=%s', identity, response.status_code)
-                return None
-            data = bytearray()
-            for chunk in response.iter_content(65536):
-                data.extend(chunk)
-                if len(data) > 12 * 1024 * 1024:
-                    return None
-        if data.startswith(b'\xff\xd8\xff'):
-            kind, suffix = 'image/jpeg', 'jpg'
-        elif data.startswith(b'\x89PNG\r\n\x1a\n'):
-            kind, suffix = 'image/png', 'png'
-        else:
-            return None
-        from .image_generator import _upload_to_oci_and_get_par
-        url = _upload_to_oci_and_get_par(bytes(data), f'photos/pixabay/{identity}.{suffix}', content_type=kind)
-        if url:
-            # Existing OCI helper creates five-year read URLs; refresh before expiry.
-            _write(path, {'url': url, 'expires_at': time.time() + 4 * 365 * TTL})
-            logger.info('Pixabay selected image stored: id=%s bytes=%d', identity, len(data))
-        return url
+        # Serialize workers and check the stored asset again after obtaining the lock.
+        with _DOWNLOAD_LOCK, (root / 'download.lock').open('a') as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX)
+            cached = _read(path)
+            if cached.get('expires_at', 0) > time.time():return cached.get('url')
+            data = _download_selected_bytes(photo, root)
+            if data is None:return None
+            if data.startswith(b'\xff\xd8\xff'):
+                kind, suffix = 'image/jpeg', 'jpg'
+            elif data.startswith(b'\x89PNG\r\n\x1a\n'):
+                kind, suffix = 'image/png', 'png'
+            else:return None
+            from .image_generator import _upload_to_oci_and_get_par
+            url = _upload_to_oci_and_get_par(bytes(data), f'photos/pixabay/{identity}.{suffix}', content_type=kind)
+            if url:
+                # Existing OCI helper creates five-year read URLs; refresh before expiry.
+                _write(path, {'url': url, 'expires_at': time.time() + 4 * 365 * TTL})
+                logger.info('Pixabay selected image stored: id=%s bytes=%d', identity, len(data))
+            return url
     except (OSError, requests.RequestException, ValueError, TypeError) as exc:
         logger.warning('Pixabay selected image unavailable: id=%s error_type=%s', identity, type(exc).__name__)
         return None

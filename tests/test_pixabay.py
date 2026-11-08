@@ -36,6 +36,47 @@ def response(data=None, status=200, headers=None):
 
 
 class PixabayTests(unittest.IsolatedAsyncioTestCase):
+    def test_download_429_uses_shared_cooldown_without_hammering_other_images(self):
+        photo=p.candidates(payload(),'hummus')[0]
+        with patch('requests.get',return_value=response(status=429,headers={'Retry-After':'120'})) as get:
+            self.assertIsNone(p._download_selected_bytes(photo,Path(self.temp.name)))
+            self.assertIsNone(p._download_selected_bytes({**photo,'provider_id':'pixabay_124'},Path(self.temp.name)))
+            self.assertEqual(get.call_count,1)
+
+    def test_download_short_retry_after_waits_then_succeeds(self):
+        photo=p.candidates(payload(),'hummus')[0];clock=[1000.0]
+        good=response();good.iter_content.return_value=[b'\xff\xd8\xffjpeg']
+        def sleep(delay):clock[0]+=delay
+        with patch.object(p.time,'time',side_effect=lambda:clock[0]),patch.object(p.time,'sleep',side_effect=sleep) as wait, \
+             patch('requests.get',side_effect=[response(status=429,headers={'Retry-After':'2'}),good]) as get:
+            self.assertEqual(p._download_selected_bytes(photo,Path(self.temp.name)),b'\xff\xd8\xffjpeg')
+            self.assertEqual(get.call_count,2);wait.assert_called_once_with(2)
+
+    def test_download_retries_are_bounded_and_nonretryable_errors_stop(self):
+        photo=p.candidates(payload(),'hummus')[0];clock=[1000.0]
+        with patch.object(p.time,'time',side_effect=lambda:clock[0]), \
+             patch.object(p.time,'sleep',side_effect=lambda delay:clock.__setitem__(0,clock[0]+delay)), \
+             patch('requests.get',return_value=response(status=503)) as get:
+            self.assertIsNone(p._download_selected_bytes(photo,Path(self.temp.name)))
+            self.assertEqual(get.call_count,3)
+        Path(self.temp.name,'download-cooldown.json').unlink()
+        with patch('requests.get',return_value=response(status=403)) as get:
+            self.assertIsNone(p._download_selected_bytes(photo,Path(self.temp.name)))
+            self.assertEqual(get.call_count,1)
+
+    def test_stored_image_remains_available_during_download_cooldown(self):
+        photo=p.candidates(payload(),'hummus')[0]
+        root=Path(self.temp.name);url='https://objectstorage.ap-mumbai-1.oraclecloud.com/stored.jpg'
+        p._write(root/'download-cooldown.json',{'until':time.time()+120})
+        p._write(root/'pixabay_123-stored.json',{'url':url,'expires_at':time.time()+3600})
+        with patch('requests.get') as get:
+            self.assertEqual(p._persist_selected(photo),url)
+            get.assert_not_called()
+
+    def test_download_retry_after_accepts_http_date_and_defaults_safely(self):
+        with patch.object(p.time,'time',return_value=0):
+            self.assertEqual(p._retry_after({'Retry-After':'Thu, 01 Jan 1970 00:00:03 GMT'}),3)
+            self.assertEqual(p._retry_after({}),60)
     def test_candidate_engagement_metrics_are_nonnegative_integers(self):
         data=payload();data['hits'][0].update(views=1200,downloads=350)
         photo=p.candidates(data,'hummus')[0]
