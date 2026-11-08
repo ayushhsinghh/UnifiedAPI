@@ -36,6 +36,13 @@ def response(data=None, status=200, headers=None):
 
 
 class PixabayTests(unittest.IsolatedAsyncioTestCase):
+    def test_candidate_engagement_metrics_are_nonnegative_integers(self):
+        data=payload();data['hits'][0].update(views=1200,downloads=350)
+        photo=p.candidates(data,'hummus')[0]
+        self.assertEqual((photo['likes'],photo['views'],photo['downloads']),(100,1200,350))
+        data['hits'][0].update(likes=-2,views=True,downloads='350')
+        photo=p.candidates(data,'hummus')[0]
+        self.assertEqual((photo['likes'],photo['views'],photo['downloads']),(0,0,0))
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.env = patch.dict(os.environ, {'PIXABAY_KEY': 'test-only-key', 'PIXABAY_CACHE_DIR': self.temp.name})
@@ -76,6 +83,22 @@ class PixabayTests(unittest.IsolatedAsyncioTestCase):
             with patch.object(p.time, 'time', return_value=now + p.TTL + 10):
                 self.assertTrue(p._ranking_candidates('hummus'))
             self.assertEqual(get.call_count, 2)
+
+    def test_old_cache_refreshes_once_to_collect_views_and_downloads(self):
+        data=payload();data['hits'][0].update(views=2000,downloads=500)
+        with patch('requests.get',return_value=response(data)) as get:
+            p._ranking_candidates('hummus')
+            for path in Path(self.temp.name).glob('*.json'):
+                cached=json.loads(path.read_text())
+                if 'photos' in cached:
+                    for photo in cached['photos']:
+                        photo.pop('views',None);photo.pop('downloads',None)
+                    path.write_text(json.dumps(cached))
+            result=p._ranking_candidates('hummus')
+            self.assertEqual(result[0]['downloads'],500)
+            self.assertEqual(result[0]['views'],2000)
+            p._ranking_candidates('hummus')
+            self.assertEqual(get.call_count,2)
 
     def test_empty_results_are_cached_and_missing_key_never_calls_api(self):
         with patch('requests.get', return_value=response({'hits': [], 'totalHits': 0})) as get:

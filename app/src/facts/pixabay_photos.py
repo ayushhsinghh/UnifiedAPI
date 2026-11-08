@@ -84,7 +84,8 @@ def candidates(payload, query):
             tags=[tag.strip() for tag in tags.split(',') if tag.strip()],
             license='Pixabay Content License', license_url='https://pixabay.com/service/license-summary/',
             width=width, height=height, search_query=query,
-            likes=photo.get('likes', 0) if type(photo.get('likes', 0)) is int else 0))
+            **{key:photo.get(key,0) if type(photo.get(key,0)) is int and photo.get(key,0)>=0 else 0
+               for key in ('likes','views','downloads')}))
     return result
 
 
@@ -105,7 +106,8 @@ def _ranking_candidates(query):
         with _LOCK, (root / f'{account}.lock').open('a') as lock:
             fcntl.flock(lock, fcntl.LOCK_EX)
             cached = _read(path)
-            if cached.get('expires_at', 0) > time.time() and isinstance(cached.get('photos'), list):
+            if (cached.get('expires_at', 0) > time.time() and isinstance(cached.get('photos'), list)
+                    and all(all(key in photo for key in ('likes','views','downloads')) for photo in cached['photos'])):
                 logger.info('Pixabay search cache hit: query=%r candidates=%d', query, len(cached['photos']))
                 return cached['photos']
             if _read(cooldown).get('until', 0) > time.time():

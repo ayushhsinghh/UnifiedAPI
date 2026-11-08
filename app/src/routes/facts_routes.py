@@ -385,7 +385,7 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
                 report({'status':'collecting','request_count':len(entries)})
                 selected=await select_photos(article,report=report,excluded=claimed_sources)
                 selected=sorted(selected,key=lambda p:bool(p.get('popular_pick')))
-                popular_slots=min(3,sum(bool(p.get('popular_pick')) for p in selected))
+                popular_slots=min(scene_limit,sum(bool(p.get('popular_pick')) for p in selected))
                 used=set();ready={key for key in keys if images.get(key)} if is_agriculture or is_nature or is_drinks else set()
                 extras=[key for key in ready if key.startswith(prefix+'_scene_')]
                 for p in selected:
@@ -400,8 +400,8 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
                     used.add(p['source_url'])
                     photo={**{k:v for k,v in p.items() if k!='download_location'},prefix+'_photo':True,
                         'selection_mode':p.get('selection_mode',state.get('mode','text_ranking')),'ranking_model':'gpt-6-luna' if p.get('selection_mode',state.get('mode'))!='metadata_fallback' else None}
-                    if p.get('selection_mode')=='popular_unsplash':
-                        photo.update(selection_mode='popular_unsplash',ranking_model=None)
+                    if p.get('selection_mode') in ('popular_unsplash','popular_pixabay'):
+                        photo.update(selection_mode=p['selection_mode'],ranking_model=None)
                     if item:
                         photo.update(section_id=item['section_id'],photo_id=item['id']);key=item['key']
                         if is_fashion:photo['feature_id']=item.get('feature_id')

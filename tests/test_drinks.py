@@ -14,6 +14,20 @@ def fixture():return json.loads((Path(__file__).parent/'fixtures/drinks_lesson.j
 def fixture_v2():return json.loads((Path(__file__).parent/'fixtures/drinks_lesson_v2.json').read_text())
 def fixture_v3():return json.loads((Path(__file__).parent/'fixtures/drinks_lesson_v3.json').read_text())
 class DrinksTests(unittest.TestCase):
+ def test_popular_pixabay_score_uses_all_three_metrics_and_keeps_provider_picks_at_end(self):
+  from src.facts.photo_ranking import PopularDrinksPhotos
+  bank=PopularDrinksPhotos()
+  candidates=[{**stock(i),'likes':i} for i in range(5)]
+  for i in range(5):
+   candidates.append({**stock(20+i),'provider':'pixabay','provider_id':'pixabay_'+str(i),
+    'source_url':'https://pixabay.com/photos/'+str(i),'likes':100-i,'views':i*1000,'downloads':i*100})
+  bank.add(candidates[:6]);bank.add(candidates[6:])
+  result=bank.include([candidates[0]],request_key='drinks_request_ids',limit=12)
+  self.assertFalse(result[0].get('popular_pick'))
+  self.assertEqual([p['provider_id'] for p in result[-3:]],['pixabay_4','pixabay_3','pixabay_2'])
+  self.assertTrue(all(p['selection_mode']=='popular_pixabay' and p['ranking_model'] is None and p['drinks_request_ids']==[] for p in result[-3:]))
+  self.assertEqual(len({p['source_url'] for p in result}),len(result))
+  self.assertEqual(len(bank.photos),6)
  def test_partial_photo_plan_repairs_missing_method_bindings_without_replacing_queries(self):
   f=fixture_v3();l=f['drinks_lesson']
   l['photos']=[p for p in l['photos'] if p['section_id']!='method']
@@ -113,6 +127,36 @@ class DrinksTests(unittest.TestCase):
   f=fixture();f['drinks_lesson']['photos']=[];self.assertTrue(ensure_drinks_photo_plan(f));self.assertTrue(validate_drinks_content(f));plan=f['drinks_lesson']['photos']
   self.assertGreaterEqual(len({p['section_id'] for p in plan}),3);self.assertFalse(ensure_drinks_photo_plan(f));self.assertIs(plan,f['drinks_lesson']['photos'])
 class DrinksAsyncTests(unittest.IsolatedAsyncioTestCase):
+ async def test_pixabay_fallback_survives_ranking_rejection_and_candidate_cap(self):
+  unsplash=[{**stock(i),'likes':i} for i in range(250)]
+  pix=[{**stock(300+i),'provider':'pixabay','provider_id':'pixabay_'+str(i),
+   'source_url':'https://pixabay.com/photos/'+str(i),'likes':1,'views':100+i,'downloads':10+i} for i in range(5)]
+  result=await select_drinks_photos(fixture_v3(),commons=AsyncMock(return_value=[]),
+   fetch=AsyncMock(return_value=unsplash+pix),rank=AsyncMock(return_value=PhotoRankingResult()))
+  self.assertEqual(len(result),6)
+  self.assertEqual([p['provider_id'] for p in result[-3:]],['pixabay_4','pixabay_3','pixabay_2'])
+  self.assertTrue(all(p['popular_pick'] and p['drinks_gallery_only'] for p in result))
+ async def test_pixabay_popular_fallback_publishes_at_end_of_same_drinks_gallery(self):
+  from unittest.mock import patch
+  from src.facts.photo_ranking import PopularDrinksPhotos
+  r=routes_module();r.track_selection=AsyncMock(return_value=True)
+  bank=PopularDrinksPhotos();pix=[]
+  for i in range(3):
+   pix.append({**stock(20+i),'provider':'pixabay','provider_id':'pixabay_'+str(i),
+    'source_url':'https://pixabay.com/photos/'+str(i),'likes':i+1,'views':100*i,'downloads':10*i})
+  bank.add([{**stock(i),'likes':i} for i in range(3)]+pix)
+  ranked=[{**stock(100+i),'drinks_gallery_only':True} for i in range(10)]
+  r.select_drinks_photos=AsyncMock(return_value=bank.include(ranked,request_key='drinks_request_ids'))
+  persist=AsyncMock(side_effect=lambda p:'https://objectstorage.ap-mumbai-1.oraclecloud.com/photos/'+p['provider_id'])
+  with patch('src.facts.pixabay_photos.persist_selected',new=persist):
+   await r._background_image_task({},'hash',article=fixture_v3(),photos_only=True)
+  ready=[c for c in r.set_fact_image_state.call_args_list if c.args[2]=='ready' and c.args[1].startswith('drinks_scene_')]
+  credits=[c.kwargs['credit'] for c in ready]
+  self.assertEqual(len(credits),12)
+  self.assertTrue(all(not p.get('popular_pick') for p in credits[:6]))
+  self.assertTrue(all(p['popular_pick'] for p in credits[-6:]))
+  self.assertTrue(all(p['selection_mode']=='popular_pixabay' and p['ranking_model'] is None for p in credits[-3:]))
+  self.assertEqual(persist.await_count,3)
  async def test_gemini_drinks_json_mode_repairs_partial_plan_and_validates_content(self):
   r=generator_module();f=fixture_v3()
   f['drinks_lesson']['photos']=[p for p in f['drinks_lesson']['photos'] if p['section_id']!='method']
