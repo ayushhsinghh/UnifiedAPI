@@ -184,31 +184,52 @@ async def generate_daily_fact(
                     messages=[{"role": "user", "content": openai_prompt}],
                     response_format={"type": "json_object"},
                 ), timeout=_REQUEST_TIMEOUT_SECONDS)
+                if not response.choices:
+                    raise ValueError('OpenAI returned no response choices')
+                choice = response.choices[0]
+                finish_reason = getattr(choice, 'finish_reason', None)
+                if finish_reason in ('length', 'content_filter'):
+                    raise ValueError(f'OpenAI response incomplete: finish_reason={finish_reason}')
+                if getattr(choice.message, 'refusal', None):
+                    raise ValueError('OpenAI refused the generation request')
                 fact_str = response.choices[0].message.content
-                fact = json.loads(fact_str) if fact_str else None
+                if not fact_str:
+                    raise ValueError(f'OpenAI returned empty content: finish_reason={finish_reason}')
+                try:
+                    fact = json.loads(fact_str)
+                except json.JSONDecodeError as exc:
+                    raise ValueError(f'OpenAI returned invalid JSON at line {exc.lineno}, column {exc.colno}: finish_reason={finish_reason}') from exc
 
             if isinstance(fact,dict):
                 if category == 'agriculture':ensure_agriculture_photo_plan(fact)
                 elif category == 'nature':ensure_nature_photo_plan(fact)
                 elif category == 'drinks':ensure_drinks_photo_plan(fact)
 
-            if (isinstance(fact, dict) and fact.get("headline_fact") and normalize_learning_level(fact)
-                    and validate_image_plan(fact, myth=category in {'mythbusters', 'digital_myths', 'money_myths', 'environment_myths', 'science_myths', 'nutrition_myths'}) and validate_wellness_content(fact, category)
-                    and (category != 'physics' or validate_physics_content(fact))
-                    and (category != 'biology' or validate_biology_content(fact))
-                    and (category != 'psychology' or validate_psychology_content(fact))
-                    and (category != 'indian_constitution' or validate_constitution_content(fact))
-                    and (category != 'indian_laws' or validate_indian_laws_content(fact))
-                    and (category != 'country' or validate_country_content(fact))
-                    and (category != 'india' or validate_india_content(fact))
-                    and (category != 'food' or validate_food_content(fact))
-                    and (category != 'fashion' or validate_fashion_content(fact))
-                    and (category != 'geography' or validate_geography_content(fact))
-                    and (category != 'technology' or validate_technology_content(fact))
-                    and (category != 'economics' or validate_economics_content(fact))
-                    and (category != 'agriculture' or validate_agriculture_content(fact))
-                    and (category != 'nature' or validate_nature_content(fact))
-                    and (category != 'drinks' or validate_drinks_content(fact))):
+            validation_errors = []
+            if not isinstance(fact, dict):
+                validation_errors.append('response must be a nonempty JSON object')
+            else:
+                if not (bool(fact.get("headline_fact"))):validation_errors.append('headline_fact')
+                if not (normalize_learning_level(fact)):validation_errors.append('learning_level')
+                if not (validate_image_plan(fact, myth=category in {'mythbusters', 'digital_myths', 'money_myths', 'environment_myths', 'science_myths', 'nutrition_myths'})):validation_errors.append('image_plan')
+                if not (validate_wellness_content(fact, category)):validation_errors.append('wellness_content')
+                if not (category != 'physics' or validate_physics_content(fact)):validation_errors.append('physics_content')
+                if not (category != 'biology' or validate_biology_content(fact)):validation_errors.append('biology_content')
+                if not (category != 'psychology' or validate_psychology_content(fact)):validation_errors.append('psychology_content')
+                if not (category != 'indian_constitution' or validate_constitution_content(fact)):validation_errors.append('indian_constitution_content')
+                if not (category != 'indian_laws' or validate_indian_laws_content(fact)):validation_errors.append('indian_laws_content')
+                if not (category != 'country' or validate_country_content(fact)):validation_errors.append('country_content')
+                if not (category != 'india' or validate_india_content(fact)):validation_errors.append('india_content')
+                if not (category != 'food' or validate_food_content(fact)):validation_errors.append('food_content')
+                if not (category != 'fashion' or validate_fashion_content(fact)):validation_errors.append('fashion_content')
+                if not (category != 'geography' or validate_geography_content(fact)):validation_errors.append('geography_content')
+                if not (category != 'technology' or validate_technology_content(fact)):validation_errors.append('technology_content')
+                if not (category != 'economics' or validate_economics_content(fact)):validation_errors.append('economics_content')
+                if not (category != 'agriculture' or validate_agriculture_content(fact)):validation_errors.append('agriculture_content')
+                if not (category != 'nature' or validate_nature_content(fact)):validation_errors.append('nature_content')
+                if category == 'drinks':
+                    validate_drinks_content(fact, errors=validation_errors)
+            if not validation_errors:
                 normalize_evidence(fact)
                 fact["category"] = category
                 if category == 'drinks':prepare_drinks_media(fact)
@@ -266,10 +287,11 @@ async def generate_daily_fact(
                 )
                 return fact
 
-            logger.warning(
-                "Model returned empty or malformed response on attempt %d",
-                attempt + 1,
-            )
+            last_error = ValueError("Response validation failed: " + "; ".join(validation_errors))
+            logger.warning("Rejected %s response on attempt %d: %s (finish_reason=%s)",
+                           model_name, attempt + 1, last_error,
+                           getattr(response.choices[0], 'finish_reason', None)
+                           if not model_name.startswith('gemini') and response.choices else None)
 
         except Exception as exc:
             last_error = exc

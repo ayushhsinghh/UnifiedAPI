@@ -50,7 +50,7 @@ DRINKS_RESPONSE_SCHEMA['required'].append('drinks_lesson')
 
 # Versioned content keeps saved first-edition articles readable.
 LEGACY_DRINKS_RESPONSE_SCHEMA=deepcopy(DRINKS_RESPONSE_SCHEMA)
-DRINKS_LESSON_SCHEMA['properties']['content_version']={'type':'INTEGER','enum':[2]}
+DRINKS_LESSON_SCHEMA['properties']['content_version']={'type':'INTEGER'}
 DRINKS_LESSON_SCHEMA['properties']['production_evolution']=_object({
  era:sourced({'context':_TEXT,'equipment':_strings(),'steps':_strings(),'result':_TEXT})
  for era in ('historical','modern')})
@@ -66,7 +66,7 @@ DRINKS_LESSON_SCHEMA=deepcopy(DRINKS_LESSON_SCHEMA)
 for key in ('opening_hook','question','learning_goal','introduction','then_and_now','production_evolution','production_steps','variations','related_drinks'):
  DRINKS_LESSON_SCHEMA['properties'].pop(key,None)
  if key in DRINKS_LESSON_SCHEMA['required']:DRINKS_LESSON_SCHEMA['required'].remove(key)
-DRINKS_LESSON_SCHEMA['properties']['content_version']={'type':'INTEGER','enum':[3]}
+DRINKS_LESSON_SCHEMA['properties']['content_version']={'type':'INTEGER'}
 DRINKS_LESSON_SCHEMA['properties']['identity']['properties']['drink_type']['enum']+=['coffee','tea','cocoa','juice','soft_drink']
 DRINKS_LESSON_SCHEMA['properties']['opening']=sourced({'heading':_TEXT,'introduction':_TEXT,'question':_TEXT})
 DRINKS_LESSON_SCHEMA['properties']['origin']['properties']['cultural_role']=_TEXT
@@ -159,59 +159,83 @@ def _ensure_v3_photo_plan(f,name):
 
 def drinks_photo_entries(f):return [dict(p,key=f'drinks_photo_{i}') for i,p in enumerate(f.get('drinks_lesson',{}).get('photos',[])[:30])]
 
-def validate_drinks_content(f):
+def _drinks_shape_error(value, schema, path='$'):
+ if value is None and schema.get('nullable'):return None
+ kind=schema['type']
+ if kind=='OBJECT' and isinstance(value,dict):
+  for key in schema.get('required',[]):
+   if key not in value:return f'{path}.{key}: required field missing'
+  for key,child in schema['properties'].items():
+   if key in value:
+    error=_drinks_shape_error(value[key],child,f'{path}.{key}')
+    if error:return error
+ elif kind=='ARRAY' and isinstance(value,list):
+  if len(value)>100:return f'{path}: too many entries'
+  for index,item in enumerate(value):
+   error=_drinks_shape_error(item,schema['items'],f'{path}[{index}]')
+   if error:return error
+ elif not _shape(value,schema):return f'{path}: expected {kind} with allowed value and length'
+ return None
+
+def validate_drinks_content(f, errors=None):
+ def reject(reason):
+  if errors is not None:errors.append(reason)
+  return False
  try:
-  if f.get('drinks_lesson',{}).get('content_version') not in (None,2,3):return False
+  if f.get('drinks_lesson',{}).get('content_version') not in (None,2,3):return reject('Unsupported drinks_lesson.content_version')
   schema=(VERSION2_DRINKS_RESPONSE_SCHEMA if 'opening_hook' in f.get('drinks_lesson',{}) else PRE_HOOK_DRINKS_RESPONSE_SCHEMA) if modern_drinks(f) else LEGACY_DRINKS_RESPONSE_SCHEMA
   if f.get('drinks_lesson',{}).get('content_version')==3:schema=DRINKS_RESPONSE_SCHEMA
-  if not _shape(f,schema) or not validate_drinks_images(f):return False
+  shape_error=_drinks_shape_error(f,schema)
+  if shape_error:return reject(shape_error)
+  if not validate_drinks_images(f):return reject('Invalid drinks image plan: cover, overview, science or image_details')
   l=f['drinks_lesson'];sources=f['sources'];ids={s['id'] for s in sources}
-  if not sources or not _unique_ids(sources):return False
+  if not sources or not _unique_ids(sources):return reject('sources must contain unique nonempty IDs')
   def check(v):
    if isinstance(v,dict):return ('source_ids' not in v or bool(v['source_ids']) and set(v['source_ids'])<=ids) and all(check(x) for x in v.values())
    if isinstance(v,list):return all(check(x) for x in v)
    return not isinstance(v,str) or bool(v.strip())
-  if not check(l):return False
+  if not check(l):return reject('drinks_lesson contains empty text or unresolved source_ids')
   third=l.get('content_version')==3
   bounds=[('history',0 if third else 2,6),('ingredients',2,10),('science',1 if third else 0,1 if third else 3),('photos',12 if third else 4,30 if third else 18)]
   if third:bounds+=[('explore_drinks',2,8)]
   else:bounds+=[('production_steps',2,6),('variations',1,6)]
   for key,low,high in bounds:
    rows=l[key]
-   if not low<=len(rows)<=high or not _unique_ids(rows) or any(not simple_id(p['id']) for p in rows):return False
+   if not low<=len(rows)<=high or not _unique_ids(rows) or any(not simple_id(p['id']) for p in rows):return reject(f'Invalid count or IDs in drinks_lesson.{key}: expected {low}..{high}')
   if third:
    m=l['making']
-   if not 3<=len(m['stages'])<=5 or not _unique_ids(m['stages']) or any(not simple_id(p['id']) for p in m['stages']):return False
-   if len(m['comparisons'])>4 or not _unique_ids(m['comparisons']) or any(not simple_id(p['id']) for p in m['comparisons']):return False
-   if not 2<=len(m['defining_features'])<=4:return False
+   if not 3<=len(m['stages'])<=5 or not _unique_ids(m['stages']) or any(not simple_id(p['id']) for p in m['stages']):return reject('making.stages requires 3..5 entries with unique simple IDs')
+   if len(m['comparisons'])>4 or not _unique_ids(m['comparisons']) or any(not simple_id(p['id']) for p in m['comparisons']):return reject('making.comparisons allows at most 4 entries with unique simple IDs')
+   if not 2<=len(m['defining_features'])<=4:return reject('making.defining_features requires 2..4 entries')
    names=[p['name'].strip().casefold() for p in l['explore_drinks']]
-   if len(set(names))!=len(names) or l['identity']['name'].strip().casefold() in names:return False
-   if any(not 1<=len(p['ingredients'])<=8 for p in l['explore_drinks']):return False
+   if len(set(names))!=len(names) or l['identity']['name'].strip().casefold() in names:return reject('explore_drinks names must be unique and differ from the main drink')
+   if any(not 1<=len(p['ingredients'])<=8 for p in l['explore_drinks']):return reject('explore_drinks ingredients requires 1..8 entries')
    for section,entries in [('ingredients',l['ingredients']),('method',m['stages']),('explore',l['explore_drinks'])]:
-    if not {p['id'] for p in entries}<={p['entry_id'] for p in l['photos'] if p['section_id']==section}:return False
-  if not 1<=len(l['identity']['country_names'])<=6 or len(l['identity']['local_names'])>5:return False
+    if not {p['id'] for p in entries}<={p['entry_id'] for p in l['photos'] if p['section_id']==section}:return reject(f'Missing photo binding for section {section}')
+  if not 1<=len(l['identity']['country_names'])<=6 or len(l['identity']['local_names'])>5:return reject('Invalid identity country_names or local_names count')
   r=l['recipe'];ingredients=r['ingredients'];used={i for s in r['steps'] for i in s['ingredient_ids']}
   finite=lambda v:type(v) in (int,float) and math.isfinite(v)
-  if not finite(r['servings']) or int(r['servings'])!=r['servings'] or not 1<=r['servings']<=20:return False
-  if any(not finite(r[k]) or not 0<=r[k]<=2880 for k in ('prep_minutes','cook_minutes','rest_minutes')):return False
-  if not 2<=len(ingredients)<=20 or not _unique_ids(ingredients) or any(not simple_id(i['id']) or not finite(i['amount']) or not 0<i['amount']<=100000 for i in ingredients):return False
-  if not 2<=len(r['steps'])<=12 or not r['equipment'] or used!={i['id'] for i in ingredients}:return False
-  if len(r['substitutions'])>12 or any(p['ingredient_id'] not in used for p in r['substitutions']):return False
+  if not finite(r['servings']) or int(r['servings'])!=r['servings'] or not 1<=r['servings']<=20:return reject('recipe.servings must be an integer from 1 to 20')
+  if any(not finite(r[k]) or not 0<=r[k]<=2880 for k in ('prep_minutes','cook_minutes','rest_minutes')):return reject('recipe times must be finite and between 0 and 2880')
+  if not 2<=len(ingredients)<=20 or not _unique_ids(ingredients) or any(not simple_id(i['id']) or not finite(i['amount']) or not 0<i['amount']<=100000 for i in ingredients):return reject('Invalid recipe ingredient count, IDs or amounts')
+  if not 2<=len(r['steps'])<=12 or not r['equipment'] or used!={i['id'] for i in ingredients}:return reject('recipe requires 2..12 steps, equipment and exact ingredient references')
+  if len(r['substitutions'])>12 or any(p['ingredient_id'] not in used for p in r['substitutions']):return reject('Invalid recipe substitutions or ingredient references')
   has_alcohol=any(i['contains_alcohol'] for i in ingredients)
-  if has_alcohol!=(r['alcohol_status']=='alcoholic'):return False
-  if l['identity']['alcohol_status']=='non_alcoholic' and has_alcohol:return False
-  if r['preparation_type']=='alcohol_free_interpretation' and has_alcohol:return False
+  if has_alcohol!=(r['alcohol_status']=='alcoholic'):return reject('recipe.alcohol_status conflicts with ingredients')
+  if l['identity']['alcohol_status']=='non_alcoholic' and has_alcohol:return reject('Non-alcoholic identity conflicts with recipe ingredients')
+  if r['preparation_type']=='alcohol_free_interpretation' and has_alcohol:return reject('Alcohol-free recipe contains alcohol')
   refs=drink_refs(l)
-  if any((p['section_id']=='science' and not l['science']) or not 1<=len(p['queries'])<=4 or any(len(q)>160 for q in p['queries']) or (p['entry_id'] is not None and p['entry_id'] not in refs.get(p['section_id'],set())) for p in l['photos']):return False
-  if len({p['section_id'] for p in l['photos']})<3:return False
+  if any((p['section_id']=='science' and not l['science']) or not 1<=len(p['queries'])<=4 or any(len(q)>160 for q in p['queries']) or (p['entry_id'] is not None and p['entry_id'] not in refs.get(p['section_id'],set())) for p in l['photos']):return reject('Invalid photo queries or section entry references')
+  if len({p['section_id'] for p in l['photos']})<3:return reject('Photos must cover at least three sections')
   if modern_drinks(f):
-   if not (V3_PHOTO_SECTIONS if third else REQUIRED_PHOTO_SECTIONS)<={p['section_id'] for p in l['photos']}:return False
-   if any(not 2<=len(p['queries'])<=3 or len(set(q.casefold() for q in p['queries']))!=len(p['queries']) for p in l['photos']):return False
-   if not 1<=len(l['science'])<=3:return False
+   if not (V3_PHOTO_SECTIONS if third else REQUIRED_PHOTO_SECTIONS)<={p['section_id'] for p in l['photos']}:return reject('Missing required photo sections')
+   if any(not 2<=len(p['queries'])<=3 or len(set(q.casefold() for q in p['queries']))!=len(p['queries']) for p in l['photos']):return reject('Photos require 2..3 distinct queries')
+   if not 1<=len(l['science'])<=3:return reject('science requires 1..3 entries')
    for era in ([] if third else l['production_evolution'].values()):
-    if not 2<=len(era['steps'])<=6 or not 1<=len(era['equipment'])<=8:return False
-  return 1<=len(l['troubleshooting'])<=5 and 1<=len(l['knowledge_checks'])<=3 and 2<=len(l['takeaways'])<=5 and (third or 1<=len(l['related_drinks'])<=6)
- except (KeyError,ValueError,TypeError,OverflowError):return False
+    if not 2<=len(era['steps'])<=6 or not 1<=len(era['equipment'])<=8:return reject('Invalid production_evolution steps or equipment count')
+  if not (1<=len(l['troubleshooting'])<=5 and 1<=len(l['knowledge_checks'])<=3 and 2<=len(l['takeaways'])<=5 and (third or 1<=len(l['related_drinks'])<=6)):return reject('Invalid troubleshooting, knowledge check, takeaway or related-drink count')
+  return True
+ except (KeyError,ValueError,TypeError,OverflowError):return reject('Invalid field type or missing field in drinks_lesson')
 
 def prepare_drinks_media(f):
  f['images']={};f['image_credits']={};slots=['cover','overview']+(['how_it_works'] if f['drinks_lesson']['science_focus_id'] is not None else [])

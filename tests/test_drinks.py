@@ -14,6 +14,23 @@ def fixture():return json.loads((Path(__file__).parent/'fixtures/drinks_lesson.j
 def fixture_v2():return json.loads((Path(__file__).parent/'fixtures/drinks_lesson_v2.json').read_text())
 def fixture_v3():return json.loads((Path(__file__).parent/'fixtures/drinks_lesson_v3.json').read_text())
 class DrinksTests(unittest.TestCase):
+ def test_provider_schema_has_no_numeric_enums_and_keeps_integer_version(self):
+  from src.facts.drinks import DRINKS_RESPONSE_SCHEMA,VERSION2_DRINKS_RESPONSE_SCHEMA
+  def check(schema):
+   self.assertTrue(all(isinstance(v,str) for v in schema.get('enum',[])))
+   for child in schema.get('properties',{}).values():check(child)
+   if 'items' in schema:check(schema['items'])
+  for schema in (DRINKS_RESPONSE_SCHEMA,VERSION2_DRINKS_RESPONSE_SCHEMA):check(schema)
+  self.assertEqual(DRINKS_LESSON_SCHEMA['properties']['content_version']['type'],'INTEGER')
+  f=fixture_v3();f['drinks_lesson']['content_version']=4
+  self.assertFalse(validate_drinks_content(f))
+ def test_validation_reports_field_paths_and_semantic_rules(self):
+  f=fixture_v3();del f['drinks_lesson']['opening']['introduction'];errors=[]
+  self.assertFalse(validate_drinks_content(f,errors=errors))
+  self.assertIn('$.drinks_lesson.opening.introduction',errors[0])
+  f=fixture_v3();f['drinks_lesson']['recipe']['steps'][0]['ingredient_ids']=['missing'];errors=[]
+  self.assertFalse(validate_drinks_content(f,errors=errors))
+  self.assertIn('ingredient references',errors[0])
  def test_third_edition_has_distinct_content_and_one_science_image(self):
   f=fixture_v3();self.assertTrue(validate_drinks_content(f));prepare_drinks_media(f)
   self.assertEqual(f['drinks_media']['version'],3);self.assertEqual(f['drinks_media']['generated_limit'],3)
@@ -78,6 +95,29 @@ class DrinksTests(unittest.TestCase):
   f=fixture();f['drinks_lesson']['photos']=[];self.assertTrue(ensure_drinks_photo_plan(f));self.assertTrue(validate_drinks_content(f));plan=f['drinks_lesson']['photos']
   self.assertGreaterEqual(len({p['section_id'] for p in plan}),3);self.assertFalse(ensure_drinks_photo_plan(f));self.assertIs(plan,f['drinks_lesson']['photos'])
 class DrinksAsyncTests(unittest.IsolatedAsyncioTestCase):
+ async def test_openai_incomplete_response_is_not_accepted_as_a_fact(self):
+  from unittest.mock import patch
+  r=generator_module()
+  r.genai.Client.return_value.aio.models.generate_content=AsyncMock(side_effect=ValueError('old schema failure'))
+  response=types.SimpleNamespace(choices=[types.SimpleNamespace(finish_reason='length',message=types.SimpleNamespace(content=json.dumps(fixture_v3()),refusal=None))])
+  r.openai.AsyncOpenAI.return_value.chat.completions.create=AsyncMock(return_value=response)
+  with patch.object(r.asyncio,'sleep',new=AsyncMock()):
+   self.assertIsNone(await r.generate_daily_fact('drinks',[]))
+  self.assertIn('finish_reason=length',str(r.logger.warning.call_args.args[-1]))
+ async def test_openai_rejection_replaces_prior_gemini_exception(self):
+  from unittest.mock import patch
+  r=generator_module()
+  import logging
+  r.logger=logging.getLogger('drinks_validation_regression')
+  r.genai.Client.return_value.aio.models.generate_content=AsyncMock(side_effect=ValueError('old Gemini schema error'))
+  bad=fixture_v3();del bad['drinks_lesson']['opening']['introduction']
+  response=types.SimpleNamespace(choices=[types.SimpleNamespace(finish_reason='stop',message=types.SimpleNamespace(content=json.dumps(bad)))])
+  r.openai.AsyncOpenAI.return_value.chat.completions.create=AsyncMock(return_value=response)
+  with patch.object(r.asyncio,'sleep',new=AsyncMock()),self.assertLogs(r.logger,level='WARNING') as logs:
+   self.assertIsNone(await r.generate_daily_fact('drinks',[]))
+  self.assertIn('$.drinks_lesson.opening.introduction',logs.output[-1])
+  self.assertNotIn('old Gemini schema error',logs.output[-1])
+  self.assertTrue(any('finish_reason=stop' in line for line in logs.output))
  async def test_third_edition_ranker_accepts_thirty_metadata_matches(self):
   f=fixture_v3();request=f['drinks_lesson']['photos'][0]['id'];photos=[photo(i) for i in range(30)]
   payload={'selected':[dict(photo_id=p['provider_id'],score=90,scene=request,reason='Metadata matches the requested subject.') for p in photos],'retry_queries':[]}
