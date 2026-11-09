@@ -28,6 +28,7 @@ from security import validate_file_extension
 from src.auth.tokens import get_current_user
 from src.database.job_repository import create_job
 from src.transcription.models import JobStatus
+from src.transcription.engine_policy import audio_engine_enabled
 from src.transcription.openai_worker import openai_transcribe_job
 
 logger = logging.getLogger(__name__)
@@ -61,6 +62,8 @@ async def create_openai_job_endpoint(
         language: Source language code (default: ja-JP).
         translate: Whether to translate to English ("on"/"off").
     """
+    if not audio_engine_enabled('openai', cfg):
+        raise HTTPException(503, 'OpenAI audio transcription is disabled. Select Whisper or NVIDIA Riva.')
     validate_file_extension(file.filename)
 
     job_id = generate_job_id()

@@ -18,6 +18,7 @@ from . import gemini_media as media
 from .gemini_languages import whisper_language
 from .gemini_live import translate_section
 from .gemini_logging import context, event, failure
+from .engine_policy import audio_engine_enabled
 
 logger = logging.getLogger(__name__)
 
@@ -311,6 +312,8 @@ async def run_claimed(job, translator=translate_section):
 
 async def main(once=False):
     cfg = get_config()
+    if not audio_engine_enabled('gemini', cfg):
+        raise SystemExit('Gemini audio translation is disabled by the audio engine configuration.')
     if not cfg.GEMINI_TRANSLATION_ENABLED or not cfg.GEMINI_API_KEY:
         event(logger, 'worker_configuration_invalid', level=logging.ERROR,
               enabled=cfg.GEMINI_TRANSLATION_ENABLED, api_key_present=bool(cfg.GEMINI_API_KEY))

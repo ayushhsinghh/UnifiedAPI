@@ -32,6 +32,7 @@ from src.transcription.gemini_live import translate_section
 def cfg(root):
     return types.SimpleNamespace(UPLOAD_DIR=str(root / 'uploads'), OUTPUT_DIR=str(root / 'outputs'),
         JOBS_COLLECTION='jobs', MAX_UPLOAD_SIZE=6 * 1024**3, GEMINI_TRANSLATION_ENABLED=True,
+        AUDIO_TRANSCRIPTION_ENABLED_ENGINES=frozenset({'whisper','riva','gemini','openai'}),
         GEMINI_TRANSLATION_MODEL='gemini-3.5-live-translate-preview', GEMINI_API_KEY='test-only-key',
         GEMINI_TRANSLATION_MAX_DURATION_SECONDS=21600, GEMINI_TRANSLATION_LEASE_SECONDS=180,
         GEMINI_TRANSLATION_HEARTBEAT_SECONDS=30, GEMINI_TRANSLATION_SUBTITLE_MODEL='medium')
@@ -221,6 +222,13 @@ class LiveProtocolTests(unittest.IsolatedAsyncioTestCase):
 
 
 class WorkerTests(unittest.IsolatedAsyncioTestCase):
+    async def test_disabled_worker_never_claims_queued_jobs(self):
+        self.config.AUDIO_TRANSCRIPTION_ENABLED_ENGINES = frozenset({'whisper','riva'})
+        with patch.object(repo, 'claim') as claim:
+            with self.assertRaisesRegex(SystemExit, 'disabled'):
+                await worker.main(once=True)
+            claim.assert_not_called()
+
     async def asyncSetUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.root = Path(self.temp.name)
@@ -386,6 +394,32 @@ class WorkerTests(unittest.IsolatedAsyncioTestCase):
 
 
 class ApiTests(unittest.IsolatedAsyncioTestCase):
+    async def test_disabled_cloud_engines_reject_new_jobs_without_queueing(self):
+        self.config.AUDIO_TRANSCRIPTION_ENABLED_ENGINES = frozenset({'whisper','riva'})
+        with patch.object(self.openai, 'cfg', self.config), \
+             patch.object(self.openai, 'create_job') as create_openai, \
+             patch.object(repo, 'enqueue') as create_gemini:
+            for path in ('/api/gemini/jobs','/api/openai/jobs'):
+                response = await self.client.post(path, headers=self.headers,
+                    data={'target_language':'en'}, files={'file':('audio.mp3', b'audio', 'audio/mpeg')})
+                self.assertEqual(response.status_code, 503, response.text)
+                self.assertIn('disabled', response.json()['detail'])
+            create_openai.assert_not_called()
+            create_gemini.assert_not_called()
+        response = await self.client.get('/api/gemini/capabilities')
+        self.assertFalse(response.json()['enabled'])
+
+    async def test_disabled_gemini_cannot_retry_but_keeps_owned_history(self):
+        self.config.AUDIO_TRANSCRIPTION_ENABLED_ENGINES = frozenset({'whisper','riva'})
+        job_id='job_'+'e'*32
+        repo.enqueue(job_id,'owner@example.test',{'video':'source.mp3','target_language':'en'})
+        self.db.jobs.update_one({'job_id':job_id},{'$set':{'status':'failed'}})
+        response=await self.client.post('/api/jobs/'+job_id+'/retry',headers=self.headers)
+        self.assertEqual(response.status_code,503,response.text)
+        self.assertEqual(self.db.jobs.find_one({'job_id':job_id})['status'],'failed')
+        response=await self.client.get('/api/jobs/'+job_id,headers=self.headers)
+        self.assertEqual(response.status_code,200,response.text)
+
     async def asyncSetUp(self):
         import httpx
         from fastapi import FastAPI, Request, HTTPException

@@ -57,7 +57,9 @@ _otel_shutdown = setup_telemetry(app)
 
 @app.on_event("startup")
 async def _start_gemini_worker() -> None:
-    if not cfg.GEMINI_TRANSLATION_ENABLED:
+    from src.transcription.engine_policy import audio_engine_enabled
+    if not audio_engine_enabled('gemini', cfg) or not cfg.GEMINI_TRANSLATION_ENABLED:
+        logger.info('Gemini audio translation worker disabled by engine configuration')
         return
     if not cfg.GEMINI_API_KEY:
         logger.error("Gemini translation worker cannot start: GEMINI_API_KEY is missing")

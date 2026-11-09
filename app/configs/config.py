@@ -193,6 +193,8 @@ def get_config() -> SimpleNamespace:
 
 
 # Gemini speech translation is opt-in. Credentials stay in the API/worker environment.
+# Audio engine availability is separate from Gemini/OpenAI article generation.
+AUDIO_TRANSCRIPTION_ENABLED_ENGINES = frozenset({'whisper', 'riva'})
 GEMINI_TRANSLATION_ENABLED = os.getenv("GEMINI_TRANSLATION_ENABLED", "false").lower() == "true"
 GEMINI_TRANSLATION_MODEL = "gemini-3.5-live-translate-preview"
 GEMINI_TRANSLATION_MAX_DURATION_SECONDS = int(os.getenv("GEMINI_TRANSLATION_MAX_DURATION_SECONDS", "21600"))

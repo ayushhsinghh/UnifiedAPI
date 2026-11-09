@@ -18,6 +18,7 @@ from src.transcription.gemini_languages import LANGUAGES, whisper_language
 from src.transcription.gemini_media import MediaError, probe, require_space
 from src.transcription.gemini_worker import cleanup, safe_artifact
 from src.transcription.gemini_logging import context, event, failure
+from src.transcription.engine_policy import audio_engine_enabled
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix='/api/gemini', tags=['gemini-translation'])
@@ -27,7 +28,7 @@ router = APIRouter(prefix='/api/gemini', tags=['gemini-translation'])
 @limiter.limit('30/minute')
 def capabilities(request: Request):
     cfg = get_config()
-    return {'enabled': cfg.GEMINI_TRANSLATION_ENABLED and bool(cfg.GEMINI_API_KEY),
+    return {'enabled': audio_engine_enabled('gemini', cfg) and cfg.GEMINI_TRANSLATION_ENABLED and bool(cfg.GEMINI_API_KEY),
             'model': cfg.GEMINI_TRANSLATION_MODEL, 'max_upload_bytes': cfg.MAX_UPLOAD_SIZE,
             'max_duration_seconds': cfg.GEMINI_TRANSLATION_MAX_DURATION_SECONDS,
             'languages': [{'code': code, 'name': name, 'subtitle_fallback_supported': whisper_language(code) is not None}
@@ -40,6 +41,8 @@ async def create_gemini_job(request: Request, file: UploadFile = File(...),
                            target_language: str = Form(...), generate_subtitles: bool = Form(True),
                            current_user: dict = Depends(get_current_user)):
     cfg = get_config()
+    if not audio_engine_enabled('gemini', cfg):
+        raise HTTPException(503, 'Gemini audio translation is disabled. Select Whisper or NVIDIA Riva.')
     if not cfg.GEMINI_TRANSLATION_ENABLED or not cfg.GEMINI_API_KEY:
         event(logger, 'upload_unavailable', level=logging.WARNING,
               enabled=cfg.GEMINI_TRANSLATION_ENABLED, api_key_present=bool(cfg.GEMINI_API_KEY))

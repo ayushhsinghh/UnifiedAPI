@@ -25,6 +25,7 @@ from fastapi import (
 )
 from fastapi.responses import FileResponse, JSONResponse
 from src.database import gemini_jobs_repository as gemini_repo
+from src.transcription.engine_policy import audio_engine_enabled
 from src.routes.gemini_routes import artifact_response, owned, cancel_owned
 
 from commons import generate_job_id, limiter
@@ -253,7 +254,7 @@ def retry_gemini_job(request: Request, job_id: str, current_user: dict = Depends
     job = owned(job_id, current_user)
     if job.get('engine') != gemini_repo.ENGINE:
         raise HTTPException(409, 'Only Gemini translation jobs support this retry operation.')
-    if not cfg.GEMINI_TRANSLATION_ENABLED or not cfg.GEMINI_API_KEY:
+    if not audio_engine_enabled('gemini', cfg) or not cfg.GEMINI_TRANSLATION_ENABLED or not cfg.GEMINI_API_KEY:
         raise HTTPException(503, 'Gemini audio translation is not enabled.')
     if not gemini_repo.retry(job_id, current_user['email']):
         raise HTTPException(409, 'Only failed or cancelled jobs can be retried.')
