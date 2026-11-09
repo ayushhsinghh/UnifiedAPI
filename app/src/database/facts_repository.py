@@ -304,3 +304,14 @@ def save_history_photo_plan(content_hash: str, fact: dict, previous_photos=None)
                  'full_response.history_media.photo_plan_version':1,
                  'full_response.history_media.photo_plan_source':fact.get('history_media',{}).get('photo_plan_source','fallback')}})
     return result.matched_count==1
+
+
+def save_politics_photo_plan(content_hash: str, fact: dict, previous_photos=None) -> bool:
+    """Persist a repair only against the exact plan this worker read."""
+    path='full_response.indian_politics_lesson.photos'
+    result=get_db()[cfg.DAILY_FACTS_COLLECTION].update_one({
+        'content_hash':content_hash,'full_response.article_type':'indian_politics_lesson',path:previous_photos},
+        {'$set':{path:fact['indian_politics_lesson']['photos'],
+                 'full_response.indian_politics_media.photo_plan_version':1,
+                 'full_response.indian_politics_media.photo_plan_source':fact.get('indian_politics_media',{}).get('photo_plan_source','fallback')}})
+    return result.matched_count==1

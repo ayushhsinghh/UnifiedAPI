@@ -140,6 +140,9 @@ def ranking_input(fact,photos):
             'places':[p.get('name') for p in profile.get('notable_places',[])[:5]]}
         for key in ('everyday_life','products_and_industries','global_contributions'):
             brief[key]=[{'title':p.get('title'),'explanation':p.get('explanation','')[:600]} for p in profile.get(key,[])[:5]]
+    if fact.get('article_type')=='indian_politics_lesson':
+        lesson=fact.get('indian_politics_lesson',{})
+        brief={k:lesson.get(k) for k in ('identity','core_idea','context','actors','rules','process','worked_example','accountability','photos')}
     if fact.get('article_type')=='history_lesson':
         lesson=fact.get('history_lesson',{})
         brief={k:lesson.get(k) for k in ('identity','setting','causes','figures','chronology','evidence','india','mechanism','photos')}
@@ -171,7 +174,7 @@ def ranking_input(fact,photos):
         lesson=fact.get('economics_lesson',{})
         brief={k:lesson.get(k) for k in ('identity','central_idea','opening_scenario','mechanism','real_world_case','photos')}
     return {'topic':fact.get('topic'),'lesson':brief,'photos':[{'photo_id':p['provider_id'],
-        **({'provider':p.get('provider'),'title':p.get('title','')[:160]} if fact.get('article_type') in ('drinks_lesson','history_lesson') else {}),
+        **({'provider':p.get('provider'),'title':p.get('title','')[:160]} if fact.get('article_type') in ('drinks_lesson','history_lesson','indian_politics_lesson') else {}),
         'description':p.get('description_text',p.get('description',''))[:600],'alt_description':p.get('alt_description','')[:300]}
         for p in photos[:240]]}
 
@@ -220,11 +223,13 @@ def validate_ranking(payload,photos,request_ids=None,request_key='food_request_i
 
 async def rank_photos(fact,photos,*,client=None,report=lambda state:None):
     owned=client is None
-    editorial=next((kind for kind in ('food','fashion','geography','technology','economics','agriculture','nature','drinks','culture','history') if fact.get('article_type')==kind+'_lesson'),None)
+    editorial=next((kind for kind in ('food','fashion','geography','technology','economics','agriculture','nature','drinks','culture','history','indian_politics') if fact.get('article_type')==kind+'_lesson'),None)
     requests={p['id'] for p in fact.get(editorial+'_lesson',{}).get('photos',[])} if editorial else None
     prompt=SYSTEM_PROMPT
     if requests is not None:
         prompt+='\nFor this editorial lesson, scene MUST be one exact photos request id from the brief. Select a photo only for that requested subject and section. Cover complementary requests when metadata supports them. Return fewer than ten freely; there is no minimum for this lesson.'
+    politics=editorial=='indian_politics'
+    if politics:prompt+='\nFor Indian Politics match the exact institution, office, person and procedure. Buildings show setting, not evidence of a particular vote or political claim. Never substitute generic people or another legislature for a named actor. Preserve time/place and avoid implying endorsement. Stock may match ONLY modern_context requests for institutional/place context. You may select up to 30 relevant section photos.'
     history=editorial=='history'
     if history:prompt+='\nFor History, match the actual person, document, object, place and era. A later painting is a later depiction, not an eyewitness record; a photograph of a modern ruin is not the original site condition. Do not infer provenance or dates. Use source metadata, not the requested target_period as proof. Stock photos may match ONLY modern_context requests, illustrating present-day places, never historical events. You may select up to 30 complementary records.'
     culture=editorial=='culture'
@@ -247,7 +252,7 @@ async def rank_photos(fact,photos,*,client=None,report=lambda state:None):
                     response_format={'type':'json_object'},reasoning_effort='none',max_completion_tokens=4096,store=False),
                     timeout=ATTEMPT_TIMEOUT)
                 payload=json.loads(response.choices[0].message.content)
-                result=validate_ranking(payload,photos,request_ids=requests,request_key=(editorial or 'food')+'_request_ids',max_selected=30 if drinks_v3 or culture or history else MAX_PHOTOS)
+                result=validate_ranking(payload,photos,request_ids=requests,request_key=(editorial or 'food')+'_request_ids',max_selected=30 if drinks_v3 or culture or history or politics else MAX_PHOTOS)
                 report({'ranked_count':len(payload['selected']),'qualified_count':len(result),
                     'retry_queries':result.retry_queries})
                 return result
@@ -309,6 +314,10 @@ async def select_nature_photos(fact,*,report=lambda state:None,fetch=None,common
     ensure_nature_photo_plan(fact)
     return await _select_editorial_photos(fact,nature_photo_entries(fact),'nature_request_ids',report=report,fetch=fetch,commons=commons,rank=rank,excluded=excluded)
 
+async def select_politics_photos(fact,*,report=lambda state:None,fetch=None,commons=None,rank=None,excluded=()):
+    from .indian_politics import politics_photo_entries
+    return await _select_split_editorial_photos(fact,politics_photo_entries(fact),'indian_politics',report=report,fetch=fetch,commons=commons,rank=rank,excluded=excluded)
+
 async def select_history_photos(fact,*,report=lambda state:None,fetch=None,commons=None,rank=None,excluded=()):
     from .history import history_photo_entries
     return await _select_split_editorial_photos(fact,history_photo_entries(fact),'history',report=report,fetch=fetch,commons=commons,rank=rank,excluded=excluded)
@@ -328,15 +337,15 @@ async def select_drinks_photos(fact,*,report=lambda state:None,fetch=None,common
 async def _select_split_editorial_photos(fact,entries,category,*,report,fetch=None,commons=None,rank=None,excluded=()):
     # Independent pools: documentary matches cannot consume the stock gallery slots.
     gallery_entries=[p for p in entries if p['section_id'] in ('overview','context','process','tradeoffs','limits','modern_making','method','explore','ingredients','recipe','variations','serving','daily_life','worldview','markers','explanation','spread','living') and p['kind'] not in ('named_place','person','historical_object')]
-    if category=='history':gallery_entries=[p for p in entries if p['kind']=='modern_context']
-    if category in ('culture','history') or category=='drinks' and fact.get('drinks_lesson',{}).get('content_version')==3:gallery_entries=gallery_entries[:12]
+    if category in ('history','indian_politics'):gallery_entries=[p for p in entries if p['kind']=='modern_context']
+    if category in ('culture','history','indian_politics') or category=='drinks' and fact.get('drinks_lesson',{}).get('content_version')==3:gallery_entries=gallery_entries[:12]
     states={'sections':{},'gallery':{}}
     def progress(flow,value):
         states[flow].update(value)
         report({'flows':{name:dict(state) for name,state in states.items()}})
     async def select(flow,requests,source):
         try:
-            photos=await _select_editorial_photos(fact,requests,category+'_request_ids',report=lambda value:progress(flow,value),fetch=fetch,commons=commons,rank=rank,excluded=excluded,photo_sources=source,max_selected=30 if flow=='sections' and (category in ('culture','history') or category=='drinks' and fact.get('drinks_lesson',{}).get('content_version')==3) else MAX_PHOTOS)
+            photos=await _select_editorial_photos(fact,requests,category+'_request_ids',report=lambda value:progress(flow,value),fetch=fetch,commons=commons,rank=rank,excluded=excluded,photo_sources=source,max_selected=30 if flow=='sections' and (category in ('culture','history','indian_politics') or category=='drinks' and fact.get('drinks_lesson',{}).get('content_version')==3) else MAX_PHOTOS)
             progress(flow,{'status':'completed' if photos else 'insufficient','selected_count':len(photos)})
             return [{**p,'selection_mode':p.get('selection_mode',states[flow].get('mode','text_ranking'))} for p in photos]
         except Exception as error:
@@ -354,7 +363,7 @@ async def _select_editorial_photos(fact,entries,request_key,*,report,fetch=None,
     if commons is None:
         from .country_photos import ranking_candidates as commons
     rank=rank or rank_photos
-    drinks=fact.get('article_type') in ('drinks_lesson','culture_lesson','history_lesson')
+    drinks=fact.get('article_type') in ('drinks_lesson','culture_lesson','history_lesson','indian_politics_lesson')
     commons_only=photo_sources=='commons' or (photo_sources is None and drinks and fact.get('drinks_lesson',{}).get('content_version') in (2,3))
     pool={};sources=set(excluded);semaphore=asyncio.Semaphore(6 if drinks or fact.get('article_type')=='agriculture_lesson' else 3)
     popular=(PopularDrinksPhotos if drinks else PopularUnsplash)(excluded)
@@ -366,7 +375,7 @@ async def _select_editorial_photos(fact,entries,request_key,*,report,fetch=None,
             async with semaphore:
                 try:return await asyncio.wait_for(source(query),timeout=15)
                 except Exception:return []
-        if fact.get('article_type') in ('culture_lesson','history_lesson') or drinks and fact.get('drinks_lesson',{}).get('content_version')==3:
+        if fact.get('article_type') in ('culture_lesson','history_lesson','indian_politics_lesson') or drinks and fact.get('drinks_lesson',{}).get('content_version')==3:
             token=(id(source),query.casefold())
             if token not in pending:pending[token]=asyncio.create_task(lookup())
             return item,await pending[token]
@@ -387,7 +396,7 @@ async def _select_editorial_photos(fact,entries,request_key,*,report,fetch=None,
         for _,photos in batches:popular.add(photos)
         # Give every Agriculture request candidates before the 240-photo cap is reached.
         records=([(item,photo) for n in range(max((len(photos) for _,photos in batches),default=0)) for item,photos in batches for photo in photos[n:n+1]]
-                 if fact.get('article_type') in ('agriculture_lesson','drinks_lesson','culture_lesson','history_lesson') else [(item,photo) for item,photos in batches for photo in photos])
+                 if fact.get('article_type') in ('agriculture_lesson','drinks_lesson','culture_lesson','history_lesson','indian_politics_lesson') else [(item,photo) for item,photos in batches for photo in photos])
         for item,photo in records:
                 if photo['source_url'] in sources:continue
                 photo_id=by_source.get(photo['source_url'],photo['provider_id'])
@@ -408,7 +417,7 @@ async def _select_editorial_photos(fact,entries,request_key,*,report,fetch=None,
             'provider_counts':provider_counts()})
     def permitted(photo,request_id):
         item=next((e for e in entries if e['id']==request_id),None)
-        if fact.get('article_type')=='history_lesson' and photo.get('provider')!='wikimedia' and (item is None or item.get('kind')!='modern_context'):return False
+        if fact.get('article_type') in ('history_lesson','indian_politics_lesson') and photo.get('provider')!='wikimedia' and (item is None or item.get('kind')!='modern_context'):return False
         if commons_only and photo.get('provider')!='wikimedia':return False
         if photo_sources=='stock' and photo.get('provider') not in ('unsplash','pixabay'):return False
         if item is None or (item.get('kind') in ('historical_object','person','named_place','satellite','named_model','screenshot','named_species','microscopy') and photo.get('provider')!='wikimedia'):return False

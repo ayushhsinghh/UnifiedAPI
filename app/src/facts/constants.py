@@ -98,11 +98,10 @@ CATEGORY_HINTS: Dict[str, str] = {
         "providing a complete and immersive guide to what makes that nation distinct"
     ),
     "indian_politics": (
-        "Indian parliamentary system, Lok Sabha & Rajya Sabha, "
-        "role of the President & PM, Election Commission of India, "
-        "EVM voting technology, coalition politics history, "
-        "Panchayati Raj system, Indian political parties evolution, "
-        "Governor's role in states, anti-defection law"
+        "One beginner-friendly Indian political institution or process: who acts, "
+        "what authority they have, how decisions unfold, rules versus practice, "
+        "a neutral worked example, accountability and the citizen's perspective. "
+        "Prefer stable parliamentary, electoral, federal or local-government concepts."
     ),
     "indian_constitution": (
         "Preamble & its amendments, fundamental rights (Part III), "

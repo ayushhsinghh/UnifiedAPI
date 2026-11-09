@@ -1,0 +1,586 @@
+{
+  "category": "indian_politics",
+  "topic": "Question Hour in Lok Sabha",
+  "headline_fact": "A question can turn a local concern into a public government answer.",
+  "summary": "Question Hour gives members a structured way to seek information from ministers. It connects representation with scrutiny: a member asks, a ministry answers, and the record becomes available for others to examine.",
+  "did_you_know": "How a representative turns a concern into a public answer.",
+  "history": "Lok Sabha is one of the two Houses of Parliament. Union ministers answer questions about responsibilities within their ministries.",
+  "core_mechanics": "A member identifies a matter and gives notice of a question.",
+  "why_it_matters": "The useful result is information that can support further scrutiny. An answer does not itself change a policy.",
+  "in_depth_breakdown": {
+    "detailed_processes": [],
+    "real_world_application": "A question is an information and accountability tool, rather than a direct order to the government.",
+    "fascinating_trivia": []
+  },
+  "impact_on_india": "Parliamentary answers can help a reader see what a ministry says it does, and what members ask it to explain.",
+  "cultural_significance": "Question Hour connects representation with public scrutiny.",
+  "common_misconceptions": [],
+  "key_year": "An ongoing parliamentary procedure",
+  "key_figure": "Members, the Speaker and ministers",
+  "key_stat": "Oral and written answers follow different procedures",
+  "quote": {
+    "text": "No quotation included.",
+    "confidence": "unverified",
+    "source_ids": []
+  },
+  "global_comparison": {
+    "summary": "This lesson focuses on Lok Sabha procedures.",
+    "comparisons": []
+  },
+  "timeline": [],
+  "learning_takeaways": [
+    "A member asks for information from the responsible ministry.",
+    "Admission and listing follow House procedures.",
+    "An answer supports scrutiny; it does not itself change a policy."
+  ],
+  "content_freshness": "evergreen",
+  "emoji_icon": "",
+  "difficulty_level": "beginner",
+  "region": "India",
+  "fun_rating": 4.5,
+  "read_time_seconds": 660,
+  "tags": [
+    "indian_politics",
+    "parliament",
+    "questions"
+  ],
+  "related_categories": [
+    "indian_constitution",
+    "indian_laws"
+  ],
+  "visual_suggestions": {
+    "cover": "Editorial illustration of Indian parliamentary institutions, Parliament architecture centre-right, quiet left title area. No identifiable politicians, party emblems or official seals.",
+    "overview": "A conceptual overview of a member seeking information from a ministry through parliamentary procedure. Clearly an illustration, no real faces or official documents.",
+    "how_it_works": "Educational diagram of a parliamentary question: member frames a question, House admission and listing, ministry answer, public record. Distinguish oral answers with supplementary questions from written answers. Use meaningful short labels and connecting arrows. No portraits, party symbols, invented vote results or official seals."
+  },
+  "share_text": "How a representative turns a concern into a public answer.",
+  "image_details": [
+    {
+      "slot": "overview",
+      "placement": "overview",
+      "alt": "Conceptual overview of parliamentary questions",
+      "caption": "An illustration of representation and scrutiny.",
+      "learning_purpose": "Connect the member, ministry and public record."
+    },
+    {
+      "slot": "how_it_works",
+      "placement": "explanation",
+      "alt": "The question process and its oral and written branches",
+      "caption": "The path from notice to a public answer.",
+      "learning_purpose": "Show the difference between oral and written questions."
+    }
+  ],
+  "sources": [
+    {
+      "id": "questions",
+      "title": "Lok Sabha: Questions",
+      "url": "https://sansad.in/ls/questions/questions",
+      "author": "Lok Sabha Secretariat"
+    },
+    {
+      "id": "rules",
+      "title": "Lok Sabha: Rules on Questions",
+      "url": "https://sansad.in/uploads/LSPP_Questions_Procedure_rules_2c7312313c.pdf",
+      "author": "Lok Sabha Secretariat"
+    },
+    {
+      "id": "library",
+      "title": "Parliament Digital Library: Questions and answers",
+      "url": "https://eparlib.sansad.in/faq.jsp",
+      "author": "Parliament Digital Library"
+    }
+  ],
+  "claim_citations": [],
+  "sources_or_references": [
+    "Lok Sabha: Questions",
+    "Lok Sabha: Rules on Questions",
+    "Parliament Digital Library: Questions and answers"
+  ],
+  "schema_version": "2.0",
+  "article_type": "indian_politics_lesson",
+  "images": {},
+  "image_credits": {},
+  "generated_at": "2026-11-09T00:00:00Z",
+  "indian_politics_lesson": {
+    "content_version": 1,
+    "identity": {
+      "name": "Question Hour in Lok Sabha",
+      "topic_type": "parliament",
+      "level": "union",
+      "institutions": [
+        "Lok Sabha",
+        "Union ministries"
+      ],
+      "scope": "This lesson follows questions addressed to Union ministers in Lok Sabha.",
+      "period": "The parliamentary question procedure",
+      "as_of": null,
+      "source_ids": [
+        "questions",
+        "rules"
+      ]
+    },
+    "hook": "How a representative turns a concern into a public answer.",
+    "opening": {
+      "heading": "Who makes the government answer?",
+      "situation": "Imagine a member wants to understand why a public programme misses its targets. A speech can raise the concern. A parliamentary question asks the ministry to put an answer on the record.",
+      "question": "How does that question reach the minister?",
+      "kind": "illustrative",
+      "source_ids": [
+        "questions",
+        "rules"
+      ]
+    },
+    "core_idea": {
+      "explanation": "Question Hour gives members a structured way to seek information from ministers. It connects representation with scrutiny: a member asks, a ministry answers, and the record becomes available for others to examine.",
+      "why_it_matters": "The useful result is information that can support further scrutiny. An answer does not itself change a policy.",
+      "source_ids": [
+        "questions",
+        "rules"
+      ]
+    },
+    "context": {
+      "setting": "Lok Sabha is one of the two Houses of Parliament. Union ministers answer questions about responsibilities within their ministries.",
+      "when_it_applies": "The House schedules questions as part of its sittings. The procedure separates questions for oral answers from questions for written answers.",
+      "what_it_does_not_cover": "This is a lesson about parliamentary questions. It does not describe a debate on a Bill or a vote of confidence.",
+      "source_ids": [
+        "questions",
+        "rules"
+      ]
+    },
+    "actors": [
+      {
+        "id": "member",
+        "name": "The member",
+        "kind": "office",
+        "role": "A member frames a question about a matter within the government’s responsibility.",
+        "authority": "The member can give notice of a question through the House procedure.",
+        "limits": "Giving notice does not guarantee an oral answer.",
+        "source_ids": [
+          "questions",
+          "rules"
+        ]
+      },
+      {
+        "id": "speaker",
+        "name": "The Speaker",
+        "kind": "office",
+        "role": "The Speaker oversees the conduct of business in the House.",
+        "authority": "The rules give the Speaker authority over the admissibility of questions and the conduct of supplementary questions.",
+        "limits": "A question must meet the rules of the House.",
+        "source_ids": [
+          "questions",
+          "rules"
+        ]
+      },
+      {
+        "id": "ministry",
+        "name": "The ministry",
+        "kind": "institution",
+        "role": "The responsible ministry prepares the government’s answer.",
+        "authority": "The minister provides the reply on behalf of the government.",
+        "limits": "An answer supplies information. It is not a separate law or a court judgment.",
+        "source_ids": [
+          "questions",
+          "rules"
+        ]
+      }
+    ],
+    "rules": [
+      {
+        "id": "admission",
+        "title": "A question must be admissible",
+        "basis_type": "procedure",
+        "reference": "Lok Sabha rules on questions",
+        "formal_position": "Questions must satisfy conditions on their subject and form before they enter the list.",
+        "practice": "This stage turns a concern into a question that the responsible ministry can answer.",
+        "scope_or_variation": "These are Lok Sabha procedures. Other legislatures have their own rules.",
+        "source_ids": [
+          "questions",
+          "rules"
+        ]
+      },
+      {
+        "id": "answer",
+        "title": "Oral and written answers differ",
+        "basis_type": "procedure",
+        "reference": "Starred and unstarred questions",
+        "formal_position": "A starred question is listed for an oral answer. An unstarred question receives a written answer.",
+        "practice": "Oral answers can lead to supplementary questions. Written answers make information available without an oral exchange.",
+        "scope_or_variation": "Listing a starred question does not mean the House reaches every listed question.",
+        "source_ids": [
+          "questions",
+          "rules"
+        ]
+      }
+    ],
+    "process": {
+      "starts_when": "A member identifies a matter and gives notice of a question.",
+      "ends_with": "The answer enters the parliamentary record through the applicable procedure.",
+      "steps": [
+        {
+          "id": "notice",
+          "title": "Frame the question",
+          "actor_ids": [
+            "member"
+          ],
+          "rule_ids": [
+            "admission"
+          ],
+          "action": "The member asks for specific information within the ministry’s responsibility.",
+          "result": "The House receives a notice for consideration.",
+          "conditions": "The subject and wording must meet the rules.",
+          "source_ids": [
+            "questions",
+            "rules"
+          ]
+        },
+        {
+          "id": "list",
+          "title": "Admit and list it",
+          "actor_ids": [
+            "speaker"
+          ],
+          "rule_ids": [
+            "admission",
+            "answer"
+          ],
+          "action": "The question passes through the House’s admission and listing procedure.",
+          "result": "An admitted question enters the appropriate question list.",
+          "conditions": "The type of question determines whether the answer is oral or written.",
+          "source_ids": [
+            "questions",
+            "rules"
+          ]
+        },
+        {
+          "id": "reply",
+          "title": "Answer and follow up",
+          "actor_ids": [
+            "ministry",
+            "member",
+            "speaker"
+          ],
+          "rule_ids": [
+            "answer"
+          ],
+          "action": "The ministry supplies its answer. When an oral question is taken up, members can seek further information through supplementaries.",
+          "result": "The reply provides a record that members and the public can examine.",
+          "conditions": "The Speaker controls the oral exchange under the rules.",
+          "source_ids": [
+            "questions",
+            "rules"
+          ]
+        }
+      ],
+      "source_ids": [
+        "questions",
+        "rules"
+      ]
+    },
+    "worked_example": {
+      "title": "Follow one concern through the system",
+      "kind": "illustrative",
+      "date": null,
+      "setting": "An unnamed member wants information about a Union programme. This example uses no real constituency or reported case.",
+      "steps": [
+        {
+          "process_step_id": "notice",
+          "explanation": "The member asks how the ministry measures delivery, rather than making an unsupported accusation.",
+          "source_ids": [
+            "questions",
+            "rules"
+          ]
+        },
+        {
+          "process_step_id": "list",
+          "explanation": "The question follows the admission and listing process.",
+          "source_ids": [
+            "questions",
+            "rules"
+          ]
+        },
+        {
+          "process_step_id": "reply",
+          "explanation": "The ministry’s reply becomes material for further scrutiny.",
+          "source_ids": [
+            "questions",
+            "rules"
+          ]
+        }
+      ],
+      "outcome": "The member has a public answer to examine. A policy change requires a separate decision.",
+      "what_it_shows": "A question is an information and accountability tool, rather than a direct order to the government.",
+      "source_ids": [
+        "questions",
+        "rules"
+      ]
+    },
+    "accountability": [
+      {
+        "id": "public-record",
+        "title": "A record others can examine",
+        "actor_ids": [
+          "member",
+          "ministry"
+        ],
+        "check": "Members can compare an answer with earlier replies and other public records.",
+        "what_can_change": "That information can support further questions and scrutiny.",
+        "limits": "The question procedure does not itself compel the government to adopt a different policy.",
+        "source_ids": [
+          "questions",
+          "rules"
+        ]
+      }
+    ],
+    "tradeoffs": [
+      {
+        "id": "depth",
+        "title": "A live exchange or a written record",
+        "benefit": "An oral exchange allows follow-up questions in the House.",
+        "cost": "Speaking time limits how much the House can examine in one sitting.",
+        "when_it_matters": "A reader should look at the written record as well as a short video clip.",
+        "source_ids": [
+          "questions",
+          "rules"
+        ]
+      }
+    ],
+    "changes": [],
+    "citizen_view": {
+      "why_it_matters": "Parliamentary answers can help a reader see what a ministry says it does, and what members ask it to explain.",
+      "channels": [
+        {
+          "id": "records",
+          "name": "Read the questions and answers",
+          "what_it_does": "The parliamentary record lets readers find the question, the reply, and the institution responsible.",
+          "scope": "Start with the original question and answer, rather than a quotation without context.",
+          "source_ids": [
+            "questions",
+            "rules"
+          ]
+        }
+      ],
+      "source_ids": [
+        "questions",
+        "rules"
+      ]
+    },
+    "confusions": [
+      {
+        "id": "vote",
+        "belief": "A question is a vote against the government.",
+        "correction": "A question seeks an answer.",
+        "explanation": "A vote and a parliamentary question serve different purposes.",
+        "source_ids": [
+          "questions",
+          "rules"
+        ]
+      },
+      {
+        "id": "star",
+        "belief": "Every question gets an oral exchange.",
+        "correction": "Written answers follow a different route.",
+        "explanation": "Unstarred questions receive written answers without supplementary questions.",
+        "source_ids": [
+          "questions",
+          "rules"
+        ]
+      }
+    ],
+    "key_terms": [
+      {
+        "term": "Supplementary question",
+        "meaning": "A follow-up question connected with an oral answer.",
+        "source_ids": [
+          "questions",
+          "rules"
+        ]
+      },
+      {
+        "term": "Admissibility",
+        "meaning": "Whether a question meets the House’s conditions for acceptance.",
+        "source_ids": [
+          "questions",
+          "rules"
+        ]
+      }
+    ],
+    "knowledge_checks": [
+      {
+        "question": "Does a minister’s answer change a policy by itself?",
+        "answer": "No. It supplies information for scrutiny.",
+        "explanation": "A policy change needs a separate decision through the appropriate process."
+      }
+    ],
+    "takeaways": [
+      "A member asks for information from the responsible ministry.",
+      "Admission and listing follow House procedures.",
+      "An answer supports scrutiny; it does not itself change a policy."
+    ],
+    "related_topics": [
+      "Parliamentary committees",
+      "Question Hour and Zero Hour"
+    ],
+    "diagram_prompt": "Educational diagram of a parliamentary question: member frames a question, House admission and listing, ministry answer, public record. Distinguish oral answers with supplementary questions from written answers. Use meaningful short labels and connecting arrows. No portraits, party symbols, invented vote results or official seals.",
+    "photos": [
+      {
+        "id": "fallback_0",
+        "section_id": "overview",
+        "entry_id": null,
+        "kind": "institution",
+        "subject": "Lok Sabha",
+        "queries": [
+          "Lok Sabha",
+          "Lok Sabha India"
+        ]
+      },
+      {
+        "id": "fallback_1",
+        "section_id": "context",
+        "entry_id": null,
+        "kind": "institution",
+        "subject": "Lok Sabha building",
+        "queries": [
+          "Lok Sabha building",
+          "Lok Sabha India"
+        ]
+      },
+      {
+        "id": "fallback_2",
+        "section_id": "rules",
+        "entry_id": null,
+        "kind": "document",
+        "subject": "Lok Sabha rules of procedure",
+        "queries": [
+          "Lok Sabha rules of procedure",
+          "Lok Sabha procedure"
+        ]
+      },
+      {
+        "id": "fallback_3",
+        "section_id": "example",
+        "entry_id": null,
+        "kind": "public_process",
+        "subject": "Lok Sabha proceedings",
+        "queries": [
+          "Lok Sabha proceedings",
+          "Question Hour in Lok Sabha India"
+        ]
+      },
+      {
+        "id": "fallback_4",
+        "section_id": "accountability",
+        "entry_id": null,
+        "kind": "institution",
+        "subject": "Lok Sabha proceedings",
+        "queries": [
+          "Lok Sabha proceedings",
+          "Lok Sabha questions"
+        ]
+      },
+      {
+        "id": "fallback_5",
+        "section_id": "tradeoffs",
+        "entry_id": null,
+        "kind": "public_process",
+        "subject": "Lok Sabha deliberation",
+        "queries": [
+          "Lok Sabha deliberation",
+          "Lok Sabha debate"
+        ]
+      },
+      {
+        "id": "fallback_6",
+        "section_id": "citizen",
+        "entry_id": null,
+        "kind": "modern_context",
+        "subject": "Lok Sabha India",
+        "queries": [
+          "Lok Sabha India",
+          "Lok Sabha building India"
+        ]
+      },
+      {
+        "id": "fallback_7",
+        "section_id": "confusions",
+        "entry_id": null,
+        "kind": "institution",
+        "subject": "Lok Sabha",
+        "queries": [
+          "Lok Sabha",
+          "Lok Sabha procedure"
+        ]
+      },
+      {
+        "id": "fallback_8",
+        "section_id": "actors",
+        "entry_id": "member",
+        "kind": "institution",
+        "subject": "The member",
+        "queries": [
+          "The member",
+          "The member India"
+        ]
+      },
+      {
+        "id": "fallback_9",
+        "section_id": "actors",
+        "entry_id": "speaker",
+        "kind": "institution",
+        "subject": "The Speaker",
+        "queries": [
+          "The Speaker",
+          "The Speaker India"
+        ]
+      },
+      {
+        "id": "fallback_10",
+        "section_id": "actors",
+        "entry_id": "ministry",
+        "kind": "institution",
+        "subject": "The ministry",
+        "queries": [
+          "The ministry",
+          "The ministry India"
+        ]
+      },
+      {
+        "id": "fallback_11",
+        "section_id": "process",
+        "entry_id": "notice",
+        "kind": "public_process",
+        "subject": "Lok Sabha Frame the question",
+        "queries": [
+          "Lok Sabha Frame the question",
+          "Lok Sabha proceedings"
+        ]
+      },
+      {
+        "id": "fallback_12",
+        "section_id": "process",
+        "entry_id": "list",
+        "kind": "public_process",
+        "subject": "Lok Sabha Admit and list it",
+        "queries": [
+          "Lok Sabha Admit and list it",
+          "Lok Sabha proceedings"
+        ]
+      },
+      {
+        "id": "fallback_13",
+        "section_id": "process",
+        "entry_id": "reply",
+        "kind": "public_process",
+        "subject": "Lok Sabha Answer and follow up",
+        "queries": [
+          "Lok Sabha Answer and follow up",
+          "Lok Sabha proceedings"
+        ]
+      }
+    ]
+  },
+  "indian_politics_media": {
+    "photo_plan_source": "fallback",
+    "photo_plan_version": 1
+  }
+}

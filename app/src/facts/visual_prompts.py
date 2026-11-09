@@ -147,6 +147,13 @@ def build_section_image_context(key, article=None):
             if value:
                 text = value if isinstance(value, str) else json.dumps(value, ensure_ascii=False)
                 excerpt[field] = text[:4000]
+        if article.get('article_type') == 'indian_politics_lesson':
+            lesson=article.get('indian_politics_lesson') or {}
+            excerpt['indian_politics_context']={k:lesson.get(k) for k in ('identity','core_idea','actors','rules','process')}
+            lines.append('Indian Politics conceptual illustration: neutral institutional setting, not documentary evidence. No named politician portraits, party symbols, invented results, ballot papers, official forms, seals or signatures.')
+            if key=='how_it_works':
+                lines[1]='Explain the actual roles, actions and outcomes with concise labels and meaningful relationships.'
+                lines[2]=_VISUAL_RULES.replace('Include no text, letters, numbers, labels, captions, logos, watermarks, or fake writing.', 'Use short accurate educational labels from the supplied process prompt. No official-looking forms, seals, invented election results, logos or watermarks.')
         if article.get('article_type') == 'history_lesson':
             lesson=article.get('history_lesson') or {}
             excerpt['history_context']={k:lesson.get(k) for k in ('identity','setting','chronology','mechanism')}
