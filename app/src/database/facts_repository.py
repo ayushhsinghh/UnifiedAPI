@@ -293,3 +293,14 @@ def save_culture_photo_plan(content_hash: str, fact: dict, previous_photos=None)
                  'full_response.culture_media.photo_plan_version':1,
                  'full_response.culture_media.photo_plan_source':fact.get('culture_media',{}).get('photo_plan_source','fallback')}})
     return result.matched_count==1
+
+
+def save_history_photo_plan(content_hash: str, fact: dict, previous_photos=None) -> bool:
+    """Compare-and-swap the exact photo plan, preserving article text and ready images."""
+    path='full_response.history_lesson.photos'
+    result=get_db()[cfg.DAILY_FACTS_COLLECTION].update_one({
+        'content_hash':content_hash,'full_response.article_type':'history_lesson',path:previous_photos},
+        {'$set':{path:fact['history_lesson']['photos'],
+                 'full_response.history_media.photo_plan_version':1,
+                 'full_response.history_media.photo_plan_source':fact.get('history_media',{}).get('photo_plan_source','fallback')}})
+    return result.matched_count==1

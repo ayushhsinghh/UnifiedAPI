@@ -42,6 +42,7 @@ from src.database.facts_repository import (
     save_agriculture_photo_plan,
     save_nature_photo_plan,
     save_culture_photo_plan,
+    save_history_photo_plan,
     save_drinks_photo_plan,
 )
 from src.facts.fact_generator import (
@@ -53,7 +54,7 @@ from src.facts.visual_prompts import IMAGE_SECTION_BRIEFS, build_section_image_c
 from src.facts.country_photos import find_country_photos, find_subject_photo, country_scene_queries, country_scene_plan
 from src.facts.country_media_plan import country_photo_entries
 from src.facts.unsplash_photos import track_selection
-from src.facts.photo_ranking import select_india_photos,select_country_photos,select_food_photos,select_fashion_photos,select_geography_photos,select_technology_photos,select_economics_photos,select_agriculture_photos,select_nature_photos,select_drinks_photos,select_culture_photos,PhotoRankingUnavailable
+from src.facts.photo_ranking import select_india_photos,select_country_photos,select_food_photos,select_fashion_photos,select_geography_photos,select_technology_photos,select_economics_photos,select_agriculture_photos,select_nature_photos,select_drinks_photos,select_culture_photos,select_history_photos,PhotoRankingUnavailable
 from src.facts.image_generator import generate_and_save_image
 
 logger = logging.getLogger(__name__)
@@ -192,20 +193,21 @@ async def process_fact_generation_task(
 
 def _with_article_photo_plan(article, content_hash, repair_generated=False):
     """Repair legacy plans before scheduling so history and job polling can bind photos."""
-    category={'agriculture_lesson':'agriculture','nature_lesson':'nature','drinks_lesson':'drinks','culture_lesson':'culture'}.get(article.get('article_type'))
+    category={'agriculture_lesson':'agriculture','nature_lesson':'nature','drinks_lesson':'drinks','culture_lesson':'culture','history_lesson':'history'}.get(article.get('article_type'))
     if not category:return article
     from copy import deepcopy
     from src.facts.agriculture import ensure_agriculture_photo_plan,ensure_agriculture_science_image
     from src.facts.drinks import ensure_drinks_photo_plan
+    from src.facts.history import ensure_history_photo_plan
     from src.facts.culture import ensure_culture_photo_plan
     from src.facts.nature import ensure_nature_photo_plan
-    ensure={'agriculture':ensure_agriculture_photo_plan,'nature':ensure_nature_photo_plan,'drinks':ensure_drinks_photo_plan,'culture':ensure_culture_photo_plan}[category]
-    save={'agriculture':save_agriculture_photo_plan,'nature':save_nature_photo_plan,'drinks':save_drinks_photo_plan,'culture':save_culture_photo_plan}[category]
+    ensure={'agriculture':ensure_agriculture_photo_plan,'nature':ensure_nature_photo_plan,'drinks':ensure_drinks_photo_plan,'culture':ensure_culture_photo_plan,'history':ensure_history_photo_plan}[category]
+    save={'agriculture':save_agriculture_photo_plan,'nature':save_nature_photo_plan,'drinks':save_drinks_photo_plan,'culture':save_culture_photo_plan,'history':save_history_photo_plan}[category]
     prepared=deepcopy(article)
     changed=ensure(prepared,expand=True) if category=='agriculture' else ensure(prepared)
     if category=='agriculture' and repair_generated:changed=ensure_agriculture_science_image(prepared) or changed
     if not changed:return article
-    saved=save(content_hash,prepared,previous_photos=article.get('agriculture_lesson',{}).get('photos')) if category=='agriculture' else save(content_hash,prepared,previous_photos=article.get('culture_lesson',{}).get('photos')) if category=='culture' else save(content_hash,prepared)
+    saved=save(content_hash,prepared,previous_photos=article.get('agriculture_lesson',{}).get('photos')) if category=='agriculture' else save(content_hash,prepared,previous_photos=article.get(category+'_lesson',{}).get('photos')) if category in ('culture','history') else save(content_hash,prepared)
     if saved:return prepared
     # Another retry may have installed its plan first. Use that exact persisted plan.
     stored=get_fact_by_hash(content_hash) or {}
@@ -226,6 +228,7 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
     is_fashion = (article or {}).get('article_type') == 'fashion_lesson'
     is_geography = (article or {}).get('article_type') == 'geography_lesson'
     is_drinks = (article or {}).get('article_type') == 'drinks_lesson'
+    is_history = (article or {}).get('article_type') == 'history_lesson'
     is_culture = (article or {}).get('article_type') == 'culture_lesson'
     is_nature = (article or {}).get('article_type') == 'nature_lesson'
     is_agriculture = (article or {}).get('article_type') == 'agriculture_lesson'
@@ -242,7 +245,7 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
     previous_photos=[photo for group in (article or {}).get('country_photo_galleries',{}).values() if isinstance(group,list) for photo in group if isinstance(photo,dict)]
     claimed_sources = {p.get('source_url') for p in previous_photos if p.get('source_url')}
     if ranked_country:claimed_sources={p.get('source_url') for p in previous_photos if p.get('subject_kind') and p.get('source_url')}
-    if is_india or is_agriculture or is_nature or is_drinks or is_culture:
+    if is_india or is_agriculture or is_nature or is_drinks or is_culture or is_history:
         claimed_sources.update(p.get('source_url') for p in (article or {}).get('image_credits',{}).values() if isinstance(p,dict) and p.get('source_url'))
     claimed_photographers = {p.get('author') for p in previous_photos if p.get('provider')=='unsplash'}
     claimed_descriptions = [set(p.get('description','').casefold().split()) for p in previous_photos if p.get('provider')=='unsplash']
@@ -313,7 +316,7 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
             )
             if url:
                 images[key] = url
-            if hybrid or is_india or is_food or is_fashion or is_geography or is_technology or is_economics or is_agriculture or is_nature or is_drinks or is_culture:
+            if hybrid or is_india or is_food or is_fashion or is_geography or is_technology or is_economics or is_agriculture or is_nature or is_drinks or is_culture or is_history:
                 detail=next((d for d in (article or {}).get('image_details',[]) if d.get('slot')==key),{})
                 subject=(article or {}).get('topic') or (country or {}).get('identity',{}).get('name','the topic')
                 credit={'kind':'generated','url':url,'title':detail.get('caption') or f"Illustration of {subject}",
@@ -346,7 +349,7 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
     tasks = []
     for key, brief in IMAGE_SECTION_BRIEFS.items():
         if photos_only:continue
-        if (is_drinks or is_culture) and key not in ('cover','overview','how_it_works'):continue
+        if (is_drinks or is_culture or is_history) and key not in ('cover','overview','how_it_works'):continue
         if is_agriculture and key not in ('cover','overview','how_it_works'):continue
         if (is_india or is_food or is_fashion or is_geography or is_technology or is_economics or is_nature) and key not in ('cover','overview'):continue
         if key in expanded_scenes:continue
@@ -361,23 +364,24 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
                 build_section_image_context(key, article),
             ))
 
-    if is_food or is_fashion or is_geography or is_technology or is_economics or is_agriculture or is_nature or is_drinks or is_culture:
+    if is_food or is_fashion or is_geography or is_technology or is_economics or is_agriculture or is_nature or is_drinks or is_culture or is_history:
         from src.facts.food import food_photo_entries
         from src.facts.fashion import fashion_photo_entries
         from src.facts.geography import geography_photo_entries
         from src.facts.technology import technology_photo_entries
         from src.facts.economics import economics_photo_entries
         from src.facts.agriculture import agriculture_photo_entries
+        from src.facts.history import history_photo_entries
         from src.facts.culture import culture_photo_entries
         from src.facts.drinks import drinks_photo_entries
         from src.facts.nature import nature_photo_entries
-        prefix='culture' if is_culture else 'drinks' if is_drinks else 'nature' if is_nature else 'agriculture' if is_agriculture else 'economics' if is_economics else 'technology' if is_technology else 'geography' if is_geography else 'fashion' if is_fashion else 'food'
-        select_photos={'food':select_food_photos,'fashion':select_fashion_photos,'geography':select_geography_photos,'technology':select_technology_photos,'economics':select_economics_photos,'agriculture':select_agriculture_photos,'nature':select_nature_photos,'drinks':select_drinks_photos,'culture':select_culture_photos}[prefix]
+        prefix='history' if is_history else 'culture' if is_culture else 'drinks' if is_drinks else 'nature' if is_nature else 'agriculture' if is_agriculture else 'economics' if is_economics else 'technology' if is_technology else 'geography' if is_geography else 'fashion' if is_fashion else 'food'
+        select_photos={'food':select_food_photos,'fashion':select_fashion_photos,'geography':select_geography_photos,'technology':select_technology_photos,'economics':select_economics_photos,'agriculture':select_agriculture_photos,'nature':select_nature_photos,'drinks':select_drinks_photos,'culture':select_culture_photos,'history':select_history_photos}[prefix]
         async def process_editorial_photos():
-            entries={'food':food_photo_entries,'fashion':fashion_photo_entries,'geography':geography_photo_entries,'technology':technology_photo_entries,'economics':economics_photo_entries,'agriculture':agriculture_photo_entries,'nature':nature_photo_entries,'drinks':drinks_photo_entries,'culture':culture_photo_entries}[prefix](article)
-            scene_limit=12 if is_drinks or is_agriculture or is_culture else 6
+            entries={'food':food_photo_entries,'fashion':fashion_photo_entries,'geography':geography_photo_entries,'technology':technology_photo_entries,'economics':economics_photo_entries,'agriculture':agriculture_photo_entries,'nature':nature_photo_entries,'drinks':drinks_photo_entries,'culture':culture_photo_entries,'history':history_photo_entries}[prefix](article)
+            scene_limit=12 if is_drinks or is_agriculture or is_culture or is_history else 6
             keys=[p['key'] for p in entries]+[f'{prefix}_scene_{n}' for n in range(scene_limit)]
-            state={'plan_source':article.get(prefix+'_media',{}).get('photo_plan_source','model')} if is_agriculture or is_nature or is_drinks or is_culture else {}
+            state={'plan_source':article.get(prefix+'_media',{}).get('photo_plan_source','model')} if is_agriculture or is_nature or is_drinks or is_culture or is_history else {}
             def report(value):
                 state.update(value);set_fact_photo_selection(content_hash,dict(state))
             async def finalize():
@@ -390,12 +394,12 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
                 selected=await select_photos(article,report=report,excluded=claimed_sources)
                 selected=sorted(selected,key=lambda p:bool(p.get('popular_pick')))
                 popular_slots=min(scene_limit,sum(bool(p.get('popular_pick')) for p in selected))
-                used=set();ready={key for key in keys if images.get(key)} if is_agriculture or is_nature or is_drinks or is_culture else set()
+                used=set();ready={key for key in keys if images.get(key)} if is_agriculture or is_nature or is_drinks or is_culture or is_history else set()
                 extras=[key for key in ready if key.startswith(prefix+'_scene_')]
                 for p in selected:
                     if p['source_url'] in used:continue
-                    item=None if p.get('popular_pick') or p.get('drinks_gallery_only') or p.get('agriculture_gallery_only') or p.get('culture_gallery_only') else next((entry for entry in entries if entry['id'] in p.get(prefix+'_request_ids',[]) and entry['key'] not in ready),None)
-                    if is_culture or is_agriculture or is_drinks and article.get('drinks_lesson',{}).get('content_version') in (2,3):
+                    item=None if p.get('popular_pick') or p.get('drinks_gallery_only') or p.get('agriculture_gallery_only') or p.get('culture_gallery_only') or p.get('history_gallery_only') else next((entry for entry in entries if entry['id'] in p.get(prefix+'_request_ids',[]) and entry['key'] not in ready),None)
+                    if is_history or is_culture or is_agriculture or is_drinks and article.get('drinks_lesson',{}).get('content_version') in (2,3):
                         if item is not None and p.get('provider')!='wikimedia':continue
                         if item is None and p.get('provider') not in ('unsplash','pixabay'):continue
                     gallery_limit=scene_limit if p.get('popular_pick') else scene_limit-popular_slots
@@ -413,7 +417,7 @@ async def _background_image_task(visual_suggestions: dict, content_hash: str, ex
                         if is_technology:photo['component_id']=item.get('component_id')
                         if is_agriculture:photo['step_id']=item.get('step_id')
                         if is_nature:photo['feature_id']=item.get('feature_id')
-                        if is_drinks or is_culture:photo['entry_id']=item.get('entry_id')
+                        if is_drinks or is_culture or is_history:photo['entry_id']=item.get('entry_id')
                     elif len(extras)<scene_limit:
                         key=next(f'{prefix}_scene_{n}' for n in range(scene_limit) if f'{prefix}_scene_{n}' not in ready);photo[prefix+'_carousel']=True;extras.append(photo)
                     else:continue
@@ -744,7 +748,7 @@ async def get_fact_job_status(job_id: str) -> dict:
                 fact_data['fact']['image_credits'] = stored.get('image_credits') or {}
                 fact_data['fact']['country_photo_galleries'] = stored.get('country_photo_galleries') or {}
                 fact_data['fact']['photo_selection']=stored.get('photo_selection') or {}
-                kind={'agriculture_lesson':'agriculture','nature_lesson':'nature','drinks_lesson':'drinks','culture_lesson':'culture'}.get(stored.get('full_response',{}).get('article_type'))
+                kind={'agriculture_lesson':'agriculture','nature_lesson':'nature','drinks_lesson':'drinks','culture_lesson':'culture','history_lesson':'history'}.get(stored.get('full_response',{}).get('article_type'))
                 if kind:
                     fact_data['fact'][kind+'_lesson']=stored['full_response'][kind+'_lesson']
                     fact_data['fact'][kind+'_media']=stored['full_response'].get(kind+'_media',{})
@@ -821,9 +825,9 @@ async def retry_image_generation(
     
     expected_keys = fact_image_keys(full_response)
     if photos_only:
-        kind={'agriculture_lesson':'agriculture','nature_lesson':'nature','drinks_lesson':'drinks','culture_lesson':'culture'}.get(full_response.get('article_type'))
+        kind={'agriculture_lesson':'agriculture','nature_lesson':'nature','drinks_lesson':'drinks','culture_lesson':'culture','history_lesson':'history'}.get(full_response.get('article_type'))
         if not kind:
-            raise HTTPException(status_code=400,detail='Photo-only retry is supported for Agriculture, Nature, Drinks and Culture lessons.')
+            raise HTTPException(status_code=400,detail='Photo-only retry is supported for Agriculture, Nature, Drinks, Culture and History lessons.')
         expected_keys=[key for key in expected_keys if key.startswith((kind+'_photo_',kind+'_scene_'))]
         
     # Check if we have all expected keys
@@ -843,7 +847,7 @@ async def retry_image_generation(
     logger.info("Retrying image generation for %s. Missing keys: %s", content_hash, missing_keys)
     start_fact_images(content_hash, missing_keys)
     retry_article=full_response
-    if full_response.get('article_type') in ('agriculture_lesson','nature_lesson','drinks_lesson','culture_lesson'):
+    if full_response.get('article_type') in ('agriculture_lesson','nature_lesson','drinks_lesson','culture_lesson','history_lesson'):
         retry_article={**full_response,'image_credits':fact_doc.get('image_credits') or full_response.get('image_credits',{})}
     if full_response.get('article_type')=='india_lesson':
         retry_article={**full_response,'image_credits':fact_doc.get('image_credits') or full_response.get('image_credits',{})}

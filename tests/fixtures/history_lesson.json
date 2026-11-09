@@ -1,0 +1,595 @@
+{
+  "category": "history",
+  "topic": "The opening of the Suez Canal",
+  "headline_fact": "A channel across Egypt changed the sea route between Europe and India.",
+  "summary": "The Suez Canal connects the Mediterranean with the Red Sea. Its opening gives ships another route between Europe and the Indian Ocean, without a voyage around southern Africa.",
+  "did_you_know": "A channel across Egypt changed the sea route between Europe and India.",
+  "history": "The project depends on Egyptian concessions, an international company and negotiations involving imperial powers. Control of a route is also a political question.",
+  "core_mechanics": "The canal creates a connection between two seas. A ship can use that connection instead of following the much longer route around southern Africa.",
+  "why_it_matters": "A focused account of construction and opening, connecting an engineering project with labour, diplomacy and routes to India.",
+  "in_depth_breakdown": {
+    "detailed_processes": [],
+    "real_world_application": "The canal creates a connection between two seas. A ship can use that connection instead of following the much longer route around southern Africa.",
+    "fascinating_trivia": []
+  },
+  "impact_on_india": "The construction period overlaps with a major change in the administration of British India.",
+  "cultural_significance": "A connected account considers documents, the work on the landscape and the people involved. It can explain the route without treating the opening ceremony as the whole story.",
+  "common_misconceptions": [],
+  "key_year": "1869",
+  "key_figure": "Ferdinand de Lesseps and Egyptian canal workers",
+  "key_stat": "A new connection between two seas",
+  "quote": {
+    "text": "No quotation included.",
+    "confidence": "unverified",
+    "source_ids": []
+  },
+  "global_comparison": {
+    "summary": "The canal connects a local engineering project with wider transport routes.",
+    "comparisons": []
+  },
+  "timeline": [],
+  "learning_takeaways": [
+    "Place and political permission both matter to the project.",
+    "The work of labourers belongs beside the story of promoters.",
+    "A contemporary record shows a perspective, not every experience."
+  ],
+  "content_freshness": "evergreen",
+  "emoji_icon": "",
+  "difficulty_level": "beginner",
+  "region": "Egypt",
+  "fun_rating": 4.5,
+  "read_time_seconds": 660,
+  "tags": [
+    "history",
+    "Egypt",
+    "shipping"
+  ],
+  "related_categories": [
+    "geography",
+    "technology",
+    "india"
+  ],
+  "visual_suggestions": {
+    "cover": "Conceptual illustration of the Suez Canal setting in the nineteenth century, quiet left title area, no fake archival provenance.",
+    "overview": "Conceptual overview of a channel connecting the Mediterranean and the Red Sea, no invented borders or measurements.",
+    "how_it_works": "Conceptual educational diagram comparing a route around southern Africa with a connection through the Suez isthmus. Show Mediterranean Sea, canal and Red Sea as a connected schematic. Label route choice and connection. State schematic, not to scale. No invented distances, dates, borders, statistics or historical map claims."
+  },
+  "share_text": "A channel across Egypt changed the sea route between Europe and India.",
+  "image_details": [
+    {
+      "slot": "overview",
+      "placement": "overview",
+      "alt": "Conceptual overview of the canal and connected shipping routes.",
+      "caption": "An illustrated overview of the historical idea, not an archival record.",
+      "learning_purpose": "Connect the local channel with the wider route."
+    },
+    {
+      "slot": "how_it_works",
+      "placement": "explanation",
+      "alt": "A conceptual comparison shows a route around Africa and the connection through Suez.",
+      "caption": "A schematic route explanation, not to scale.",
+      "learning_purpose": "Explain how a connection changes an available journey."
+    }
+  ],
+  "sources": [
+    {
+      "id": "canal",
+      "title": "Canal History",
+      "url": "https://www.suezcanal.gov.eg/English/About/SuezCanal/Pages/CanalHistory.aspx",
+      "author": "Suez Canal Authority"
+    },
+    {
+      "id": "documents",
+      "title": "A close-up on the Suez Canal: historical documents",
+      "url": "https://www.napoleon.org/en/history-of-the-two-empires/close-up/a-close-up-on-the-suez-canal/",
+      "author": "Fondation Napoléon"
+    },
+    {
+      "id": "india",
+      "title": "The Indian Rebellion of 1857",
+      "url": "https://www.nationalarchives.gov.uk/education/resources/1857-indian-rebellion/",
+      "author": "The National Archives"
+    }
+  ],
+  "claim_citations": [],
+  "sources_or_references": [
+    "Suez Canal Authority; Fondation Napoléon; The National Archives"
+  ],
+  "schema_version": "2.0",
+  "article_type": "history_lesson",
+  "images": {},
+  "image_credits": {},
+  "history_lesson": {
+    "content_version": 1,
+    "identity": {
+      "start_year": 1859,
+      "end_year": 1869,
+      "date_label": "1859–1869",
+      "name": "The opening of the Suez Canal",
+      "historical_region": "The Suez isthmus, Egypt",
+      "modern_location": "Egypt: Port Said to Suez",
+      "scope": "A focused account of construction and opening, connecting an engineering project with labour, diplomacy and routes to India.",
+      "topic_type": "event",
+      "source_ids": [
+        "canal"
+      ]
+    },
+    "hook": "A channel across Egypt changed the sea route between Europe and India.",
+    "opening": {
+      "heading": "How can digging a channel change a world map?",
+      "scene": "The Suez Canal connects the Mediterranean with the Red Sea. Its opening gives ships another route between Europe and the Indian Ocean, without a voyage around southern Africa.",
+      "question": "What turns a shorter route into a historical turning point?",
+      "source_ids": [
+        "canal"
+      ]
+    },
+    "setting": {
+      "geography": "The canal crosses the Egyptian isthmus between the Mediterranean and the Red Sea. Port Said marks the northern entrance; Suez stands at the southern end.",
+      "political_climate": "The project depends on Egyptian concessions, an international company and negotiations involving imperial powers. Control of a route is also a political question.",
+      "everyday_conditions": "The finished waterway rests on years of excavation and the work of Egyptian labourers. A history focused only on ceremonies misses the people who make the project possible.",
+      "locations": [
+        "Port Said",
+        "Suez",
+        "The Bitter Lakes"
+      ],
+      "source_ids": [
+        "canal"
+      ]
+    },
+    "causes": [
+      {
+        "id": "route",
+        "title": "The attraction of a shorter sea route",
+        "kind": "structural",
+        "explanation": "Ships sailing between Europe and the Indian Ocean can otherwise go around southern Africa. A connection across Egypt changes that route.",
+        "connection": "The geography gives the proposed waterway its commercial significance.",
+        "source_ids": [
+          "canal"
+        ]
+      },
+      {
+        "id": "concession",
+        "title": "Permission to build",
+        "kind": "trigger",
+        "explanation": "The concessions granted in the 1850s provide the basis for the canal project.",
+        "connection": "Political permission lets a geographical idea become an organised construction project.",
+        "source_ids": [
+          "canal"
+        ]
+      }
+    ],
+    "figures": [
+      {
+        "id": "lesseps",
+        "name": "Ferdinand de Lesseps",
+        "kind": "person",
+        "role": "Promoter of the canal project",
+        "objective": "He works to secure support for a canal across the isthmus.",
+        "actions": "He organises the company and negotiates around the project.",
+        "impact": "His work helps connect finance, political permission and construction.",
+        "source_ids": [
+          "canal"
+        ]
+      },
+      {
+        "id": "workers",
+        "name": "Egyptian canal workers",
+        "kind": "collective",
+        "role": "The people who carry out excavation",
+        "objective": "Their labour is central to transforming the landscape.",
+        "actions": "Workers excavate the route during the construction period.",
+        "impact": "The channel cannot exist without the work performed on the ground.",
+        "source_ids": [
+          "canal"
+        ]
+      }
+    ],
+    "chronology": [
+      {
+        "start_year": 1859,
+        "end_year": 1859,
+        "date_label": "25 April 1859",
+        "id": "begin",
+        "title": "Excavation begins",
+        "what_happened": "Construction starts at the northern end of the proposed route.",
+        "why_it_matters": "The project moves from agreements into work on the landscape.",
+        "figure_ids": [
+          "lesseps",
+          "workers"
+        ],
+        "source_ids": [
+          "canal"
+        ]
+      },
+      {
+        "start_year": 1860,
+        "end_year": 1868,
+        "date_label": "The 1860s",
+        "id": "digging",
+        "title": "The route takes shape",
+        "what_happened": "Excavation continues across the isthmus.",
+        "why_it_matters": "A sea route needs a continuous navigable channel, not isolated stretches of water.",
+        "figure_ids": [
+          "workers"
+        ],
+        "source_ids": [
+          "canal"
+        ]
+      },
+      {
+        "start_year": 1869,
+        "end_year": 1869,
+        "date_label": "August 1869",
+        "id": "joined",
+        "title": "The waters connect",
+        "what_happened": "The waters of the two seas meet along the completed route.",
+        "why_it_matters": "The geographical connection becomes a physical waterway.",
+        "figure_ids": [
+          "workers"
+        ],
+        "source_ids": [
+          "canal"
+        ]
+      },
+      {
+        "start_year": 1869,
+        "end_year": 1869,
+        "date_label": "17 November 1869",
+        "id": "opening",
+        "title": "The canal opens",
+        "what_happened": "The inauguration marks the opening of the waterway to navigation.",
+        "why_it_matters": "Shipping gains a route between the Mediterranean and the Red Sea.",
+        "figure_ids": [
+          "lesseps"
+        ],
+        "source_ids": [
+          "canal"
+        ]
+      }
+    ],
+    "decisions": [
+      {
+        "id": "build",
+        "title": "Organising a canal project",
+        "figure_id": "lesseps",
+        "chronology_id": "begin",
+        "options": "The established sea journey goes around southern Africa; the proposed canal offers a different route.",
+        "choice": "De Lesseps promotes and organises the canal project.",
+        "consequence": "The undertaking commits resources and labour to a new connection.",
+        "source_ids": [
+          "canal"
+        ]
+      }
+    ],
+    "evidence": {
+      "introduction": "A record can show what its creator chose to describe. Read it alongside the institution and occasion that produced it.",
+      "records": [
+        {
+          "id": "illustrated_record",
+          "title": "A report of the first excavation",
+          "creator": "Le Monde illustré",
+          "created_when": "May 1859",
+          "relationship": "contemporary",
+          "account": "The illustrated press presents the beginning of excavation as a notable public event.",
+          "what_it_shows": "It records how the project is presented to an audience at the time.",
+          "limits": "A ceremonial account does not by itself describe the whole experience of the workforce.",
+          "source_ids": [
+            "documents"
+          ]
+        }
+      ],
+      "modern_understanding": "A connected account considers documents, the work on the landscape and the people involved. It can explain the route without treating the opening ceremony as the whole story.",
+      "updates": [],
+      "source_ids": [
+        "documents",
+        "canal"
+      ]
+    },
+    "india": {
+      "introduction": "The construction period overlaps with a major change in the administration of British India.",
+      "connections": [
+        {
+          "start_year": 1859,
+          "end_year": 1869,
+          "date_label": "1859–1869",
+          "id": "india_context",
+          "title": "India under Crown rule",
+          "relationship": "contemporary_context",
+          "what_happened": "The British Crown governs India after the transfer of authority from the East India Company in 1858.",
+          "connection": "The canal project therefore develops alongside a changing imperial setting for routes between Europe and India.",
+          "distinction": "The overlap gives context; it does not mean the canal caused the transfer of authority.",
+          "source_ids": [
+            "india",
+            "canal"
+          ]
+        }
+      ],
+      "source_ids": [
+        "india"
+      ]
+    },
+    "mechanism": {
+      "title": "Why a shorter route matters",
+      "domain": "logistics",
+      "problem": "A sea journey depends on the path available between its starting point and destination.",
+      "explanation": "The canal creates a connection between two seas. A ship can use that connection instead of following the much longer route around southern Africa.",
+      "steps": [
+        {
+          "id": "connection",
+          "factor": "A continuous waterway",
+          "effect": "The channel links the Mediterranean to the Red Sea.",
+          "source_ids": [
+            "canal"
+          ]
+        },
+        {
+          "id": "route_choice",
+          "factor": "A different path",
+          "effect": "Ships bound for the Indian Ocean gain an alternative to the route around southern Africa.",
+          "source_ids": [
+            "canal"
+          ]
+        },
+        {
+          "id": "network",
+          "factor": "A wider shipping network",
+          "effect": "A change at one link can affect how journeys are organised across a much larger area.",
+          "source_ids": [
+            "canal"
+          ]
+        }
+      ],
+      "why_it_mattered": "The canal illustrates how a local engineering project can change the possibilities of a global transport network.",
+      "limits": null,
+      "diagram_prompt": "Conceptual educational diagram comparing a route around southern Africa with a connection through the Suez isthmus. Show Mediterranean Sea, canal and Red Sea as a connected schematic. Label route choice and connection. State schematic, not to scale. No invented distances, dates, borders, statistics or historical map claims.",
+      "source_ids": [
+        "canal"
+      ]
+    },
+    "outcome": {
+      "immediate_result": "The completed canal opens a navigable connection between the two seas.",
+      "why_distinctive": "A comparatively narrow link changes the structure of a much wider shipping network.",
+      "source_ids": [
+        "canal"
+      ]
+    },
+    "consequences": [
+      {
+        "id": "shipping",
+        "title": "A new route for shipping",
+        "domain": "economy",
+        "place_and_period": "Europe and the Indian Ocean after 1869",
+        "change": "Ships have an alternative to sailing around southern Africa.",
+        "causal_connection": "The canal creates the geographical connection that makes the alternative possible.",
+        "source_ids": [
+          "canal"
+        ]
+      },
+      {
+        "id": "control",
+        "title": "Control becomes a wider question",
+        "domain": "society",
+        "place_and_period": "Egypt and international relations after opening",
+        "change": "The canal becomes an object of political and commercial interest.",
+        "causal_connection": "The value of the route gives control of the waterway wider significance.",
+        "source_ids": [
+          "canal"
+        ]
+      }
+    ],
+    "legacy": [
+      {
+        "id": "waterway",
+        "title": "The canal as a working connection",
+        "place": "Egypt",
+        "trace": "A canal still links the Mediterranean and Red Sea.",
+        "relationship": "direct_continuity",
+        "explanation": "Its later development belongs to a longer story; the present waterway is not an unchanged version of the original channel.",
+        "source_ids": [
+          "canal"
+        ]
+      }
+    ],
+    "key_terms": [
+      {
+        "term": "Isthmus",
+        "meaning": "A narrow strip of land connecting larger areas of land.",
+        "source_ids": [
+          "canal"
+        ]
+      }
+    ],
+    "knowledge_checks": [
+      {
+        "question": "Why does a small change on a map matter to a long sea journey?",
+        "answer": "A new connection can change the available route.",
+        "explanation": "The distance across the channel is only one part of the much larger network it joins."
+      }
+    ],
+    "takeaways": [
+      "Place and political permission both matter to the project.",
+      "The work of labourers belongs beside the story of promoters.",
+      "A contemporary record shows a perspective, not every experience."
+    ],
+    "related_topics": [
+      "Indian Ocean shipping",
+      "The Suez Crisis"
+    ],
+    "photos": [
+      {
+        "id": "fallback_0",
+        "section_id": "overview",
+        "entry_id": null,
+        "kind": "artifact",
+        "subject": "The opening of the Suez Canal",
+        "target_period": "1859–1869",
+        "queries": [
+          "The opening of the Suez Canal",
+          "The opening of the Suez Canal artifacts"
+        ]
+      },
+      {
+        "id": "fallback_1",
+        "section_id": "setting",
+        "entry_id": null,
+        "kind": "historical_map",
+        "subject": "The Suez isthmus, Egypt 1859–1869 map",
+        "target_period": "1859–1869",
+        "queries": [
+          "The Suez isthmus, Egypt 1859–1869 map",
+          "The opening of the Suez Canal historical map"
+        ]
+      },
+      {
+        "id": "fallback_2",
+        "section_id": "causes",
+        "entry_id": null,
+        "kind": "manuscript",
+        "subject": "The opening of the Suez Canal historical records",
+        "target_period": "1859–1869",
+        "queries": [
+          "The opening of the Suez Canal historical records",
+          "The opening of the Suez Canal causes"
+        ]
+      },
+      {
+        "id": "fallback_3",
+        "section_id": "people",
+        "entry_id": null,
+        "kind": "archival_photo",
+        "subject": "The opening of the Suez Canal participants",
+        "target_period": "1859–1869",
+        "queries": [
+          "The opening of the Suez Canal participants",
+          "The opening of the Suez Canal historical figures"
+        ]
+      },
+      {
+        "id": "fallback_4",
+        "section_id": "evidence",
+        "entry_id": null,
+        "kind": "manuscript",
+        "subject": "The opening of the Suez Canal primary sources",
+        "target_period": "1859–1869",
+        "queries": [
+          "The opening of the Suez Canal primary sources",
+          "The opening of the Suez Canal documents"
+        ]
+      },
+      {
+        "id": "fallback_5",
+        "section_id": "mechanism",
+        "entry_id": null,
+        "kind": "artifact",
+        "subject": "The opening of the Suez Canal logistics",
+        "target_period": "1859–1869",
+        "queries": [
+          "The opening of the Suez Canal logistics",
+          "The opening of the Suez Canal museum artifacts"
+        ]
+      },
+      {
+        "id": "fallback_6",
+        "section_id": "consequences",
+        "entry_id": null,
+        "kind": "historical_map",
+        "subject": "The opening of the Suez Canal consequences",
+        "target_period": "1859–1869",
+        "queries": [
+          "The opening of the Suez Canal consequences",
+          "The opening of the Suez Canal aftermath map"
+        ]
+      },
+      {
+        "id": "fallback_7",
+        "section_id": "legacy",
+        "entry_id": null,
+        "kind": "modern_context",
+        "subject": "Egypt: Port Said to Suez",
+        "target_period": "Present-day site context",
+        "queries": [
+          "Egypt: Port Said to Suez",
+          "Egypt: Port Said to Suez heritage site"
+        ]
+      },
+      {
+        "id": "fallback_8",
+        "section_id": "chronology",
+        "entry_id": "begin",
+        "kind": "manuscript",
+        "subject": "The opening of the Suez Canal Excavation begins",
+        "target_period": "1859–1869",
+        "queries": [
+          "The opening of the Suez Canal Excavation begins",
+          "The opening of the Suez Canal 25 April 1859"
+        ]
+      },
+      {
+        "id": "fallback_9",
+        "section_id": "chronology",
+        "entry_id": "digging",
+        "kind": "manuscript",
+        "subject": "The opening of the Suez Canal The route takes shape",
+        "target_period": "1859–1869",
+        "queries": [
+          "The opening of the Suez Canal The route takes shape",
+          "The opening of the Suez Canal The 1860s"
+        ]
+      },
+      {
+        "id": "fallback_10",
+        "section_id": "chronology",
+        "entry_id": "joined",
+        "kind": "manuscript",
+        "subject": "The opening of the Suez Canal The waters connect",
+        "target_period": "1859–1869",
+        "queries": [
+          "The opening of the Suez Canal The waters connect",
+          "The opening of the Suez Canal August 1869"
+        ]
+      },
+      {
+        "id": "fallback_11",
+        "section_id": "chronology",
+        "entry_id": "opening",
+        "kind": "manuscript",
+        "subject": "The opening of the Suez Canal The canal opens",
+        "target_period": "1859–1869",
+        "queries": [
+          "The opening of the Suez Canal The canal opens",
+          "The opening of the Suez Canal 17 November 1869"
+        ]
+      },
+      {
+        "id": "fallback_12",
+        "section_id": "india",
+        "entry_id": "india_context",
+        "kind": "historical_map",
+        "subject": "India 1859–1869 map",
+        "target_period": "1859–1869",
+        "queries": [
+          "India 1859–1869 map",
+          "India under Crown rule India"
+        ]
+      }
+    ]
+  },
+  "history_media": {
+    "version": 1,
+    "generated_limit": 3,
+    "generated_slots": [
+      "cover",
+      "overview",
+      "how_it_works"
+    ],
+    "photo_timeout_seconds": 720,
+    "photo_plan_version": 1,
+    "photo_plan_source": "fallback"
+  },
+  "history_validation": {
+    "structure_checked": true,
+    "year_bounds_and_order_checked": true,
+    "source_verification": "not_performed",
+    "historical_review": "not_performed"
+  }
+}

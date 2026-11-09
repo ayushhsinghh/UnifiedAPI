@@ -147,6 +147,13 @@ def build_section_image_context(key, article=None):
             if value:
                 text = value if isinstance(value, str) else json.dumps(value, ensure_ascii=False)
                 excerpt[field] = text[:4000]
+        if article.get('article_type') == 'history_lesson':
+            lesson=article.get('history_lesson') or {}
+            excerpt['history_context']={k:lesson.get(k) for k in ('identity','setting','chronology','mechanism')}
+            lines.append('Historical illustrations are conceptual, never authentic documents or archival photographs. Preserve period and place; no fabricated portraits, maps, uniforms, inscriptions, dates or statistics.')
+            if key=='how_it_works':
+                lines[1]='Explain the actual historical mechanism with clear relationships, concise labels and a conceptual-scale legend.'
+                lines[2]=_VISUAL_RULES.replace('Include no text, letters, numbers, labels, captions, logos, watermarks, or fake writing.', 'Use short accurate educational labels from the supplied mechanism prompt. No fake documents, measurements, maps, logos or watermarks.')
         if article.get('article_type') == 'culture_lesson':
             lesson=article.get('culture_lesson') or {}
             excerpt['culture_context']={k:lesson.get(k) for k in ('identity','opening','origins','markers','why_custom')}

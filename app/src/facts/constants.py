@@ -69,11 +69,9 @@ CATEGORY_HINTS: Dict[str, str] = {
         "ISRO's cost-efficiency records, SpaDeX docking mission"
     ),
     "history": (
-        "Indus Valley Civilization, Maurya & Gupta empires, "
-        "Mughal era architecture & governance, Maratha empire expansion, "
-        "Indian independence movement, Partition of 1947, "
-        "ancient Indian trade routes (Silk Road), Chola dynasty naval power, "
-        "Indian kingdoms' contributions to art, post-independence modernization"
+        "One global historical event or focused era: geography, politics, causes, chronology, "
+        "people and decisions, contemporary records versus modern research, India on the same "
+        "timeline, an explained historical mechanism and lasting consequences"
     ),
     "technology": (
         "Accessible global technologies behind familiar actions and devices; system parts, "
