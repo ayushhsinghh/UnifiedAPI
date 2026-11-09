@@ -144,11 +144,9 @@ CATEGORY_HINTS: Dict[str, str] = {
         "one clear question, meaningful maps, physical processes and real named case studies"
     ),
     "culture": (
-        "Indian classical dance forms (Bharatanatyam, Kathak, Odissi), "
-        "Indian classical music (Hindustani & Carnatic), "
-        "festival traditions (Diwali, Holi, Pongal, Onam), "
-        "ancient Indian literature (Vedas, Upanishads), Indian martial arts (Kalaripayattu), "
-        "Indian wedding traditions, rangoli & kolam art, Indian puppet traditions"
+        "One named culture from anywhere in the world: heartland and history, daily life then and now, "
+        "values and etiquette, clothing, architecture, food, music, celebrations, meaningful India "
+        "connections, one explained custom, diaspora and living regional variation"
     ),
     "mathematics": (
         "Aryabhata (zero & place value), Brahmagupta (negative numbers), "

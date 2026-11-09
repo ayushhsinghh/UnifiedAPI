@@ -40,6 +40,7 @@ from .food import FOOD_RESPONSE_SCHEMA, FOOD_IMAGE_INSTRUCTIONS, build_food_prom
 from .fashion import FASHION_RESPONSE_SCHEMA, FASHION_IMAGE_INSTRUCTIONS, build_fashion_prompt, validate_fashion_content, prepare_fashion_media
 from .geography import GEOGRAPHY_RESPONSE_SCHEMA, GEOGRAPHY_IMAGE_INSTRUCTIONS, build_geography_prompt, validate_geography_content, prepare_geography_media
 from .drinks import DRINKS_RESPONSE_SCHEMA,DRINKS_IMAGE_INSTRUCTIONS,build_drinks_prompt,validate_drinks_content,prepare_drinks_media,ensure_drinks_photo_plan
+from .culture import CULTURE_RESPONSE_SCHEMA,CULTURE_IMAGE_INSTRUCTIONS,build_culture_prompt,validate_culture_content,prepare_culture_media,ensure_culture_photo_plan
 from .nature import NATURE_RESPONSE_SCHEMA, NATURE_IMAGE_INSTRUCTIONS, build_nature_prompt, validate_nature_content, prepare_nature_media, ensure_nature_photo_plan
 from .agriculture import AGRICULTURE_RESPONSE_SCHEMA, AGRICULTURE_IMAGE_INSTRUCTIONS, build_agriculture_prompt, validate_agriculture_content, prepare_agriculture_media, ensure_agriculture_photo_plan
 from .economics import ECONOMICS_RESPONSE_SCHEMA, ECONOMICS_IMAGE_INSTRUCTIONS, build_economics_prompt, validate_economics_content, prepare_economics_media
@@ -80,7 +81,10 @@ async def generate_daily_fact(
     if blocklist is None:
         blocklist = []
 
-    if category == 'drinks':
+    if category == 'culture':
+        prompt=build_culture_prompt(blocklist)
+        response_schema=CULTURE_RESPONSE_SCHEMA
+    elif category == 'drinks':
         prompt=build_drinks_prompt(blocklist)
         response_schema=DRINKS_RESPONSE_SCHEMA
     elif category == 'nature':
@@ -143,7 +147,9 @@ async def generate_daily_fact(
         audience = audience.replace('Aim for a focused 3-6 minute read, not an encyclopedia chapter or exam syllabus.', 'Explore one focused India topic in an accessible 7-10 minute read.')
     if category in ('food','fashion','geography','technology','economics','agriculture','nature','drinks'):
         audience = audience.replace('3-6 minute','6-10 minute')
-    prompt += '\n\n' + audience + '\n\n' + (DRINKS_IMAGE_INSTRUCTIONS if category == 'drinks' else NATURE_IMAGE_INSTRUCTIONS if category == 'nature' else AGRICULTURE_IMAGE_INSTRUCTIONS if category == 'agriculture' else ECONOMICS_IMAGE_INSTRUCTIONS if category == 'economics' else TECHNOLOGY_IMAGE_INSTRUCTIONS if category == 'technology' else GEOGRAPHY_IMAGE_INSTRUCTIONS if category == 'geography' else FASHION_IMAGE_INSTRUCTIONS if category == 'fashion' else FOOD_IMAGE_INSTRUCTIONS if category == 'food' else INDIA_IMAGE_INSTRUCTIONS if category == 'india' else COUNTRY_IMAGE_INSTRUCTIONS if category == 'country' else IMAGE_INSTRUCTIONS)
+    if category == 'culture':
+        audience=audience.replace('Teach ONE interesting fact or useful new idea','Teach ONE named culture through connected useful ideas').replace('3-6 minute','8-12 minute').replace('explain the central fact in one sentence','explain a central cultural practice and its context')
+    prompt += '\n\n' + audience + '\n\n' + (CULTURE_IMAGE_INSTRUCTIONS if category == 'culture' else DRINKS_IMAGE_INSTRUCTIONS if category == 'drinks' else NATURE_IMAGE_INSTRUCTIONS if category == 'nature' else AGRICULTURE_IMAGE_INSTRUCTIONS if category == 'agriculture' else ECONOMICS_IMAGE_INSTRUCTIONS if category == 'economics' else TECHNOLOGY_IMAGE_INSTRUCTIONS if category == 'technology' else GEOGRAPHY_IMAGE_INSTRUCTIONS if category == 'geography' else FASHION_IMAGE_INSTRUCTIONS if category == 'fashion' else FOOD_IMAGE_INSTRUCTIONS if category == 'food' else INDIA_IMAGE_INSTRUCTIONS if category == 'india' else COUNTRY_IMAGE_INSTRUCTIONS if category == 'country' else IMAGE_INSTRUCTIONS)
     last_error: Optional[Exception] = None
     
     fallback_models = [cfg.GEMINI_MODEL_NAME, "gemini-3.8-flash", "gemini-3.5-flash", cfg.OPENAI_MODEL_NAME]
@@ -165,7 +171,7 @@ async def generate_daily_fact(
                     "response_mime_type": "application/json",
                 }
                 gemini_prompt = prompt
-                if category == 'drinks':
+                if category in ('drinks','culture'):
                     # Avoid schema-compilation failures for the large Drinks contract.
                     # JSON mode avoids schema compilation; local validation still enforces it.
                     gemini_prompt += "\n\nRETURN A VALID JSON OBJECT MATCHING THIS SCHEMA EXACTLY:\n" + json.dumps(response_schema)
@@ -213,6 +219,7 @@ async def generate_daily_fact(
                 if category == 'agriculture':ensure_agriculture_photo_plan(fact)
                 elif category == 'nature':ensure_nature_photo_plan(fact)
                 elif category == 'drinks':ensure_drinks_photo_plan(fact)
+                elif category == 'culture':ensure_culture_photo_plan(fact)
 
             validation_errors = []
             if not isinstance(fact, dict):
@@ -236,12 +243,14 @@ async def generate_daily_fact(
                 if not (category != 'economics' or validate_economics_content(fact)):validation_errors.append('economics_content')
                 if not (category != 'agriculture' or validate_agriculture_content(fact)):validation_errors.append('agriculture_content')
                 if not (category != 'nature' or validate_nature_content(fact)):validation_errors.append('nature_content')
+                if category == 'culture' and not validate_culture_content(fact):validation_errors.append('culture_content')
                 if category == 'drinks':
                     validate_drinks_content(fact, errors=validation_errors)
             if not validation_errors:
                 normalize_evidence(fact)
                 fact["category"] = category
                 if category == 'drinks':prepare_drinks_media(fact)
+                if category == 'culture':prepare_culture_media(fact)
                 if category == 'nature':
                     prepare_nature_media(fact)
                 if category == 'agriculture':

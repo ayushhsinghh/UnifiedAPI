@@ -27,6 +27,9 @@ def validate_image_plan(fact, myth=None):
     if fact.get('article_type')=='agriculture_lesson':
         from .agriculture import validate_agriculture_images
         return validate_agriculture_images(fact)
+    if fact.get('article_type')=='culture_lesson':
+        from .culture import validate_culture_images
+        return validate_culture_images(fact)
     if fact.get('article_type')=='drinks_lesson':
         from .drinks import validate_drinks_images
         return validate_drinks_images(fact)

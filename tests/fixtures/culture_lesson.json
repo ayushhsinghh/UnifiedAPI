@@ -1,0 +1,576 @@
+{
+  "category": "culture",
+  "topic": "Balinese culture",
+  "headline_fact": "In Bali, sharing water can also mean sharing responsibility.",
+  "summary": "Water crosses a rice terrace, then continues toward another field. Its path connects neighbours who need the same resource. In Bali, this practical dependence also connects with community organisation and ritual life.",
+  "did_you_know": "In Bali, sharing water can also mean sharing responsibility.",
+  "history": "Balinese traditions develop through local histories and exchanges with the wider region. Religious ideas from India meet existing ways of understanding the landscape, rather than replacing every local practice.",
+  "core_mechanics": "A field depends on water that also serves other fields. Rules and cooperation help people manage this shared dependence.",
+  "why_it_matters": "An introductory portrait of Balinese Hindu community life, with examples from farming villages and performance traditions.",
+  "in_depth_breakdown": {
+    "detailed_processes": [],
+    "real_world_application": "A field depends on water that also serves other fields. Rules and cooperation help people manage this shared dependence.",
+    "fascinating_trivia": []
+  },
+  "impact_on_india": "Bali makes the difference between cultural exchange and cultural sameness especially useful to understand.",
+  "cultural_significance": "A cultural idea becomes clearer when you connect it to something people do.",
+  "common_misconceptions": [],
+  "key_year": "Across centuries",
+  "key_figure": "Community institutions",
+  "key_stat": "Shared cultural practices",
+  "quote": {
+    "text": "No quotation included.",
+    "confidence": "unverified",
+    "source_ids": []
+  },
+  "global_comparison": {
+    "summary": "Bali makes the difference between cultural exchange and cultural sameness especially useful to understand.",
+    "comparisons": []
+  },
+  "timeline": [],
+  "learning_takeaways": [
+    "Place and practical work help explain cultural institutions.",
+    "Cultural exchange produces local forms, not exact copies.",
+    "A culture includes many communities and ways of life."
+  ],
+  "content_freshness": "evergreen",
+  "emoji_icon": "",
+  "difficulty_level": "Beginner",
+  "region": "Bali, Indonesia",
+  "fun_rating": 4.5,
+  "read_time_seconds": 660,
+  "tags": [
+    "culture",
+    "Bali",
+    "community"
+  ],
+  "related_categories": [
+    "india",
+    "music"
+  ],
+  "visual_suggestions": {
+    "cover": "Conceptual illustration of Balinese rice terraces and water temple, quiet left title space, no writing.",
+    "overview": "Conceptual overview illustration of a terrace, instruments and food from the lesson, no documentary claims.",
+    "how_it_works": "Educational conceptual infographic of a water source feeding connected terraced fields. Show water channels and a separate community decision group. Label water, fields and shared decisions. Connect physical dependence with cooperation using labelled arrows. No invented dates, statistics, ritual symbols or claims of a measured map."
+  },
+  "share_text": "In Bali, sharing water can also mean sharing responsibility.",
+  "image_details": [
+    {
+      "slot": "overview",
+      "placement": "overview",
+      "alt": "Conceptual illustration of the culture and its setting.",
+      "caption": "An illustrated overview, not a documentary photograph.",
+      "learning_purpose": "Connect place, daily life and cultural practices."
+    },
+    {
+      "slot": "how_it_works",
+      "placement": "explanation",
+      "alt": "Conceptual diagram connects a water source, shared fields and collective decisions.",
+      "caption": "An illustrated explanation of shared water and cooperation.",
+      "learning_purpose": "Explain how a shared resource connects with community organisation."
+    }
+  ],
+  "sources": [
+    {
+      "id": "heritage",
+      "title": "Cultural Landscape of Bali Province",
+      "url": "https://whc.unesco.org/en/list/1194/",
+      "author": "UNESCO"
+    },
+    {
+      "id": "gamelan",
+      "title": "Gamelan",
+      "url": "https://ich.unesco.org/en/RL/gamelan-01607",
+      "author": "UNESCO"
+    },
+    {
+      "id": "bali",
+      "title": "Bali: Geography, History and Culture",
+      "url": "https://www.indonesia.travel/gb/en/destination/bali-nusa-tenggara/bali",
+      "author": "Indonesia Tourism"
+    }
+  ],
+  "claim_citations": [],
+  "sources_or_references": [
+    "UNESCO; Indonesia Tourism"
+  ],
+  "schema_version": "2.0",
+  "article_type": "culture_lesson",
+  "images": {},
+  "image_credits": {},
+  "culture_lesson": {
+    "content_version": 1,
+    "identity": {
+      "name": "Balinese culture",
+      "local_names": [
+        "Budaya Bali"
+      ],
+      "peoples": [
+        "Balinese communities"
+      ],
+      "heartland": "Bali, Indonesia",
+      "languages": [
+        "Balinese",
+        "Indonesian"
+      ],
+      "scope": "An introductory portrait of Balinese Hindu community life, with examples from farming villages and performance traditions.",
+      "source_ids": [
+        "heritage"
+      ]
+    },
+    "hook": "In Bali, sharing water can also mean sharing responsibility.",
+    "opening": {
+      "heading": "What can an irrigation canal tell you about a culture?",
+      "scene": "Water crosses a rice terrace, then continues toward another field. Its path connects neighbours who need the same resource. In Bali, this practical dependence also connects with community organisation and ritual life.",
+      "question": "How can a shared landscape become part of a shared way of life?",
+      "source_ids": [
+        "heritage"
+      ]
+    },
+    "origins": {
+      "heartland": "A volcanic island between Java and Lombok",
+      "climate_and_terrain": "Bali combines volcanic highlands with a tropical climate. Cultivation links upland water sources with fields farther downhill.",
+      "adaptation": "Terraced rice landscapes make this relationship visible. Farmers need arrangements for managing water across neighbouring fields, rather than treating each field as an isolated plot.",
+      "historical_origins": "Balinese traditions develop through local histories and exchanges with the wider region. Religious ideas from India meet existing ways of understanding the landscape, rather than replacing every local practice.",
+      "time_context": "The water-temple landscape develops over centuries; present-day communities continue to change.",
+      "source_ids": [
+        "heritage"
+      ]
+    },
+    "milestones": [
+      {
+        "id": "water_temples",
+        "period": "Over centuries",
+        "event": "Water temples become part of the organisation of irrigated landscapes.",
+        "significance": "A physical resource and a community institution become closely connected.",
+        "source_ids": [
+          "heritage"
+        ]
+      }
+    ],
+    "daily_life": {
+      "introduction": "Work, community responsibilities and ritual are useful entry points into daily life. The comparison below describes particular settings rather than one lifestyle shared by everyone.",
+      "comparisons": [
+        {
+          "id": "water",
+          "domain": "Working with shared water",
+          "historical_context": "Rice-growing communities in irrigated landscapes",
+          "then": "Farmers organise water use through local institutions and shared responsibilities.",
+          "now": "Cultivation continues alongside pressures from development and changing livelihoods.",
+          "why_changed": "Land use and sources of income change around the farming landscape.",
+          "who_and_where": "This example concerns subak communities, rather than every resident of Bali.",
+          "source_ids": [
+            "heritage"
+          ]
+        },
+        {
+          "id": "learning",
+          "domain": "Learning through participation",
+          "historical_context": "Community music and performance",
+          "then": "Practical knowledge passes through learning instruments and rehearsing with others.",
+          "now": "Transmission also involves educational and cultural institutions.",
+          "why_changed": "Formal teaching creates additional places to learn.",
+          "who_and_where": "The setting and repertoire differ between ensembles.",
+          "source_ids": [
+            "gamelan"
+          ]
+        },
+        {
+          "id": "gathering",
+          "domain": "Gathering through food",
+          "historical_context": "Meals and ceremonial settings",
+          "then": "Shared preparation and familiar dishes help mark gatherings.",
+          "now": "Food traditions also appear in household businesses and restaurants.",
+          "why_changed": "New markets create additional settings for familiar foods.",
+          "who_and_where": "Recipes and the role of a dish differ between households and occasions.",
+          "source_ids": [
+            "heritage"
+          ]
+        }
+      ],
+      "source_ids": [
+        "heritage"
+      ]
+    },
+    "worldview": {
+      "introduction": "A cultural idea becomes clearer when you connect it to something people do.",
+      "concepts": [
+        {
+          "id": "tri_hita",
+          "term": "Tri Hita Karana",
+          "local_term": null,
+          "meaning": "This concept relates spiritual life, relationships between people, and the natural world.",
+          "everyday_example": "Water-temple landscapes connect environmental management with collective and ritual responsibilities.",
+          "scope": "It is a framework for understanding particular practices, not a description of every individual belief.",
+          "source_ids": [
+            "heritage"
+          ]
+        }
+      ],
+      "etiquette": [
+        {
+          "id": "visit",
+          "situation": "Entering a place used for worship",
+          "practice": "Ask the local hosts how a visitor should dress and behave.",
+          "reason": "A temple is a working community space, not only a visual attraction.",
+          "context": "Follow the guidance for that place and occasion.",
+          "source_ids": [
+            "gamelan"
+          ]
+        }
+      ],
+      "source_ids": [
+        "heritage"
+      ]
+    },
+    "markers": [
+      {
+        "id": "clothing",
+        "kind": "clothing",
+        "name": "Ceremonial clothing",
+        "place_or_community": "Balinese ceremonial settings",
+        "description": "Kebaya and wrapped cloth are among the forms of dress associated with ceremonial life. The occasion helps explain why clothing differs from everyday work clothes.",
+        "meaning": "Dress signals participation in a particular social setting.",
+        "experience": "Look at the whole outfit and its occasion, rather than treating one garment as a uniform.",
+        "today": "Ceremonial clothing remains part of contemporary public and community life.",
+        "source_ids": [
+          "bali"
+        ]
+      },
+      {
+        "id": "architecture",
+        "kind": "architecture",
+        "name": "Water temples",
+        "place_or_community": "Bali’s cultivated landscapes",
+        "description": "Temples stand within a wider landscape of fields and water channels. Their significance becomes clearer when you see how people use the surrounding land.",
+        "meaning": "Built spaces connect ritual with the management of shared resources.",
+        "experience": "Follow the relationship between the water source, the channel and the fields.",
+        "today": "These places remain part of living landscapes.",
+        "source_ids": [
+          "heritage"
+        ]
+      },
+      {
+        "id": "food",
+        "kind": "food",
+        "name": "Lawar",
+        "place_or_community": "Balinese cooking",
+        "description": "Lawar combines chopped ingredients with coconut and seasonings. Different preparations use different ingredients and serve different settings.",
+        "meaning": "A familiar dish can link the work of preparing food with an occasion.",
+        "experience": "Ask what the preparation contains and when people usually serve it.",
+        "today": "The dish appears in local food businesses as well as ceremonial settings.",
+        "source_ids": [
+          "bali"
+        ]
+      },
+      {
+        "id": "music",
+        "kind": "music",
+        "name": "Gamelan",
+        "place_or_community": "Balinese ensembles within Indonesian musical traditions",
+        "description": "Gamelan names an ensemble and its instruments. Percussion instruments create parts that work together rather than functioning as unrelated solo performances.",
+        "meaning": "Learning and playing connect musical knowledge with group participation.",
+        "experience": "Listen for how the different parts fit together.",
+        "today": "Community groups and educational institutions continue the practice.",
+        "source_ids": [
+          "gamelan"
+        ]
+      },
+      {
+        "id": "celebration",
+        "kind": "celebration",
+        "name": "Galungan",
+        "place_or_community": "Balinese Hindu communities",
+        "description": "Galungan is associated with ancestors and the relationship between dharma and adharma. It places a major occasion within the rhythm of community life.",
+        "meaning": "Celebration gives shared ideas a place in the calendar.",
+        "experience": "Learn what the event means to the community before treating it as a performance.",
+        "today": "Families and communities maintain the occasion in contemporary life.",
+        "source_ids": [
+          "bali"
+        ]
+      }
+    ],
+    "india_connections": {
+      "introduction": "Bali makes the difference between cultural exchange and cultural sameness especially useful to understand.",
+      "connections": [
+        {
+          "id": "exchange",
+          "title": "Indian religious ideas in a Balinese setting",
+          "relationship": "documented_contact",
+          "explanation": "The water-temple landscape reflects exchanges involving Hindu and Buddhist traditions alongside local cosmology.",
+          "indian_example": "Readers familiar with Hindu traditions can recognise some ideas while learning how the Balinese setting changes their expression.",
+          "distinction": "Shared references do not make Balinese ritual life identical to any one Indian tradition.",
+          "source_ids": [
+            "heritage"
+          ]
+        }
+      ],
+      "source_ids": [
+        "heritage"
+      ]
+    },
+    "why_custom": {
+      "title": "Why sharing water becomes a community task",
+      "custom": "Cooperative water management in a terraced landscape",
+      "explanation": "A field depends on water that also serves other fields. Rules and cooperation help people manage this shared dependence.",
+      "drivers": [
+        {
+          "id": "slope",
+          "factor": "Connected fields",
+          "effect": "Water moves across a landscape rather than remaining within one household’s boundary.",
+          "source_ids": [
+            "heritage"
+          ]
+        },
+        {
+          "id": "cooperation",
+          "factor": "Collective responsibility",
+          "effect": "Local institutions give people a way to organise the shared resource.",
+          "source_ids": [
+            "heritage"
+          ]
+        }
+      ],
+      "what_it_explains": "This relationship helps explain why fields, channels and community institutions belong in the same story.",
+      "limits": null,
+      "infographic_prompt": "Educational conceptual infographic of a water source feeding connected terraced fields. Show water channels and a separate community decision group. Label water, fields and shared decisions. Connect physical dependence with cooperation using labelled arrows. No invented dates, statistics, ritual symbols or claims of a measured map.",
+      "source_ids": [
+        "heritage"
+      ]
+    },
+    "spread": {
+      "introduction": "Cultural influence can move through teaching, travel and performance. Movement also changes the setting in which a practice is understood.",
+      "pathways": [
+        {
+          "id": "learning_abroad",
+          "destination": "Learning and performance beyond Indonesia",
+          "period": "Contemporary cultural exchange",
+          "route": "Gamelan is taught and performed in settings beyond its original local communities.",
+          "what_changed": "A rehearsal or concert can have a different purpose from a local ritual setting.",
+          "what_continues": "Musicians continue to learn the relationships between ensemble parts.",
+          "source_ids": [
+            "gamelan"
+          ]
+        }
+      ],
+      "influences": [
+        {
+          "id": "ensemble",
+          "name": "Ensemble learning",
+          "example": "Learners meet an approach in which the parts fit into a larger musical whole.",
+          "connection": "The practice travels through instruments, teachers and participation, not only through recordings.",
+          "source_ids": [
+            "gamelan"
+          ]
+        }
+      ],
+      "source_ids": [
+        "gamelan"
+      ]
+    },
+    "living_culture": {
+      "introduction": "The examples in this portrait are entry points. They describe practices and settings rather than a single way to be Balinese.",
+      "variations": [
+        {
+          "id": "settings",
+          "community_or_region": "Farming and performance communities",
+          "difference": "An irrigation collective and a musical ensemble organise different activities.",
+          "explanation": "Both belong in a cultural portrait, but neither describes every household or profession.",
+          "source_ids": [
+            "heritage"
+          ]
+        }
+      ],
+      "source_ids": [
+        "heritage"
+      ]
+    },
+    "key_terms": [
+      {
+        "term": "Subak",
+        "meaning": "A cooperative institution connected with irrigation in Bali.",
+        "source_ids": [
+          "heritage"
+        ]
+      }
+    ],
+    "knowledge_checks": [
+      {
+        "question": "Why does a rice terrace belong in a cultural portrait?",
+        "answer": "The field connects with institutions and shared responsibilities.",
+        "explanation": "A cultural explanation looks at the relationship between practical work, ideas and community organisation."
+      }
+    ],
+    "takeaways": [
+      "Place and practical work help explain cultural institutions.",
+      "Cultural exchange produces local forms, not exact copies.",
+      "A culture includes many communities and ways of life."
+    ],
+    "related_topics": [
+      "Balinese gamelan",
+      "Water temples of Bali"
+    ],
+    "photos": [
+      {
+        "id": "fallback_0",
+        "section_id": "overview",
+        "entry_id": null,
+        "kind": "everyday",
+        "subject": "Balinese culture",
+        "queries": [
+          "Balinese culture",
+          "Balinese culture everyday life"
+        ]
+      },
+      {
+        "id": "fallback_1",
+        "section_id": "origins",
+        "entry_id": null,
+        "kind": "named_place",
+        "subject": "Bali, Indonesia",
+        "queries": [
+          "Bali, Indonesia",
+          "Balinese culture history"
+        ]
+      },
+      {
+        "id": "fallback_2",
+        "section_id": "daily_life",
+        "entry_id": null,
+        "kind": "everyday",
+        "subject": "Balinese culture daily life",
+        "queries": [
+          "Balinese culture daily life",
+          "Balinese culture community"
+        ]
+      },
+      {
+        "id": "fallback_3",
+        "section_id": "worldview",
+        "entry_id": null,
+        "kind": "everyday",
+        "subject": "Balinese culture customs",
+        "queries": [
+          "Balinese culture customs",
+          "Balinese culture social life"
+        ]
+      },
+      {
+        "id": "fallback_4",
+        "section_id": "explanation",
+        "entry_id": null,
+        "kind": "process",
+        "subject": "Cooperative water management in a terraced landscape",
+        "queries": [
+          "Cooperative water management in a terraced landscape",
+          "Balinese culture Cooperative water management in a terraced landscape"
+        ]
+      },
+      {
+        "id": "fallback_5",
+        "section_id": "spread",
+        "entry_id": null,
+        "kind": "everyday",
+        "subject": "Balinese culture diaspora",
+        "queries": [
+          "Balinese culture diaspora",
+          "Balinese culture cultural heritage"
+        ]
+      },
+      {
+        "id": "fallback_6",
+        "section_id": "living",
+        "entry_id": null,
+        "kind": "everyday",
+        "subject": "Balinese culture contemporary culture",
+        "queries": [
+          "Balinese culture contemporary culture",
+          "Balinese culture traditions today"
+        ]
+      },
+      {
+        "id": "fallback_7",
+        "section_id": "markers",
+        "entry_id": "clothing",
+        "kind": "attire",
+        "subject": "Ceremonial clothing",
+        "queries": [
+          "Ceremonial clothing",
+          "Ceremonial clothing Balinese culture"
+        ]
+      },
+      {
+        "id": "fallback_8",
+        "section_id": "markers",
+        "entry_id": "architecture",
+        "kind": "architecture",
+        "subject": "Water temples",
+        "queries": [
+          "Water temples",
+          "Water temples Balinese culture"
+        ]
+      },
+      {
+        "id": "fallback_9",
+        "section_id": "markers",
+        "entry_id": "food",
+        "kind": "food",
+        "subject": "Lawar",
+        "queries": [
+          "Lawar",
+          "Lawar Balinese culture"
+        ]
+      },
+      {
+        "id": "fallback_10",
+        "section_id": "markers",
+        "entry_id": "music",
+        "kind": "music",
+        "subject": "Gamelan",
+        "queries": [
+          "Gamelan",
+          "Gamelan Balinese culture"
+        ]
+      },
+      {
+        "id": "fallback_11",
+        "section_id": "markers",
+        "entry_id": "celebration",
+        "kind": "festival",
+        "subject": "Galungan",
+        "queries": [
+          "Galungan",
+          "Galungan Balinese culture"
+        ]
+      },
+      {
+        "id": "fallback_12",
+        "section_id": "india",
+        "entry_id": "exchange",
+        "kind": "historical_object",
+        "subject": "Indian religious ideas in a Balinese setting",
+        "queries": [
+          "Indian religious ideas in a Balinese setting",
+          "Balinese culture India cultural exchange"
+        ]
+      }
+    ]
+  },
+  "culture_media": {
+    "version": 1,
+    "generated_limit": 3,
+    "generated_slots": [
+      "cover",
+      "overview",
+      "how_it_works"
+    ],
+    "photo_timeout_seconds": 720,
+    "photo_plan_version": 1,
+    "photo_plan_source": "fallback"
+  },
+  "culture_validation": {
+    "structure_checked": true,
+    "source_verification": "not_performed",
+    "historical_review": "not_performed"
+  }
+}

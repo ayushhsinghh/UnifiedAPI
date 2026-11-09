@@ -282,3 +282,14 @@ def finish_fact_images(content_hash: str) -> None:
             {"content_hash": content_hash},
             {"$set": {"image_ready": state["status"] == "completed"}},
         )
+
+
+def save_culture_photo_plan(content_hash: str, fact: dict, previous_photos=None) -> bool:
+    """Replace the exact plan read by this worker; do not overwrite concurrent repairs."""
+    path='full_response.culture_lesson.photos'
+    result=get_db()[cfg.DAILY_FACTS_COLLECTION].update_one({
+        'content_hash':content_hash,'full_response.article_type':'culture_lesson',path:previous_photos},
+        {'$set':{path:fact['culture_lesson']['photos'],
+                 'full_response.culture_media.photo_plan_version':1,
+                 'full_response.culture_media.photo_plan_source':fact.get('culture_media',{}).get('photo_plan_source','fallback')}})
+    return result.matched_count==1

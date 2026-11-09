@@ -147,6 +147,13 @@ def build_section_image_context(key, article=None):
             if value:
                 text = value if isinstance(value, str) else json.dumps(value, ensure_ascii=False)
                 excerpt[field] = text[:4000]
+        if article.get('article_type') == 'culture_lesson':
+            lesson=article.get('culture_lesson') or {}
+            excerpt['culture_context']={k:lesson.get(k) for k in ('identity','opening','origins','markers','why_custom')}
+            lines.append('Culture illustrations are conceptual, not historical photographs. Preserve community and period context. No invented cultural symbols, stereotypes, fake museum objects or evidence.')
+            if key=='how_it_works':
+                lines[1]='Explain the one documented cultural mechanism with actual factors, clear relationships and a concise legend.'
+                lines[2]=_VISUAL_RULES.replace('Include no text, letters, numbers, labels, captions, logos, watermarks, or fake writing.', 'Use short accurate educational labels from the supplied infographic prompt. No logos, watermarks, invented dates or statistics.')
         if article.get('article_type') == 'drinks_lesson':
             lesson=article.get('drinks_lesson') or {}
             excerpt['drinks_context']={k:lesson.get(k) for k in ('identity','opening','signature','introduction','sensory_profile','making')}

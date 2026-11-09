@@ -62,6 +62,7 @@ def generator_module():
         'fact_test.food': __import__('src.facts.food',fromlist=['food']),
         'fact_test.fashion': __import__('src.facts.fashion',fromlist=['fashion']),
         'fact_test.geography': __import__('src.facts.geography',fromlist=['geography']),
+        'fact_test.culture': __import__('src.facts.culture',fromlist=['culture']),
         'fact_test.drinks': __import__('src.facts.drinks',fromlist=['drinks']),
         'fact_test.nature': __import__('src.facts.nature',fromlist=['nature']),
         'fact_test.agriculture': __import__('src.facts.agriculture',fromlist=['agriculture']),
@@ -83,7 +84,7 @@ def routes_module():
         def __init__(self, status_code, detail): self.status_code, self.detail = status_code, detail
     repo_names = ['get_facts_list', 'get_random_cached_fact', 'get_recent_topic_keys', 'store_fact',
         'update_fact_images', 'delete_fact', 'get_fact_by_hash', '_compute_content_hash',
-        'start_fact_images', 'set_fact_image_state', 'finish_fact_images', 'claim_country_photo_enrichment', 'finish_country_photo_enrichment','set_fact_photo_selection','save_agriculture_photo_plan','save_nature_photo_plan','save_drinks_photo_plan']
+        'start_fact_images', 'set_fact_image_state', 'finish_fact_images', 'claim_country_photo_enrichment', 'finish_country_photo_enrichment','set_fact_photo_selection','save_agriculture_photo_plan','save_nature_photo_plan','save_drinks_photo_plan','save_culture_photo_plan']
     value = load('routes_test', 'src/routes/facts_routes.py', {
         **config_import,
         'fastapi': module('fastapi', APIRouter=Router, BackgroundTasks=object, Header=lambda *a, **k: None,
@@ -103,7 +104,7 @@ def routes_module():
         'src.facts.image_generator': module('src.facts.image_generator', generate_and_save_image=AsyncMock()),
         'src.facts.photo_ranking': module('src.facts.photo_ranking',select_india_photos=AsyncMock(side_effect=RuntimeError('Offline ranking fixture')),
             select_country_photos=AsyncMock(side_effect=RuntimeError('Offline ranking fixture')),
-            select_food_photos=AsyncMock(return_value=[]),select_fashion_photos=AsyncMock(return_value=[]),select_geography_photos=AsyncMock(return_value=[]),select_technology_photos=AsyncMock(return_value=[]),select_economics_photos=AsyncMock(return_value=[]),select_agriculture_photos=AsyncMock(return_value=[]),select_nature_photos=AsyncMock(return_value=[]),select_drinks_photos=AsyncMock(return_value=[]),PhotoRankingUnavailable=RuntimeError),
+            select_food_photos=AsyncMock(return_value=[]),select_fashion_photos=AsyncMock(return_value=[]),select_geography_photos=AsyncMock(return_value=[]),select_technology_photos=AsyncMock(return_value=[]),select_economics_photos=AsyncMock(return_value=[]),select_agriculture_photos=AsyncMock(return_value=[]),select_nature_photos=AsyncMock(return_value=[]),select_drinks_photos=AsyncMock(return_value=[]),select_culture_photos=AsyncMock(return_value=[]),PhotoRankingUnavailable=RuntimeError),
     })
     value.logger = Mock()
     return value
